@@ -324,7 +324,7 @@ Generate_Stats(){
 	Auto_ServiceEvent create 2>/dev/null
 	mkdir -p "$(readlink /www/ext)"
 	
-	Print_Output "false" "30 second ping test to $(ShowPingServer) starting..." "$PASS"
+	#Print_Output "false" "30 second ping test to $(ShowPingServer) starting..." "$PASS"
 	
 	TZ=$(cat /etc/TZ)
 	export TZ
@@ -469,7 +469,7 @@ ScriptHeader(){
 
 MainMenu(){
 	printf "1.    Check connection now\\n\\n"
-	printf "2.    Set preferred ping server\\n      Currently: %s\\n\\n" "$(ShowPingServer)"
+	printf "2.    Set preferred ping server\\n      Currently: %s\\n\\n" ""
 	printf "u.    Check for updates\\n"
 	printf "uf.   Update %s with latest version (force update)\\n\\n" "$SCRIPT_NAME"
 	printf "e.    Exit %s\\n\\n" "$SCRIPT_NAME"
