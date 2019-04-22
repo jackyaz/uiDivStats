@@ -320,6 +320,29 @@ Modify_WebUI_File(){
 	### ###
 }
 
+WriteStats_ToJS(){
+	html='document.getElementById("divstats").innerHTML="'
+	while IFS='' read -r line || [ -n "$line" ]; do
+		html="$html""$line""\\r\\n"
+	done < "$1"
+	html="$html"'"'
+	echo "$html" > "$2"
+}
+
+Script_gnuplot(){
+	{ echo 'set terminal png nocrop enhanced large size 800,600 background rgb "#475A5F"'; /
+echo 'set output 'plot.png''; /
+echo 'set boxwidth 0.5'; /
+echo 'set style fill solid 1.0 border -1'; /
+echo 'unset grid'; /
+echo 'set ytics 5 nomirror'; /
+echo 'set ylabel "Number of blocks"'; /
+echo 'set yrange [0:*]'; /
+echo 'set xtics rotate'; /
+echo 'plot "data.dat" using 0:2:xtic(1) notitle with boxes , "data.dat" using 0:($2+5):2 notitle with labels'; } > /tmp/gnuplot.script
+#lc rgb var
+}
+
 Generate_Stats(){
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
@@ -327,7 +350,7 @@ Generate_Stats(){
 	mkdir -p "$(readlink /www/ext)"
 	
 	#Print_Output "false" "30 second ping test to $(ShowPingServer) starting..." "$PASS"
-	
+	WriteStats_ToJS "/tmp/stats.txt" "/www/ext/divstats.js"
 	TZ=$(cat /etc/TZ)
 	export TZ
 	DATE=$(date "+%a %b %e %H:%M %Y")
@@ -490,7 +513,8 @@ MainMenu(){
 			1)
 				printf "\\n"
 				if Check_Lock "menu"; then
-					: #Menu_GenerateStats
+					Script_gnuplot
+					#Menu_GenerateStats
 				fi
 				PressEnter
 				break
