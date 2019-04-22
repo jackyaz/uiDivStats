@@ -330,15 +330,15 @@ WriteStats_ToJS(){
 }
 
 Script_gnuplot(){
-	{ echo 'set terminal png nocrop enhanced large size 800,600 background rgb "#475A5F"'; /
-echo 'set output "plot.png"'; /
-echo 'set boxwidth 0.5'; /
-echo 'set style fill solid 1.0 border -1'; /
-echo 'unset grid'; /
-echo 'set ytics 5 nomirror'; /
-echo 'set ylabel "Number of blocks"'; /
-echo 'set yrange [0:*]'; /
-echo 'set xtics rotate'; /
+	{ echo 'set terminal png nocrop enhanced large size 800,600 background rgb "#475A5F"' /
+echo 'set output "plot.png"' /
+echo 'set boxwidth 0.5' /
+echo 'set style fill solid 1.0 border -1' /
+echo 'unset grid' /
+echo 'set ytics 5 nomirror' /
+echo 'set ylabel "Number of blocks"' /
+echo 'set yrange [0:*]' /
+echo 'set xtics rotate' /
 echo 'plot "data.dat" using 0:2:xtic(1) notitle with boxes , "data.dat" using 0:($2+5):2 notitle with labels'; } > /tmp/gnuplot.script
 #lc rgb var
 }
