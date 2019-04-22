@@ -233,7 +233,7 @@ Download_File(){
 RRD_Initialise(){
 	if [ ! -f /jffs/scripts/divstats_rrd.rrd ]; then
 		Download_File "$SCRIPT_REPO/divstats_xml.xml" "/jffs/scripts/divstats_xml.xml"
-		rrdtool restore -f /jffs/scripts/sivstats_xml.xml /jffs/scripts/divstats_rrd.rrd
+		rrdtool restore -f /jffs/scripts/divstats_xml.xml /jffs/scripts/divstats_rrd.rrd
 		rm -f /jffs/scripts/divstats_xml.xml
 	fi
 }
