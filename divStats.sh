@@ -331,7 +331,7 @@ WriteStats_ToJS(){
 
 Script_gnuplot(){
 	{ echo 'set terminal png nocrop enhanced large size 800,600 background rgb "#475A5F"'; /
-echo 'set output 'plot.png''; /
+echo 'set output "plot.png"'; /
 echo 'set boxwidth 0.5'; /
 echo 'set style fill solid 1.0 border -1'; /
 echo 'unset grid'; /
