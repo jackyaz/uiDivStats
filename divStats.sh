@@ -329,6 +329,7 @@ WriteStats_ToJS(){
 	echo "$html" > "$2"
 }
 
+# shellcheck disable=SC2016
 Script_gnuplot(){
 	{ echo 'set terminal png nocrop enhanced large size 800,600 background rgb "#475A5F"' /
 echo 'set output "plot.png"' /
