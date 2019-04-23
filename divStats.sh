@@ -667,7 +667,7 @@ Generate_Stats_Diversion(){
 		#printf "%-37s%s\\n" " Top $wsTopHosts domains for top $wsTopClients clients:" "$(($endCount-$startCountwsTopHostsClients))" >>${statsFile}
 		#printf "\\n%-37s%s\\n$LINE" " Total time to compile stats:" "$(($endCount-$startCount))" >>${statsFile}
 		
-		printf "$LINE\\nEnd of stats report\\n$LINE\\n" >>${statsFile}
+		printf "$LINE\\n End of stats report\\n\\n$LINE\\n" >>${statsFile}
 		WriteStats_ToJS "/tmp/stats.txt" "/www/ext/divstats.js"
 		rm -f $statsFile
 		Print_Output "true" "Diversion statistic generation completed successfully!" "$PASS"
