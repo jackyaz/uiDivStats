@@ -113,8 +113,6 @@ document.form.submit();
 </thead>
 <tr>
 <td colspan="2" align="center">
-<img src="/ext/nstats-speed-downld.png">
-<img src="/ext/nstats-speed-upld.png">
 </td>
 </tr>
 </table>
@@ -126,8 +124,6 @@ document.form.submit();
 </thead>
 <tr>
 <td colspan="2" align="center">
-<img src="/ext/nstats-week-speed-downld.png">
-<img src="/ext/nstats-week-speed-upld.png">
 </td>
 </tr>
 </table>
