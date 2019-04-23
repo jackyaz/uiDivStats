@@ -832,7 +832,7 @@ ScriptHeader(){
 
 MainMenu(){
 	printf "1.    Check connection now\\n\\n"
-	printf "2.    Set preferred ping server\\n      Currently: %s\\n\\n" ""
+	#printf "2.    Set preferred ping server\\n      Currently: %s\\n\\n" ""
 	printf "u.    Check for updates\\n"
 	printf "uf.   Update %s with latest version (force update)\\n\\n" "$SCRIPT_NAME"
 	printf "e.    Exit %s\\n\\n" "$SCRIPT_NAME"
@@ -850,12 +850,6 @@ MainMenu(){
 				if Check_Lock "menu"; then
 					Menu_GenerateStats
 				fi
-				PressEnter
-				break
-			;;
-			2)
-				printf "\\n"
-				#Menu_SetPingServer
 				PressEnter
 				break
 			;;
