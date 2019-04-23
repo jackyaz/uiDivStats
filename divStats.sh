@@ -368,7 +368,7 @@ Generate_Stats_Diversion(){
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
 	
-	Print_Output "Starting Diversion statistic generation..." "$PASS"
+	Print_Output "true" "Starting Diversion statistic generation..." "$PASS"
 	
 	DIVERSION_DIR=/opt/share/diversion
 	
@@ -669,12 +669,13 @@ Generate_Stats_Diversion(){
 		#printf "%-37s%s\\n" " The top $wsTopClients noisiest name clients:" "$(($startCountwsTopHostsClients-$startCountNoisyClients))" >>${statsFile}
 		#printf "%-37s%s\\n" " Top $wsTopHosts domains for top $wsTopClients clients:" "$(($endCount-$startCountwsTopHostsClients))" >>${statsFile}
 		#printf "\\n%-37s%s\\n$LINE" " Total time to compile stats:" "$(($endCount-$startCount))" >>${statsFile}
-		printf " End of stats report\\n\\n" >>${statsFile}
+		
+		printf "\\n\\n$LINE\\nEnd of stats report\\n\\n" >>${statsFile}
 		WriteStats_ToJS "/tmp/stats.txt" "/www/ext/divstats.js"
 		rm -f $statsFile
-		Print_Output "Diversion statistic generation completed successfully!" "$PASS"
+		Print_Output "true" "Diversion statistic generation completed successfully!" "$PASS"
 	else
-		Print_Output "Diversion configuration not found, exiting!" "$ERR"
+		Print_Output "true" "Diversion configuration not found, exiting!" "$ERR"
 	fi
 }
 
