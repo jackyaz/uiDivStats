@@ -93,11 +93,11 @@ document.form.submit();
 <div style="line-height:10px;">&nbsp;</div>
 <div class="formfonttitle" style="margin-bottom:0px;">Diversion Statistics</div>
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#4D595D">
-<tr class="apply_gen" valign="top" height="35px">
+<!--<tr class="apply_gen" valign="top" height="35px">
 <td>
 <input type="button" onClick="applyRule();" value="Update Diversion Statistics" class="button_gen" name="button">
 </td>
-</tr>
+</tr>-->
 <tr>
 <td>
 <textarea cols="63" rows="40" wrap="off" readonly="readonly" id="divstats" class="textarea_log_table" style="font-family:'Courier New', Courier, mono; font-size:11px;">"Stats will show here"</textarea>
