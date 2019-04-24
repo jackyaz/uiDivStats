@@ -914,6 +914,14 @@ Check_Requirements(){
 	if [ ! -f "/opt/bin/diversion" ]; then
 		Print_Output "true" "Diversion not installed!" "$ERR"
 		CHECKSFAILED="true"
+	else
+		. /opt/share/diversion/.conf/diversion.conf
+		#shellcheck disable=SC2154
+		if [ "$weeklyStats" != "on" ]; then
+			Print_Output "true" "Diversion weekly stats not enabled!" "$ERR"
+			Print_Output "true" "Open Diversion, use option c and then enable using 2,1,1" ""
+			CHECKSFAILED="true"
+		fi
 	fi
 	
 	if [ "$CHECKSFAILED" = "false" ]; then
