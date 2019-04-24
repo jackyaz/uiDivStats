@@ -347,6 +347,10 @@ echo 'plot "data.dat" using 0:2:xtic(1) notitle with boxes , "data.dat" using 0:
 # shellcheck disable=SC2188
 # shellcheck disable=SC2167
 # shellcheck disable=SC2165
+#shellcheck disable=SC2059
+#shellcheck disable=SC2129
+#shellcheck disable=SC2126
+#shellcheck disable=SC2086
 Generate_Stats_Diversion(){
 	# Diversion is free to use under the GNU General Public License version 3 (GPL-3.0)
 	# https://opensource.org/licenses/GPL-3.0
