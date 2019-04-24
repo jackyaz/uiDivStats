@@ -668,6 +668,7 @@ Generate_Stats_Diversion(){
 		#printf "\\n%-37s%s\\n$LINE" " Total time to compile stats:" "$(($endCount-$startCount))" >>${statsFile}
 		
 		printf "$LINE\\n End of stats report\\n\\n$LINE\\n" >>${statsFile}
+		mkdir -p "$(readlink /www/ext)"
 		WriteStats_ToJS "/tmp/stats.txt" "/www/ext/divstats.js"
 		rm -f $statsFile
 		Print_Output "true" "Diversion statistic generation completed successfully!" "$PASS"
