@@ -355,6 +355,7 @@ echo 'plot "data.dat" using 0:2:xtic(1) notitle with boxes , "data.dat" using 0:
 # shellcheck disable=SC2013
 # shellcheck disable=SC2002
 # shellcheck disable=SC2004
+# shellcheck disable=SC1003
 Generate_Stats_Diversion(){
 	# Diversion is free to use under the GNU General Public License version 3 (GPL-3.0)
 	# https://opensource.org/licenses/GPL-3.0
@@ -924,6 +925,7 @@ Check_Requirements(){
 		Print_Output "true" "Diversion not installed!" "$ERR"
 		CHECKSFAILED="true"
 	else
+		# shellcheck disable=SC1091
 		. /opt/share/diversion/.conf/diversion.conf
 		#shellcheck disable=SC2154
 		if [ "$weeklyStats" != "on" ]; then
