@@ -12,10 +12,10 @@
 ##       https://github.com/jackyaz/divStats        ##
 ##                                                  ##
 ######################################################
-#<textarea cols="63" rows="27" wrap="off" readonly="readonly" id="textarea" class="textarea_log_table" style="font-family:'Courier New', Courier, mono; font-size:11px;">
+
 ### Start of script variables ###
 readonly SCRIPT_NAME="divStats"
-readonly SCRIPT_VERSION="v1.0.0"
+readonly SCRIPT_VERSION="v0.1.0"
 readonly SCRIPT_BRANCH="master"
 readonly SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/""$SCRIPT_NAME""/""$SCRIPT_BRANCH"
 readonly SCRIPT_CONF="/jffs/configs/$SCRIPT_NAME.config"
