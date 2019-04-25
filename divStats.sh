@@ -524,8 +524,6 @@ Generate_Stats_Diversion(){
 		awk '{for(i=1;i<=NF;i++)a[$i]++}END{for(o in a) printf "\n %-6s %-40s""%s %s",a[o],o}' | sort -nr |
 		head -$wsTopHosts >>/tmp/divstats/div-tah
 		
-		Generate_GNUPLOT_Graphs /tmp/divstats/div-tah /www/ext/divstats-blockeddomains.png
-		
 		# show if found in any of these lists
 		for i in $(awk '{print $2}' /tmp/divstats/div-tah); do
 			i=$(echo $i | sed -e 's/\./\\./g')
@@ -634,6 +632,8 @@ Generate_Stats_Diversion(){
 		sed -i '/^\s*$/d' /tmp/divstats/div-iphostleases.tmp
 		cat /tmp/divstats/div-iphostleases.tmp | sort -t . -k 4,4n -u > "${DIVERSION_DIR}/backup/diversion_stats-iphostleases"
 		
+		Generate_GNUPLOT_Graphs /tmp/divstats/div-tah /www/ext/divstats-blockeddomains.png
+		
 		rm -rf /tmp/divstats
 		
 		# show file sizes
@@ -685,7 +685,7 @@ echo 'set ytics 100 nomirror'
 echo 'set ylabel "Number of blocks"'
 echo 'set yrange [0:*]'
 echo 'set xtics rotate'
-echo 'plot "'"$1"'" using 0:1:xtic(2) notitle with boxes lc rgb white , "'"$1"'" using 0:($1-25):1 notitle with labels'; } > /tmp/gnuplot.script
+echo 'plot "'"$1"'" using 0:1:xtic(2) notitle with boxes lc rgb "white" , "'"$1"'" using 0:($1-25):1 notitle with labels'; } > /tmp/gnuplot.script
 	gnuplot /tmp/gnuplot.script
 	#cp "$1" /tmp/bak.dat
 	rm -f /tmp/gnuplot.script
