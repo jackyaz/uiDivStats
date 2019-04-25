@@ -685,7 +685,12 @@ echo 'set ytics 100 nomirror'
 echo 'set ylabel "Number of blocks"'
 echo 'set yrange [0:*]'
 echo 'set xtics rotate'
-echo 'plot "'"$1"'" using 0:1:xtic(2) notitle with boxes lc rgb "white" , "'"$1"'" using 0:($1-25):1 notitle with labels'; } > /tmp/gnuplot.script
+echo 'set border lc rgb "white"'
+echo 'set xtics textcolor rgb "white"'
+echo 'set ytics textcolor rgb "white"'
+echo 'set xlabel "X" textcolor rgb "white"'
+echo 'set ylabel "Y" textcolor rgb "white"'
+echo 'plot "'"$1"'" using 0:1:xtic(2) notitle with boxes lc rgb "white" , "'"$1"'" using 0:($1-25):1 notitle with labels lc rgb "black"'; } > /tmp/gnuplot.script
 	gnuplot /tmp/gnuplot.script
 	#cp "$1" /tmp/bak.dat
 	rm -f /tmp/gnuplot.script
