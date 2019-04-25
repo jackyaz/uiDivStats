@@ -687,7 +687,7 @@ echo 'set yrange [0:*]' /
 echo 'set xtics rotate' /
 echo 'plot "data.dat" using 0:1:xtic(2) notitle with boxes , "'"$1"'" using 0:($2+5):2 notitle with labels'; } > /tmp/gnuplot.script
 	gnuplot /tmp/gnuplot.script
-	rm -f /tmp/gnuplot.script
+	#rm -f /tmp/gnuplot.script
 #lc rgb var
 }
 
