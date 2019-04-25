@@ -681,15 +681,14 @@ echo 'set output "'"$2"'"'
 echo 'set boxwidth 0.5'
 echo 'set style fill solid 1.0 border -1'
 echo 'unset grid'
-echo 'set ytics 5 nomirror'
+echo 'set ytics 100 nomirror'
 echo 'set ylabel "Number of blocks"'
 echo 'set yrange [0:*]'
 echo 'set xtics rotate'
-echo 'plot "'"$1"'" using 0:1:xtic(2) notitle with boxes , "'"$1"'" using 0:($1+5):2 notitle with labels'; } > /tmp/gnuplot.script
+echo 'plot "'"$1"'" using 0:1:xtic(2) notitle with boxes lc rgb white , "'"$1"'" using 0:($1-25):1 notitle with labels'; } > /tmp/gnuplot.script
 	gnuplot /tmp/gnuplot.script
-	cp "$1" /tmp/bak.dat
-	#rm -f /tmp/gnuplot.script
-#lc rgb var
+	#cp "$1" /tmp/bak.dat
+	rm -f /tmp/gnuplot.script
 }
 
 Generate_RRD_Graphs(){
