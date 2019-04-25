@@ -326,23 +326,6 @@ WriteStats_ToJS(){
 	echo "$html" > "$2"
 }
 
-# shellcheck disable=SC2016
-Script_gnuplot(){
-	{ echo 'set terminal png nocrop enhanced large size 800,600 background rgb "#475A5F"' /
-echo 'set output "'"$2"'"' /
-echo 'set boxwidth 0.5' /
-echo 'set style fill solid 1.0 border -1' /
-echo 'unset grid' /
-echo 'set ytics 5 nomirror' /
-echo 'set ylabel "Number of blocks"' /
-echo 'set yrange [0:*]' /
-echo 'set xtics rotate' /
-echo 'plot "data.dat" using 0:2:xtic(1) notitle with boxes , "'"$1"'" using 0:($2+5):2 notitle with labels'; } > /tmp/gnuplot.script
-	gnuplot /tmp/gnuplot.script
-	rm -f /tmp/gnuplot.script
-#lc rgb var
-}
-
 # shellcheck disable=SC1090
 # shellcheck disable=SC2154
 # shellcheck disable=SC2034
@@ -375,6 +358,7 @@ Generate_Stats_Diversion(){
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
+	mkdir -p "$(readlink /www/ext)"
 	
 	Print_Output "true" "Starting Diversion statistic generation..." "$PASS"
 	
@@ -539,7 +523,9 @@ Generate_Stats_Diversion(){
 		awk '/is '$this_blockingIP'|is 0.0.0.0/ {print $(NF-2)}' /opt/var/log/dnsmasq.log* |
 		awk '{for(i=1;i<=NF;i++)a[$i]++}END{for(o in a) printf "\n %-6s %-40s""%s %s",a[o],o}' | sort -nr |
 		head -$wsTopHosts >>/tmp/divstats/div-tah
-		head -$wsTopHosts >>/tmp/divStats-blocked.dat
+		
+		Generate_GNUPLOT_Graphs /tmp/divstats/div-tah /www/ext/divstats-blockeddomains.png
+		
 		# show if found in any of these lists
 		for i in $(awk '{print $2}' /tmp/divstats/div-tah); do
 			i=$(echo $i | sed -e 's/\./\\./g')
@@ -680,7 +666,6 @@ Generate_Stats_Diversion(){
 		#printf "\\n%-37s%s\\n$LINE" " Total time to compile stats:" "$(($endCount-$startCount))" >>${statsFile}
 		
 		printf "$LINE\\n End of stats report\\n\\n$LINE\\n" >>${statsFile}
-		mkdir -p "$(readlink /www/ext)"
 		WriteStats_ToJS "/tmp/stats.txt" "/www/ext/divstats.js"
 		rm -f $statsFile
 		Print_Output "true" "Diversion statistic generation completed successfully!" "$PASS"
@@ -689,7 +674,24 @@ Generate_Stats_Diversion(){
 	fi
 }
 
-Generate_Graphs(){
+# shellcheck disable=SC2016
+Generate_GNUPLOT_Graphs(){
+	{ echo 'set terminal png nocrop enhanced large size 800,600 background rgb "#475A5F"' /
+echo 'set output "'"$2"'"' /
+echo 'set boxwidth 0.5' /
+echo 'set style fill solid 1.0 border -1' /
+echo 'unset grid' /
+echo 'set ytics 5 nomirror' /
+echo 'set ylabel "Number of blocks"' /
+echo 'set yrange [0:*]' /
+echo 'set xtics rotate' /
+echo 'plot "data.dat" using 0:1:xtic(2) notitle with boxes , "'"$1"'" using 0:($2+5):2 notitle with labels'; } > /tmp/gnuplot.script
+	gnuplot /tmp/gnuplot.script
+	rm -f /tmp/gnuplot.script
+#lc rgb var
+}
+
+Generate_RRD_Graphs(){
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null

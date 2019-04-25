@@ -108,6 +108,18 @@ document.form.submit();
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 <thead>
 <tr>
+<td colspan="2">In the last week/td>
+</tr>
+</thead>
+<tr>
+<td colspan="2" align="center">
+<img src="/ext/divstats-blockeddomains.png">
+</td>
+</tr>
+</table>
+<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
+<thead>
+<tr>
 <td colspan="2">Last 24 Hours</td>
 </tr>
 </thead>
