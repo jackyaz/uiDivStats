@@ -117,7 +117,7 @@ document.form.submit();
 </td>
 </tr>
 </table>
-<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
+<!--<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 <thead>
 <tr>
 <td colspan="2">Last 24 Hours</td>
@@ -138,7 +138,7 @@ document.form.submit();
 <td colspan="2" align="center">
 </td>
 </tr>
-</table>
+</table>-->
 </td>
 </tr>
 </tbody>
