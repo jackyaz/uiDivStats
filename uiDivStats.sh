@@ -637,7 +637,7 @@ Generate_Stats_Diversion(){
 		sed -i '/^\s*$/d' /tmp/divstats/div-iphostleases.tmp
 		cat /tmp/divstats/div-iphostleases.tmp | sort -t . -k 4,4n -u > "${DIVERSION_DIR}/backup/diversion_stats-iphostleases"
 		
-		Generate_GNUPLOT_Graphs /tmp/divstats/div-tah /www/ext/divstats-blockeddomains.png
+		Generate_GNUPLOT_Graphs /tmp/divstats/div-tah /www/ext/uidivstats-blockeddomains.png
 		
 		rm -rf /tmp/divstats
 		
