@@ -9,12 +9,12 @@
 ##  | (_| || | \ V /  ____) || |_| (_| || |_ \__ \  ##
 ##   \__,_||_|  \_/  |_____/  \__|\__,_| \__||___/  ##
 ##                                                  ##
-##       https://github.com/jackyaz/divStats        ##
+##       https://github.com/jackyaz/uiDivStats        ##
 ##                                                  ##
 ######################################################
 
 ### Start of script variables ###
-readonly SCRIPT_NAME="divStats"
+readonly SCRIPT_NAME="uiDivStats"
 readonly SCRIPT_VERSION="v0.1.0"
 readonly SCRIPT_BRANCH="master"
 readonly SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/""$SCRIPT_NAME""/""$SCRIPT_BRANCH"
@@ -96,7 +96,7 @@ Update_Version(){
 			Print_Output "true" "MD5 hash of $SCRIPT_NAME does not match - downloading updated $serverver" "$PASS"
 		fi
 		
-		Update_File "divstats_www.asp"
+		Update_File "uidivstats_www.asp"
 		Modify_WebUI_File
 		
 		if [ "$doupdate" != "false" ]; then
@@ -114,7 +114,7 @@ Update_Version(){
 		force)
 			serverver=$(/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME.sh" | grep "SCRIPT_VERSION=" | grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})')
 			Print_Output "true" "Downloading latest version ($serverver) of $SCRIPT_NAME" "$PASS"
-			Update_File "divstats_www.asp"
+			Update_File "uidivstats_www.asp"
 			Modify_WebUI_File
 			/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME.sh" -o "/jffs/scripts/$SCRIPT_NAME" && Print_Output "true" "$SCRIPT_NAME successfully updated"
 			chmod 0755 /jffs/scripts/"$SCRIPT_NAME"
@@ -126,7 +126,7 @@ Update_Version(){
 ############################################################################
 
 Update_File(){
-	if [ "$1" = "divstats_www.asp" ]; then
+	if [ "$1" = "uidivstats_www.asp" ]; then
 		tmpfile="/tmp/$1"
 		Download_File "$SCRIPT_REPO/$1" "$tmpfile"
 		if ! diff -q "$tmpfile" "/jffs/scripts/$1" >/dev/null 2>&1; then
@@ -230,10 +230,10 @@ Download_File(){
 }
 
 RRD_Initialise(){
-	if [ ! -f /jffs/scripts/divstats_rrd.rrd ]; then
-		Download_File "$SCRIPT_REPO/divstats_xml.xml" "/jffs/scripts/divstats_xml.xml"
-		rrdtool restore -f /jffs/scripts/divstats_xml.xml /jffs/scripts/divstats_rrd.rrd
-		rm -f /jffs/scripts/divstats_xml.xml
+	if [ ! -f /jffs/scripts/uidivstats_rrd.rrd ]; then
+		Download_File "$SCRIPT_REPO/uidivstats_xml.xml" "/jffs/scripts/uidivstats_xml.xml"
+		rrdtool restore -f /jffs/scripts/uidivstats_xml.xml /jffs/scripts/uidivstats_rrd.rrd
+		rm -f /jffs/scripts/uidivstats_xml.xml
 	fi
 }
 
@@ -247,11 +247,11 @@ Get_CONNMON_UI(){
 
 Mount_WebUI(){
 	umount /www/Advanced_MultiSubnet_Content.asp 2>/dev/null
-	if [ ! -f /jffs/scripts/divstats_www.asp ]; then
-		Download_File "$SCRIPT_REPO/divstats_www.asp" "/jffs/scripts/divstats_www.asp"
+	if [ ! -f /jffs/scripts/uidivstats_www.asp ]; then
+		Download_File "$SCRIPT_REPO/uidivstats_www.asp" "/jffs/scripts/uidivstats_www.asp"
 	fi
 	
-	mount -o bind /jffs/scripts/divstats_www.asp "/www/Advanced_MultiSubnet_Content.asp"
+	mount -o bind /jffs/scripts/uidivstats_www.asp "/www/Advanced_MultiSubnet_Content.asp"
 }
 
 Modify_WebUI_File(){
@@ -381,7 +381,7 @@ Generate_Stats_Diversion(){
 		LINE=" --------------------------------------------------------\\n"
 		[ -z "$(nvram get odmpid)" ] && routerModel=$(nvram get productid) || routerModel=$(nvram get odmpid)
 		[ -z "$FRIENDLY_ROUTER_NAME" ] && FRIENDLY_ROUTER_NAME=$routerModel
-		statsFile="/tmp/stats.txt"
+		statsFile="/tmp/uidivstats.txt"
 		
 		# start of the output for the stats
 		printf "\\n Router Stats $(date +"%c")\\n$LINE" >${statsFile}
@@ -666,7 +666,7 @@ Generate_Stats_Diversion(){
 		#printf "\\n%-37s%s\\n$LINE" " Total time to compile stats:" "$(($endCount-$startCount))" >>${statsFile}
 		
 		printf "$LINE\\n End of stats report\\n\\n$LINE\\n" >>${statsFile}
-		WriteStats_ToJS "/tmp/stats.txt" "/www/ext/divstats.js"
+		WriteStats_ToJS "$statsFile" "/www/ext/uidivstats.js"
 		rm -f $statsFile
 		Print_Output "true" "Diversion statistic generation completed successfully!" "$PASS"
 	else
@@ -701,14 +701,14 @@ Generate_RRD_Graphs(){
 	mkdir -p "$(readlink /www/ext)"
 	
 	#Print_Output "false" "30 second ping test to $(ShowPingServer) starting..." "$PASS"
-	WriteStats_ToJS "/tmp/stats.txt" "/www/ext/divstats.js"
+	WriteStats_ToJS "$statsFile" "/www/ext/uidivstats.js"
 	TZ=$(cat /etc/TZ)
 	export TZ
 	DATE=$(date "+%a %b %e %H:%M %Y")
 	
 	#Print_Output "false" "Test results - Ping $ping ms - Jitter - $jitter ms - Line Quality $pktloss %%" "$PASS"
 	
-	RDB=/jffs/scripts/divstats_rrd.rrd
+	RDB=/jffs/scripts/uidivstats_rrd.rrd
 	#rrdtool update $RDB N:"$ping":"$jitter":"$pktloss"
 	
 	COMMON="-c SHADEA#475A5F -c SHADEB#475A5F -c BACK#475A5F -c CANVAS#92A0A520 -c AXIS#92a0a520 -c FONT#ffffff -c ARROW#475A5F -n TITLE:9 -n AXIS:8 -n LEGEND:9 -w 650 -h 200"
@@ -717,7 +717,7 @@ Generate_RRD_Graphs(){
 	W_COMMON='--start -604800 --x-grid HOUR:3:DAY:1:DAY:1:0:%Y-%m-%d'
 	
 	#shellcheck disable=SC2086
-	rrdtool graph --imgformat PNG /www/ext/nstats-divstats-ping.png \
+	rrdtool graph --imgformat PNG /www/ext/nstats-uidivstats-ping.png \
 		$COMMON $D_COMMON \
 		--title "Ping - $DATE" \
 		--vertical-label "Milliseconds" \
@@ -730,7 +730,7 @@ Generate_RRD_Graphs(){
 		GPRINT:ping:LAST:"Curr\: %3.3lf\n" >/dev/null 2>&1
 	
 	#shellcheck disable=SC2086
-	rrdtool graph --imgformat PNG /www/ext/nstats-divstats-jitter.png \
+	rrdtool graph --imgformat PNG /www/ext/nstats-uidivstats-jitter.png \
 		$COMMON $D_COMMON \
 		--title "Jitter - $DATE" \
 		--vertical-label "Milliseconds" \
@@ -743,7 +743,7 @@ Generate_RRD_Graphs(){
 		GPRINT:jitter:LAST:"Curr\: %3.3lf\n" >/dev/null 2>&1
 	
 	#shellcheck disable=SC2086
-	rrdtool graph --imgformat PNG /www/ext/nstats-divstats-pktloss.png \
+	rrdtool graph --imgformat PNG /www/ext/nstats-uidivstats-pktloss.png \
 		$COMMON $D_COMMON \
 		--title "Line Quality - $DATE" \
 		--vertical-label "%" \
@@ -756,7 +756,7 @@ Generate_RRD_Graphs(){
 		GPRINT:pktloss:LAST:"Curr\: %3.3lf\n" >/dev/null 2>&1
 	
 	#shellcheck disable=SC2086
-	rrdtool graph --imgformat PNG /www/ext/nstats-week-divstats-ping.png \
+	rrdtool graph --imgformat PNG /www/ext/nstats-week-uidivstats-ping.png \
 		$COMMON $W_COMMON \
 		--title "Ping - $DATE" \
 		--vertical-label "Milliseconds" \
@@ -769,7 +769,7 @@ Generate_RRD_Graphs(){
 		GPRINT:ping:LAST:"Curr\: %3.3lf\n" >/dev/null 2>&1
 	
 	#shellcheck disable=SC2086
-	rrdtool graph --imgformat PNG /www/ext/nstats-week-divstats-jitter.png \
+	rrdtool graph --imgformat PNG /www/ext/nstats-week-uidivstats-jitter.png \
 		$COMMON $W_COMMON \
 		--title "Jitter - $DATE" \
 		--vertical-label "Milliseconds" \
@@ -782,7 +782,7 @@ Generate_RRD_Graphs(){
 		GPRINT:jitter:LAST:"Curr\: %3.3lf\n" >/dev/null 2>&1
 	
 	#shellcheck disable=SC2086
-	rrdtool graph --imgformat PNG /www/ext/nstats-week-divstats-pktloss.png \
+	rrdtool graph --imgformat PNG /www/ext/nstats-week-uidivstats-pktloss.png \
 		$COMMON $W_COMMON --alt-autoscale-max \
 		--title "Line Quality - $DATE" \
 		--vertical-label "%" \
@@ -840,7 +840,7 @@ ScriptHeader(){
 	printf "\\e[1m##                                                  ##\\e[0m\\n"
 	printf "\\e[1m##              %s on %-9s                 ##\\e[0m\\n" "$SCRIPT_VERSION" "$ROUTER_MODEL"
 	printf "\\e[1m##                                                  ##\\e[0m\\n"
-	printf "\\e[1m##       https://github.com/jackyaz/divStats        ##\\e[0m\\n"
+	printf "\\e[1m##       https://github.com/jackyaz/uidivstats        ##\\e[0m\\n"
 	printf "\\e[1m##                                                  ##\\e[0m\\n"
 	printf "\\e[1m######################################################\\e[0m\\n"
 	printf "\\n"
@@ -1015,7 +1015,7 @@ Menu_Uninstall(){
 		read -r "confirm"
 		case "$confirm" in
 			y|Y)
-				rm -f "/jffs/scripts/divstats_rrd.rrd" 2>/dev/null
+				rm -f "/jffs/scripts/uidivstats_rrd.rrd" 2>/dev/null
 				break
 			;;
 			*)
@@ -1034,7 +1034,7 @@ Menu_Uninstall(){
 	else
 		mount -o bind "/jffs/scripts/custom_menuTree.js" "/www/require/modules/menuTree.js"
 	fi
-	rm -f "/jffs/scripts/divstats_www.asp" 2>/dev/null
+	rm -f "/jffs/scripts/uidivstats_www.asp" 2>/dev/null
 	rm -f "/jffs/scripts/$SCRIPT_NAME" 2>/dev/null
 	Clear_Lock
 	Print_Output "true" "Uninstall completed" "$PASS"

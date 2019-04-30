@@ -1,14 +1,13 @@
-# ALPHA
-# divStats - WebUI for Diversion statistics
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/240224b6b96543a782f176f2435ffa03)](https://www.codacy.com/app/jackyaz/divStats?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=jackyaz/divStats&amp;utm_campaign=Badge_Grade)
-[![Build Status](https://travis-ci.com/jackyaz/divStats.svg?branch=master)](https://travis-ci.com/jackyaz/divStats)
+# uiDivStats - WebUI for Diversion statistics
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/240224b6b96543a782f176f2435ffa03)](https://www.codacy.com/app/jackyaz/uiDivStats?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=jackyaz/uiDivStats&amp;utm_campaign=Badge_Grade)
+[![Build Status](https://travis-ci.com/jackyaz/uiDivStats.svg?branch=master)](https://travis-ci.com/jackyaz/uiDivStats)
 
 ## v0.1.0
 ### Updated on 2019-04-22
 ## About
 Track your Internet uptime, on your router. Graphs available for on the Tools page of the WebUI.
 
-divStats is free to use under the [GNU General Public License version 3](https://opensource.org/licenses/GPL-3.0) (GPL 3.0).
+uiDivStats is free to use under the [GNU General Public License version 3](https://opensource.org/licenses/GPL-3.0) (GPL 3.0).
 
 ![Menu UI](https://puu.sh/DfKf9/b90295e188.png)
 
@@ -24,25 +23,25 @@ All modes supported by [Asuswrt-Merlin](https://asuswrt.lostrealm.ca/about). Mod
 Using your preferred SSH client/terminal, copy and paste the following command, then press Enter:
 
 ```sh
-/usr/sbin/curl --retry 3 "https://raw.githubusercontent.com/jackyaz/divStats/master/divStats.sh" -o "/jffs/scripts/divStats" && chmod 0755 /jffs/scripts/divStats && /jffs/scripts/divStats install
+/usr/sbin/curl --retry 3 "https://raw.githubusercontent.com/jackyaz/uiDivStats/master/uiDivStats.sh" -o "/jffs/scripts/uiDivStats" && chmod 0755 /jffs/scripts/uiDivStats && /jffs/scripts/uiDivStats install
 ```
 
 ## Usage
-To launch the divStats menu after installation, use:
+To launch the uiDivStats menu after installation, use:
 ```sh
-divStats
+uiDivStats
 ```
 
 If this does not work, you will need to use the full path:
 ```sh
-/jffs/scripts/divStats
+/jffs/scripts/uiDivStats
 ```
 
 ## Updating
-Launch divStats and select option u
+Launch uiDivStats and select option u
 
 ## Help
-Please post about any issues and problems here: [divStats on SNBForums](https://www.snbforums.com/threads/spdmerlin-automated-speedtests-with-graphs.55904/)
+Please post about any issues and problems here: [uiDivStats on SNBForums](https://www.snbforums.com/threads/spdmerlin-automated-speedtests-with-graphs.55904/)
 
 ## FAQs
 ### I haven't used scripts before on AsusWRT-Merlin
