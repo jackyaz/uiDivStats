@@ -946,6 +946,18 @@ Check_Requirements(){
 			Print_Output "true" "Open Diversion, use option c and then enable using 2,1,1" ""
 			CHECKSFAILED="true"
 		fi
+		
+		if ! grep -qm1 'div_lock_ac' /opt/bin/diversion; then
+			Print_Output "true" "Diversion update required!" "$ERR"
+			Print_Output "true" "Open Diversion and use option u to update" ""
+			CHECKSFAILED="true"
+		fi
+		
+		if ! grep -q 'log-facility=/opt/var/log/dnsmasq.log' /etc/dnsmasq.conf; then
+			Print_Output "true" "Diversion logging not enabled!" "$ERR"
+			Print_Output "true" "Open Diversion and use option l to enable logging" ""
+			CHECKSFAILED="true"
+		fi
 	fi
 	
 	if [ "$CHECKSFAILED" = "false" ]; then
