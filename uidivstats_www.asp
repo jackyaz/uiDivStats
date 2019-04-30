@@ -54,7 +54,7 @@ function reload() {
 location.reload(true);
 }
 function applyRule() {
-var action_script_tmp = "start_divStats";
+var action_script_tmp = "start_uiDivStats";
 document.form.action_script.value = action_script_tmp;
 document.form.submit();
 }
@@ -65,7 +65,7 @@ document.form.submit();
 <div id="Loading" class="popup_bg"></div>
 <iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
 <form method="post" name="form" id="ruleForm" action="/start_apply.htm" target="hidden_frame">
-<input type="hidden" name="action_script" value="start_divStats">
+<input type="hidden" name="action_script" value="start_uiDivStats">
 <input type="hidden" name="current_page" value="Advanced_MultiSubnet_Content.asp">
 <input type="hidden" name="next_page" value="Advanced_MultiSubnet_Content.asp">
 <input type="hidden" name="modified" value="0">
@@ -101,7 +101,7 @@ document.form.submit();
 <tr>
 <td>
 <textarea cols="63" rows="40" wrap="off" readonly="readonly" id="divstats" class="textarea_log_table" style="font-family:'Courier New', Courier, mono; font-size:11px;">"Stats will show here"</textarea>
-<script language="JavaScript" type="text/javascript" src="/ext/divstats.js"></script>
+<script language="JavaScript" type="text/javascript" src="/ext/uidivstats.js"></script>
 </td>
 </tr>
 </table>
@@ -113,7 +113,7 @@ document.form.submit();
 </thead>
 <tr>
 <td colspan="2" align="center">
-<img src="/ext/divstats-blockeddomains.png">
+<img src="/ext/uidivstats-blockeddomains.png">
 </td>
 </tr>
 </table>
