@@ -681,7 +681,7 @@ Generate_Stats_Diversion(){
 
 # shellcheck disable=SC2016
 Generate_GNUPLOT_Graphs(){
-	{ echo 'set terminal png nocrop enhanced large size 800,600 background rgb "#475A5F"'
+	{ echo 'set terminal png nocrop enhanced large size 753,500 background rgb "#475A5F"'
 echo 'set output "'"$2"'"'
 echo 'set boxwidth 0.5'
 echo 'set style fill solid 1.0 border -1'

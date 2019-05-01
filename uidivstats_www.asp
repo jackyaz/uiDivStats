@@ -100,7 +100,7 @@ document.form.submit();
 </tr>-->
 <tr>
 <td>
-<textarea cols="63" rows="40" wrap="off" readonly="readonly" id="divstats" class="textarea_log_table" style="font-family:'Courier New', Courier, mono; font-size:11px;">"Stats will show here"</textarea>
+<textarea cols="63" rows="35" wrap="off" readonly="readonly" id="divstats" class="textarea_log_table" style="font-family:'Courier New', Courier, mono; font-size:11px;">"Stats will show here"</textarea>
 <script language="JavaScript" type="text/javascript" src="/ext/uidivstats.js"></script>
 </td>
 </tr>
