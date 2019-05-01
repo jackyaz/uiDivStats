@@ -5,7 +5,7 @@
 ## v0.1.0
 ### Updated on 2019-04-22
 ## About
-Track your Internet uptime, on your router. Graphs available for on the Tools page of the WebUI.
+See statistics and graphs for Diversion Ad-blocking on your router.
 
 uiDivStats is free to use under the [GNU General Public License version 3](https://opensource.org/licenses/GPL-3.0) (GPL 3.0).
 
