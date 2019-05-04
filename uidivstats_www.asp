@@ -30,6 +30,7 @@ font-weight: bolder;
 var barDataUl, barLabels;
 var myBarChart;
 Chart.defaults.global.defaultFontColor = "#CCC";
+
 function initial(){
 show_menu();
 if (wl_info.band5g_2_support) {
@@ -69,7 +70,7 @@ function redraw()
 	barLabels = [];
 	//barDataDl.unshift(h[1] / ((scale == 2) ?  1048576 : ((scale == 1) ? 1024 : 1)));
 	//barLabels.unshift(months[mo] + ' ' + yr);
-	barDataDl.unshift(1010,957,916,915,836,749,732,611,493);
+	barDataUl.unshift(1010,957,916,915,836,749,732,611,493);
 	barLabels.unshift("settings-win.data.microsoft.com","graph.facebook.com","dev.appboy.com","reports.crashlytics.com","v10.events.data.microsoft.com","ads.mopub.com","mobile.pipe.aria.microsoft.com","ssl.google-analytics.com","settings.crashlytics.com");
 	draw_chart();
 }
@@ -125,7 +126,7 @@ function draw_chart(){
 }
 </script>
 </head>
-<body onload="initial();" onunLoad="return unload_body();">
+<body onload="initial();">
 <div id="TopBanner"></div>
 <div id="Loading" class="popup_bg"></div>
 <iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
