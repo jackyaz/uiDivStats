@@ -909,6 +909,7 @@ MainMenu(){
 						;;
 					esac
 				done
+				break
 			;;
 			*)
 				printf "\\nPlease choose a valid option\\n\\n"
