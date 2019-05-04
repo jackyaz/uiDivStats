@@ -81,7 +81,8 @@ function draw_chart(){
 				ticks: {
 					callback: function(value, index, values) {
 						return comma(value);
-					}
+					},
+					beginAtZero: true
 				}
 			}]
 		}
