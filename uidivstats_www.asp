@@ -96,28 +96,7 @@ function draw_chart(){
 
 function initial(){
 show_menu();
-if (wl_info.band5g_2_support) {
-document.getElementById("wifi5_1_clients_tr").style.display = "";
-document.getElementById("wifi5_2_clients_tr").style.display = "";
-} else if (based_modelid == "RT-AC87U") {
-document.getElementById("wifi5_clients_tr_qtn").style.display = "";
-document.getElementById("qtn_version").style.display = "";
-} else if (band5g_support) {
-document.getElementById("wifi5_clients_tr").style.display = "";
-}
-showbootTime();
 redraw();
-if (odmpid != "")
-document.getElementById("model_id").innerHTML = odmpid;
-else
-document.getElementById("model_id").innerHTML = productid;
-var buildno = '<% nvram_get("buildno"); %>';
-var firmver = '<% nvram_get("firmver"); %>'
-var extendno = '<% nvram_get("extendno"); %>';
-if ((extendno == "") || (extendno == "0"))
-document.getElementById("fwver").innerHTML = buildno;
-else
-document.getElementById("fwver").innerHTML = buildno + '_' + extendno;
 }
 function reload() {
 location.reload(true);
