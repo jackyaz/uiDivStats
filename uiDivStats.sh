@@ -638,7 +638,7 @@ Generate_Stats_Diversion(){
 		cat /tmp/uidivstats/div-iphostleases.tmp | sort -t . -k 4,4n -u > "${DIVERSION_DIR}/backup/diversion_stats-iphostleases"
 		
 		Generate_GNUPLOT_Graphs /tmp/uidivstats/div-tah /www/ext/uidivstats-blockeddomains.png
-		
+		cp /tmp/uidivstats/div-tah /jffs/div-tah
 		rm -rf /tmp/uidivstats
 		
 		# show file sizes
