@@ -53,6 +53,10 @@ function draw_chart(){
 		animationEasing : "easeOutQuart",
 		animationSteps : 100,
 		animateScale : true,
+		legend: {
+			display: false,
+			onClick: null
+		},
 		tooltips: {
 			callbacks: {
 				title: function (tooltipItem, data) { return data.labels[tooltipItem[0].index]; },
@@ -84,7 +88,7 @@ function draw_chart(){
 			label: "Number of blocks",
 			borderWidth: 1,
 			backgroundColor: poolColors(barDataUl.length),
-			borderColor: poolColors(barDataUl.length),
+			borderColor: "#000000",
 		}]
 	};
 	myBarChart = new Chart(ctx, {
