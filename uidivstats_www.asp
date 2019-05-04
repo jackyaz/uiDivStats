@@ -16,6 +16,8 @@ p{
 font-weight: bolder;
 }
 </style>
+<script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
+<script language="JavaScript" type="text/javascript" src="/js/chart.min.js"></script>
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
@@ -24,8 +26,7 @@ font-weight: bolder;
 <script language="JavaScript" type="text/javascript" src="/tmmenu.js"></script>
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <script language="JavaScript" type="text/javascript" src="/validator.js"></script>
-<script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
-<script language="JavaScript" type="text/javascript" src="/js/chart.min.js"></script>
+
 <script>
 var barDataUl, barLabels;
 var myBarChart;
