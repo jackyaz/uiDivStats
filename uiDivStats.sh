@@ -695,7 +695,6 @@ Generate_Stats_Diversion(){
 		
 		printf "$LINE\\n End of stats report\\n\\n$LINE\\n" >>${statsFile}
 		WriteStats_ToJS "$statsFile" "/www/ext/uidivstats.js"
-		WriteData_ToJS "$statsFile" "/www/ext/uidivstatsblockedads.js"
 		rm -f $statsFile
 		Print_Output "true" "Diversion statistic generation completed successfully!" "$PASS"
 	else
