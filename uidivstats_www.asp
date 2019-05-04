@@ -26,6 +26,7 @@ font-weight: bolder;
 <script language="JavaScript" type="text/javascript" src="/tmmenu.js"></script>
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <script language="JavaScript" type="text/javascript" src="/validator.js"></script>
+<script language="JavaScript" type="text/javascript" src="/ext/test.js"></script>
 
 <script>
 var barDataUl, barLabels;
@@ -36,10 +37,11 @@ function redraw()
 {
 	barDataUl = [];
 	barLabels = [];
+	GenChartData();
 	//barDataDl.unshift(h[1] / ((scale == 2) ?  1048576 : ((scale == 1) ? 1024 : 1)));
 	//barLabels.unshift(months[mo] + ' ' + yr);
-	barDataUl.unshift(1010,957,916,915,836,749,732,611,493);
-	barLabels.unshift("settings-win.data.microsoft.com","graph.facebook.com","dev.appboy.com","reports.crashlytics.com","v10.events.data.microsoft.com","ads.mopub.com","mobile.pipe.aria.microsoft.com","ssl.google-analytics.com","settings.crashlytics.com");
+	//barDataUl.unshift(1010,957,916,915,836,749,732,611,493);
+	//barLabels.unshift("settings-win.data.microsoft.com","graph.facebook.com","dev.appboy.com","reports.crashlytics.com","v10.events.data.microsoft.com","ads.mopub.com","mobile.pipe.aria.microsoft.com","ssl.google-analytics.com","settings.crashlytics.com");
 	draw_chart();
 }
 

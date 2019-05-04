@@ -331,6 +331,25 @@ WriteStats_ToJS(){
 	echo "$html" > "$2"
 }
 
+WriteData_ToJS(){
+	contents='function GenChartData() {'"\\r\\n"
+	contents="$contents"'barDataUl.unshift('
+	while IFS='' read -r line || [ -n "$line" ]; do
+		contents="$contents""$(echo "$line" | awk 'BEGIN{FS="   *"}{ print $1 }' | awk '{$1=$1};1')"","
+	done < /jffs/div-tah
+	contents=$(echo "$contents" | sed 's/.$//')
+	contents="$contents"");\\r\\n"
+	
+	contents="$contents"'barLabels.unshift('
+	while IFS='' read -r line || [ -n "$line" ]; do
+		contents="$contents""$(echo "$line" | awk 'BEGIN{FS="   *"}{ print $2 }' | awk '{$1=$1};1')"","
+	done < /jffs/div-tah
+	contents=$(echo "$contents" | sed 's/.$//')
+	contents="$contents"");\\r\\n"
+	contents="$contents""}"
+	echo "$contents" > "/tmp/test.js"
+}
+
 # shellcheck disable=SC1090
 # shellcheck disable=SC2154
 # shellcheck disable=SC2034
