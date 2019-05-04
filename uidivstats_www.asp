@@ -25,7 +25,11 @@ font-weight: bolder;
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <script language="JavaScript" type="text/javascript" src="/validator.js"></script>
 <script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
+<script language="JavaScript" type="text/javascript" src="/js/chart.min.js"></script>
 <script>
+var barDataUl, barLabels;
+var myBarChart;
+Chart.defaults.global.defaultFontColor = "#CCC";
 function initial(){
 show_menu();
 if (wl_info.band5g_2_support) {
@@ -57,6 +61,66 @@ function applyRule() {
 var action_script_tmp = "start_uiDivStats";
 document.form.action_script.value = action_script_tmp;
 document.form.submit();
+}
+function redraw()
+{
+	barDataUl = [];
+	barLabels = [];
+	//barDataDl.unshift(h[1] / ((scale == 2) ?  1048576 : ((scale == 1) ? 1024 : 1)));
+	//barLabels.unshift(months[mo] + ' ' + yr);
+	barDataDl.unshift(1010,957,916,915,836,749,732,611,493);
+	barLabels.unshift("settings-win.data.microsoft.com","graph.facebook.com","dev.appboy.com","reports.crashlytics.com","v10.events.data.microsoft.com","ads.mopub.com","mobile.pipe.aria.microsoft.com","ssl.google-analytics.com","settings.crashlytics.com");
+	draw_chart();
+}
+
+function draw_chart(){
+	if (barLabels.length == 0) return;
+	if (myBarChart != undefined) myBarChart.destroy();
+	var ctx = document.getElementById("chart").getContext("2d");
+	var barOptions = {
+		segmentShowStroke : false,
+		segmentStrokeColor : "#000",
+		animationEasing : "easeOutQuart",
+		animationSteps : 100,
+		animateScale : true,
+		tooltips: {
+			callbacks: {
+				title: function (tooltipItem, data) { return data.labels[tooltipItem[0].index]; },
+				label: function (tooltipItem, data) { return comma(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].toFixed(2)) + " " + snames[scale]; },
+			}
+		},
+		scales: {
+			xAxes: [{
+				gridLines: { display: false }
+			}],
+			yAxes: [{
+				gridLines: { color: "#282828" },
+				scaleLabel: {
+					display: true,
+					labelString: "Blocks"
+					},
+				ticks: {
+					callback: function(value, index, values) {
+						return comma(value);
+					}
+				}
+			}]
+		}
+	};
+	var barDataset = {
+		labels: barLabels,
+		datasets: [{data: barDataUl,
+			label: "Number of blocks",
+			borderWidth: 1,
+			backgroundColor: "#2B6692",
+			borderColor: "#000000"
+		}]
+	};
+	myBarChart = new Chart(ctx, {
+		type: 'bar',
+		options: barOptions,
+		data: barDataset
+	});
 }
 </script>
 </head>
@@ -114,6 +178,11 @@ document.form.submit();
 <tr>
 <td colspan="2" align="center">
 <img src="/ext/uidivstats-blockeddomains.png">
+</td>
+</tr>
+<tr>
+<td>
+<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="chart" height="120"></div>
 </td>
 </tr>
 </table>
