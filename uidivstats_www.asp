@@ -32,40 +32,6 @@ var barDataUl, barLabels;
 var myBarChart;
 Chart.defaults.global.defaultFontColor = "#CCC";
 
-function initial(){
-show_menu();
-if (wl_info.band5g_2_support) {
-document.getElementById("wifi5_1_clients_tr").style.display = "";
-document.getElementById("wifi5_2_clients_tr").style.display = "";
-} else if (based_modelid == "RT-AC87U") {
-document.getElementById("wifi5_clients_tr_qtn").style.display = "";
-document.getElementById("qtn_version").style.display = "";
-} else if (band5g_support) {
-document.getElementById("wifi5_clients_tr").style.display = "";
-}
-showbootTime();
-if (odmpid != "")
-document.getElementById("model_id").innerHTML = odmpid;
-else
-document.getElementById("model_id").innerHTML = productid;
-var buildno = '<% nvram_get("buildno"); %>';
-var firmver = '<% nvram_get("firmver"); %>'
-var extendno = '<% nvram_get("extendno"); %>';
-if ((extendno == "") || (extendno == "0"))
-document.getElementById("fwver").innerHTML = buildno;
-else
-document.getElementById("fwver").innerHTML = buildno + '_' + extendno;
-
-redraw();
-}
-function reload() {
-location.reload(true);
-}
-function applyRule() {
-var action_script_tmp = "start_uiDivStats";
-document.form.action_script.value = action_script_tmp;
-document.form.submit();
-}
 function redraw()
 {
 	barDataUl = [];
@@ -89,13 +55,17 @@ function draw_chart(){
 		animateScale : true,
 		tooltips: {
 			callbacks: {
-				//title: function (tooltipItem, data) { return data.labels[tooltipItem[0].index]; },
+				title: function (tooltipItem, data) { return data.labels[tooltipItem[0].index]; },
 				label: function (tooltipItem, data) { return comma(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index]); },
 			}
 		},
 		scales: {
 			xAxes: [{
 				gridLines: { display: false }
+				scaleLabel: {
+					display: false,
+					labelString: "Blocks"
+					}
 			}],
 			yAxes: [{
 				gridLines: { color: "#282828" },
@@ -125,6 +95,40 @@ function draw_chart(){
 		options: barOptions,
 		data: barDataset
 	});
+}
+
+function initial(){
+show_menu();
+if (wl_info.band5g_2_support) {
+document.getElementById("wifi5_1_clients_tr").style.display = "";
+document.getElementById("wifi5_2_clients_tr").style.display = "";
+} else if (based_modelid == "RT-AC87U") {
+document.getElementById("wifi5_clients_tr_qtn").style.display = "";
+document.getElementById("qtn_version").style.display = "";
+} else if (band5g_support) {
+document.getElementById("wifi5_clients_tr").style.display = "";
+}
+showbootTime();
+redraw();
+if (odmpid != "")
+document.getElementById("model_id").innerHTML = odmpid;
+else
+document.getElementById("model_id").innerHTML = productid;
+var buildno = '<% nvram_get("buildno"); %>';
+var firmver = '<% nvram_get("firmver"); %>'
+var extendno = '<% nvram_get("extendno"); %>';
+if ((extendno == "") || (extendno == "0"))
+document.getElementById("fwver").innerHTML = buildno;
+else
+document.getElementById("fwver").innerHTML = buildno + '_' + extendno;
+}
+function reload() {
+location.reload(true);
+}
+function applyRule() {
+var action_script_tmp = "start_uiDivStats";
+document.form.action_script.value = action_script_tmp;
+document.form.submit();
 }
 </script>
 </head>
