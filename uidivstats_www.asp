@@ -190,7 +190,7 @@ document.form.submit();
 </tr>
 <tr>
 <td>
-<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="chart" height="120"></div>
+<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="chart" height="480"></div>
 </td>
 </tr>
 </table>
