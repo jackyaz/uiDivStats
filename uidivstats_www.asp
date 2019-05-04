@@ -115,12 +115,10 @@ document.form.action_script.value = action_script_tmp;
 document.form.submit();
 }
 function getRandomColor() {
-var letters = '0123456789ABCDEF'.split('');
-var color = '#';
-for (var i = 0; i < 6; i++ ) {
-	color += letters[Math.floor(Math.random() * 16)];
-}
-return color;
+var r = Math.floor(Math.random() * 255);
+var g = Math.floor(Math.random() * 255);
+var b = Math.floor(Math.random() * 255);
+return "rgba(" + r + "," + g + "," + b + ", 0.5)";
 }
 function poolColors(a) {
 var pool = [];
