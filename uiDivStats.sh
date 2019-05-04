@@ -332,22 +332,23 @@ WriteStats_ToJS(){
 }
 
 WriteData_ToJS(){
-	contents='function GenChartData() {'"\\r\\n"
-	contents="$contents"'barDataUl.unshift('
+	echo 'function GenChartData() {' > "$2"
+	contents="$contents"'barDataBlockedAds.unshift('
 	while IFS='' read -r line || [ -n "$line" ]; do
 		contents="$contents""$(echo "$line" | awk 'BEGIN{FS="   *"}{ print $1 }' | awk '{$1=$1};1')"","
-	done < /jffs/div-tah
+	done < "$1"
 	contents=$(echo "$contents" | sed 's/.$//')
-	contents="$contents"");\\r\\n"
-	
-	contents="$contents"'barLabels.unshift('
+	contents="$contents"");"
+	echo "$contents" >> "$2"
+
+	contents='barLabels.unshift('
 	while IFS='' read -r line || [ -n "$line" ]; do
-		contents="$contents""$(echo "$line" | awk 'BEGIN{FS="   *"}{ print $2 }' | awk '{$1=$1};1')"","
-	done < /jffs/div-tah
+		contents="$contents""'""$(echo "$line" | awk 'BEGIN{FS="   *"}{ print $2 }' | awk '{$1=$1};1')""'"","
+	done < "$1"
 	contents=$(echo "$contents" | sed 's/.$//')
-	contents="$contents"");\\r\\n"
-	contents="$contents""}"
-	echo "$contents" > "/tmp/test.js"
+	contents="$contents"");"
+	echo "$contents" >> "$2"
+	echo "}" >> "$2"
 }
 
 # shellcheck disable=SC1090
@@ -691,6 +692,7 @@ Generate_Stats_Diversion(){
 		
 		printf "$LINE\\n End of stats report\\n\\n$LINE\\n" >>${statsFile}
 		WriteStats_ToJS "$statsFile" "/www/ext/uidivstats.js"
+		WriteData_ToJS "$statsFile" "/www/ext/uidivstatsblockedads.js"
 		rm -f $statsFile
 		Print_Output "true" "Diversion statistic generation completed successfully!" "$PASS"
 	else
