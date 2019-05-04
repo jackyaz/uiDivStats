@@ -83,8 +83,8 @@ function draw_chart(){
 		datasets: [{data: barDataUl,
 			label: "Number of blocks",
 			borderWidth: 1,
-			backgroundColor: "#2B6692",
-			borderColor: "#000000"
+			backgroundColor: poolColors(barDataUl.length),
+			borderColor: poolColors(barDataUl.length),
 		}]
 	};
 	myBarChart = new Chart(ctx, {
@@ -105,6 +105,21 @@ function applyRule() {
 var action_script_tmp = "start_uiDivStats";
 document.form.action_script.value = action_script_tmp;
 document.form.submit();
+}
+function getRandomColor() {
+var letters = '0123456789ABCDEF'.split('');
+var color = '#';
+for (var i = 0; i < 6; i++ ) {
+	color += letters[Math.floor(Math.random() * 16)];
+}
+return color;
+}
+function poolColors(a) {
+var pool = [];
+for(i = 0; i < a; i++) {
+	pool.push(getRandomColor());
+}
+return pool;
 }
 </script>
 </head>
