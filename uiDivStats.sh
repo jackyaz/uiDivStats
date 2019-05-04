@@ -659,6 +659,8 @@ Generate_Stats_Diversion(){
 		
 		#Generate_GNUPLOT_Graphs /tmp/uidivstats/div-tah /www/ext/uidivstats-blockeddomains.png
 		#cp /tmp/uidivstats/div-tah /jffs/div-tah
+		WriteData_ToJS /tmp/uidivstats/div-tah "/www/ext/uidivstatsblockedads.js"
+		
 		rm -f /jffs/div-tah
 		rm -rf /tmp/uidivstats
 		
