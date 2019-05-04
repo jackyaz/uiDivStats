@@ -62,10 +62,7 @@ function draw_chart(){
 		scales: {
 			xAxes: [{
 				gridLines: { display: false },
-				scaleLabel: {
-					display: false,
-					labelString: "Blocks"
-					}
+				ticks: { display: false}
 			}],
 			yAxes: [{
 				gridLines: { color: "#282828" },
