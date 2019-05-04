@@ -61,7 +61,7 @@ function draw_chart(){
 		},
 		scales: {
 			xAxes: [{
-				gridLines: { display: false }
+				gridLines: { display: false },
 				scaleLabel: {
 					display: false,
 					labelString: "Blocks"
