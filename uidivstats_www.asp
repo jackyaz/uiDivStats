@@ -57,6 +57,10 @@ function draw_chart(){
 			display: false,
 			onClick: null
 		},
+		title: {
+			display: true,
+			text: "Top 10 blocked ad domains"
+		},
 		tooltips: {
 			callbacks: {
 				title: function (tooltipItem, data) { return data.labels[tooltipItem[0].index]; },
