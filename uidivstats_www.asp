@@ -53,6 +53,7 @@ if ((extendno == "") || (extendno == "0"))
 document.getElementById("fwver").innerHTML = buildno;
 else
 document.getElementById("fwver").innerHTML = buildno + '_' + extendno;
+redraw();
 }
 function reload() {
 location.reload(true);
