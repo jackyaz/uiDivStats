@@ -55,6 +55,7 @@ if ((extendno == "") || (extendno == "0"))
 document.getElementById("fwver").innerHTML = buildno;
 else
 document.getElementById("fwver").innerHTML = buildno + '_' + extendno;
+
 redraw();
 }
 function reload() {
@@ -88,8 +89,8 @@ function draw_chart(){
 		animateScale : true,
 		tooltips: {
 			callbacks: {
-				title: function (tooltipItem, data) { return data.labels[tooltipItem[0].index]; },
-				label: function (tooltipItem, data) { return comma(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].toFixed(2)) + " " + snames[scale]; },
+				//title: function (tooltipItem, data) { return data.labels[tooltipItem[0].index]; },
+				label: function (tooltipItem, data) { return comma(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index]); },
 			}
 		},
 		scales: {
