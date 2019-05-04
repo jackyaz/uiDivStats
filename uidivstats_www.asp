@@ -179,11 +179,11 @@ return pool;
 <td colspan="2">In the last week</td>
 </tr>
 </thead>
-<tr>
+<!--<tr>
 <td colspan="2" align="center">
 <img src="/ext/uidivstats-blockeddomains.png">
 </td>
-</tr>
+</tr>-->
 <tr>
 <td>
 <div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="chart" height="240"></div>
