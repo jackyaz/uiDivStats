@@ -51,14 +51,8 @@ function draw_chart(){
 		animationEasing : "easeOutQuart",
 		animationSteps : 100,
 		animateScale : true,
-		legend: {
-			display: false,
-			onClick: null
-		},
-		title: {
-			display: true,
-			text: "Top 10 blocked ad domains"
-		},
+		legend: { display: false, position: "bottom", onClick: null },
+		title: { display: true, text: "Top 10 blocked ad domains" },
 		tooltips: {
 			callbacks: {
 				title: function (tooltipItem, data) { return data.labels[tooltipItem[0].index]; },
@@ -67,35 +61,26 @@ function draw_chart(){
 		},
 		scales: {
 			xAxes: [{
-				gridLines: { display: false },
-				ticks: { display: false}
+				gridLines: { display: true, color: "#282828" },
+				ticks: { display: true, beginAtZero: true}
 			}],
 			yAxes: [{
-				gridLines: { color: "#282828" },
-				scaleLabel: {
-					display: true,
-					labelString: "Blocks"
-					},
-				ticks: {
-					callback: function(value, index, values) {
-						return comma(value);
-					},
-					beginAtZero: true
-				}
+				gridLines: { display: false, color: "#282828" },
+				scaleLabel: { display: false, labelString: "Blocks" }
 			}]
 		}
 	};
 	var barDataset = {
 		labels: barLabels,
 		datasets: [{data: barDataBlockedAds,
-			label: "Number of blocks",
+			//label: barLabels,
 			borderWidth: 1,
 			backgroundColor: poolColors(barDataBlockedAds.length),
 			borderColor: "#000000",
 		}]
 	};
 	myBarChart = new Chart(ctx, {
-		type: 'bar',
+		type: 'horizontalBar',
 		options: barOptions,
 		data: barDataset
 	});
