@@ -75,7 +75,7 @@ function draw_chart(){
 		datasets: [{data: barDataBlockedAds,
 			//label: barLabels,
 			borderWidth: 1,
-			backgroundColor: poolColors(barDataBlockedAds.length),
+			backgroundColor: "rgba(2, 53, 135, 1)",
 			borderColor: "#000000",
 		}]
 	};
@@ -85,7 +85,6 @@ function draw_chart(){
 		data: barDataset
 	});
 }
-
 function initial(){
 show_menu();
 redraw();
