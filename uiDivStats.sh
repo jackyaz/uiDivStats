@@ -322,6 +322,26 @@ Modify_WebUI_File(){
 	### ###
 }
 
+CacheStats(){
+	case "$1" in
+		cache)
+			if [ "$(/usr/bin/find /www/ext/uidivstats*.js 2>/dev/null | wc -l)" -ge "1" ]; then
+				CACHEPATH="/tmp/""$SCRIPT_NAME""Cache"
+				mkdir -p "$CACHEPATH"
+				cp /www/ext/uidivstats*.js "$CACHEPATH"
+				rm -f "/jffs/scripts/""$SCRIPT_NAME""_cache.tar.gz" 2>/dev/null
+				tar -czf "/jffs/scripts/""$SCRIPT_NAME""_cache.tar.gz" -C "$CACHEPATH" .
+				rm -rf "$CACHEPATH" 2>/dev/null
+			fi
+		;;
+		extract)
+			if [ -f "/jffs/scripts/""$SCRIPT_NAME""_cache.tar.gz" ] && [ "$(/usr/bin/find /www/ext/uidivstats*.js 2>/dev/null | wc -l)" -eq "0" ]; then
+				tar -C /www/ext/ -xzf "/jffs/scripts/""$SCRIPT_NAME""_cache.tar.gz"
+			fi
+		;;
+	esac
+}
+
 WriteStats_ToJS(){
 	html='document.getElementById("divstats").innerHTML="'
 	while IFS='' read -r line || [ -n "$line" ]; do
@@ -694,6 +714,7 @@ Generate_Stats_Diversion(){
 		printf "$LINE\\n End of stats report\\n\\n$LINE\\n" >>${statsFile}
 		WriteStats_ToJS "$statsFile" "/www/ext/uidivstats.js"
 		rm -f $statsFile
+		CacheStats cache 2>/dev/null
 		Print_Output "true" "Diversion statistic generation completed successfully!" "$PASS"
 	else
 		Print_Output "true" "Diversion configuration not found, exiting!" "$ERR"
@@ -1005,6 +1026,7 @@ Menu_Startup(){
 	Mount_WebUI
 	Modify_WebUI_File
 	RRD_Initialise
+	CacheStats extract 2>/dev/null
 	Clear_Lock
 }
 
