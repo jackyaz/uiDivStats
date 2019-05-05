@@ -111,7 +111,7 @@ function initial(){
 
 	show_menu();
 	Redraw_Ad_Chart();
-	changeLayout(E('charttypeads'),BarChartReqDomains,charttypedomains);
+	changeLayout(E('charttypeads'),"BarChartReqDomains","charttypeads");
 }
 
 function reload() {
