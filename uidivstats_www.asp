@@ -31,7 +31,7 @@ font-weight: bolder;
 <script>
 var barDataBlockedAds, barLabelsBlockedAds, barDataReqDomains, barLabelsReqDomains;
 var BarChartBlockedAds, BarChartReqDomains;
-var charttype;
+var charttypead, charttypedomain;
 Chart.defaults.global.defaultFontColor = "#CCC";
 
 function Redraw_Ad_Chart() {
@@ -69,7 +69,7 @@ function Draw_Ad_Chart() {
 		scales: {
 			xAxes: [{
 				gridLines: { display: true, color: "#282828" },
-				ticks: { display: showXAxis(), beginAtZero: true}
+				ticks: { display: showXAxis(charttypead), beginAtZero: true}
 			}],
 			yAxes: [{
 				gridLines: { display: false, color: "#282828" },
@@ -87,11 +87,57 @@ function Draw_Ad_Chart() {
 		}]
 	};
 	BarChartBlockedAds = new Chart(ctx, {
-		type: getChartType(),
+		type: getChartType(charttypead),
 		options: barOptionsAds,
 		data: barDatasetAds
 	});
 	changeColour(E('colourads'),BarChartBlockedAds,barDataBlockedAds,colourads)
+}
+
+function Draw_Domain_Chart() {
+	if (barLabelsDomains.length == 0) return;
+	if (BarChartReqDomains != undefined) BarChartReqDomains.destroy();
+	var ctx = document.getElementById("ChartDomains").getContext("2d");
+	var barOptionsDomains = {
+		segmentShowStroke : false,
+		segmentStrokeColor : "#000",
+		animationEasing : "easeOutQuart",
+		animationSteps : 100,
+		animateScale : true,
+		legend: { display: false, position: "bottom", onClick: null },
+		title: { display: false },
+		tooltips: {
+			callbacks: {
+				title: function (tooltipItem, data) { return data.labels[tooltipItem[0].index]; },
+				label: function (tooltipItem, data) { return comma(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index]); },
+			}
+		},
+		scales: {
+			xAxes: [{
+				gridLines: { display: true, color: "#282828" },
+				ticks: { display: showXAxis(charttypedomain), beginAtZero: true}
+			}],
+			yAxes: [{
+				gridLines: { display: false, color: "#282828" },
+				scaleLabel: { display: false, labelString: "Domains" },
+				ticks: { beginAtZero: true}
+			}]
+		}
+	};
+	var barDatasetDomains = {
+		labels: barLabelsDomains,
+		datasets: [{data: barDataReqDomains,
+			borderWidth: 1,
+			backgroundColor: poolColors(barDataReqDomains.length),
+			borderColor: "#000000",
+		}]
+	};
+	BarChartReqDomains = new Chart(ctx, {
+		type: getChartType(charttypedomain),
+		options: barOptionsDomains,
+		data: barDatasetDomains
+	});
+	changeColour(E('colourads'),BarChartReqDomains,barDataReqDomains,colourdomains)
 }
 
 function initial(){
@@ -101,17 +147,30 @@ function initial(){
 				E('colourads').value = cookie.get('colourads') * 1;
 			}
 	}
-
-	var t;
-	if ((t = cookie.get('charttypeads')) != null) {
-			if (t.match(/^([0-1])$/)) {
+	
+	if ((s = cookie.get('charttypeads')) != null) {
+			if (s.match(/^([0-1])$/)) {
 				E('charttypeads').value = cookie.get('charttypeads') * 1;
 			}
 	}
-
+	
+	if ((s = cookie.get('colourdomains')) != null) {
+			if (s.match(/^([0-1])$/)) {
+				E('colourdomains').value = cookie.get('colourdomains') * 1;
+			}
+	}
+	
+	if ((s = cookie.get('charttypedomains')) != null) {
+			if (s.match(/^([0-1])$/)) {
+				E('charttypedomains').value = cookie.get('charttypedomains') * 1;
+			}
+	}
+	
 	show_menu();
 	Redraw_Ad_Chart();
 	changeLayout(E('charttypeads'),"BarChartBlockedAds","charttypeads");
+	Redraw_Domain_Chart();
+	changeLayout(E('charttypedomains'),"BarChartReqDomains","charttypedomains");
 }
 
 function reload() {
@@ -139,23 +198,23 @@ function poolColors(a) {
 	return pool;
 }
 
-function getChartType() {
-	if (charttype == null)
+function getChartType(e) {
+	if (e == null)
 	{
 		return 'horizontalBar';
 	}
 	else
 	{
-		return charttype;
+		return e;
 	}
 }
 
-function showXAxis() {
-	if (charttype == null)
+function showXAxis(e) {
+	if (e == null)
 	{
 		return true;
 	}
-	else if (charttype == "bar")
+	else if (e == "bar")
 	{
 		return false;
 	}
@@ -183,11 +242,25 @@ function changeLayout(e,chartname,cookiename) {
 	layout = e.value * 1;
 	if ( layout == 0 )
 	{
-		charttype = "horizontalBar"
+		if ( chartname == "BarChartBlockedAds" )
+		{
+			charttypead = "horizontalBar"
+		}
+		else
+		{
+			charttypedomain = "horizontalBar"
+		}
 	}
 	else
 	{
-		charttype = "bar"
+		if ( chartname == "BarChartBlockedAds" )
+		{
+			charttypead = "bar"
+		}
+		else
+		{
+			charttypedomain = "bar"
+		}
 	}
 	cookie.set(cookiename, layout, 31);
 	if ( chartname == "BarChartBlockedAds" )
