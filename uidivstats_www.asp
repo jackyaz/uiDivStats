@@ -33,6 +33,13 @@ var barDataBlockedAds, barLabels;
 var myBarChart;
 Chart.defaults.global.defaultFontColor = "#CCC";
 
+var s;
+if ((s = cookie.get('colour')) != null) {
+		if (s.match(/^([0-1])$/)) {
+			E('colour').value = colour = RegExp.$1 * 1;
+		}
+}
+
 function redraw()
 {
 	barDataBlockedAds = [];
@@ -85,6 +92,7 @@ function draw_chart(){
 		options: barOptions,
 		data: barDataset
 	});
+	changeColour();
 }
 function initial(){
 show_menu();
@@ -110,6 +118,19 @@ for(i = 0; i < a; i++) {
 	pool.push(getRandomColor());
 }
 return pool;
+}
+function changeColour() {
+	colour = e.value * 1;
+	if ( colour == 0 )
+	{
+		myBarChart.config.data.datasets[0].backgroundColor = "rgba(2, 53, 135, 1)";
+	}
+	else
+	{
+		myBarChart.config.data.datasets[0].backgroundColor = poolColors(barDataBlockedAds.length);
+	}
+	myBarChart.update();
+	cookie.set('colour', colour, 31);
 }
 </script>
 </head>
@@ -160,6 +181,15 @@ return pool;
 </table>
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 <thead>
+<tr class='even'>
+<th width="40%"><#Scale#></th>
+<td>
+<select style="width:70px" class="input_option" onchange='changeColour(this)' id='colours'>
+<option value=0>Colour</option>
+<option value=1>Plain</option>
+</select>
+</td>
+</tr>
 <tr>
 <td colspan="2">In the last week</td>
 </tr>
