@@ -178,7 +178,13 @@ function changeColour(e) {
 </tr>
 </table>
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
+<thead>
+<tr>
+<td colspan="2">In the last week</td>
+</tr>
+</thead>
 <tr class='even'>
+<th width="40%">Style for charts</th>
 <td>
 <select style="width:70px" class="input_option" onchange='changeColour(this)' id='colour'>
 <option value=0>Colour</option>
@@ -187,16 +193,7 @@ function changeColour(e) {
 </td>
 </tr>
 <tr>
-<td colspan="2">In the last week</td>
-</tr>
-</thead>
-<!--<tr>
-<td colspan="2" align="center">
-<img src="/ext/uidivstats-blockeddomains.png">
-</td>
-</tr>-->
-<tr>
-<td>
+<td colspan="2">
 <div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="chart" height="240"></div>
 </td>
 </tr>
