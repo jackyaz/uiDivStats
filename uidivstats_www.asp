@@ -91,7 +91,7 @@ function Draw_Ad_Chart() {
 		options: barOptionsAds,
 		data: barDatasetAds
 	});
-	changeColour(E('colourads'));
+	changeColour(E('colourads'),BarChartBlockedAds,barDataBlockedAds,colourads)
 }
 
 function initial(){
@@ -165,18 +165,18 @@ function showXAxis() {
 	}
 }
 
-function changeColour(e) {
+function changeColour(e,chartname,datasetname,cookiename) {
 	colour = e.value * 1;
 	if ( colour == 0 )
 	{
-		BarChartBlockedAds.config.data.datasets[0].backgroundColor = poolColors(barDataBlockedAds.length);
+		chartname.config.data.datasets[0].backgroundColor = poolColors(datasetname.length);
 	}
 	else
 	{
-		BarChartBlockedAds.config.data.datasets[0].backgroundColor = "rgba(2, 53, 135, 1)";
+		chartname.config.data.datasets[0].backgroundColor = "rgba(2, 53, 135, 1)";
 	}
-	cookie.set('colour', colour, 31);
-	BarChartBlockedAds.update();
+	cookie.set(cookiename, colour, 31);
+	chartname.update();
 }
 
 function changeLayout(e) {
@@ -248,7 +248,7 @@ function changeLayout(e) {
 <tr class='even'>
 <th width="40%">Style for charts</th>
 <td>
-<select style="width:100px" class="input_option" onchange='changeColour(this)' id='colourads'>
+<select style="width:100px" class="input_option" onchange='changeColour(this,BarChartBlockedAds,barDataBlockedAds,colourads)' id='colourads'>
 <option value=0>Colour</option>
 <option value=1>Plain</option>
 </select>
@@ -278,7 +278,7 @@ function changeLayout(e) {
 <tr class='even'>
 <th width="40%">Style for charts</th>
 <td>
-<select style="width:100px" class="input_option" onchange='changeColour(this)' id='colourdomains'>
+<select style="width:100px" class="input_option" onchange='changeColour(this,BarChartReqDomains,barDataReqDomains,colourdomains)' id='colourdomains'>
 <option value=0>Colour</option>
 <option value=1>Plain</option>
 </select>
