@@ -29,7 +29,7 @@ font-weight: bolder;
 <script language="JavaScript" type="text/javascript" src="/ext/uidivstats.js"></script>
 
 <script>
-var barDataBlockedAds, barLabelsBlockedAds, barDataReqDomains, barLabelsReqDomains;
+var barDataBlockedAds, barLabelsBlockedAds, barDataDomains, barLabelsReqDomains;
 var BarChartBlockedAds, BarChartReqDomains;
 var charttypead, charttypedomain;
 Chart.defaults.global.defaultFontColor = "#CCC";
@@ -42,7 +42,7 @@ function Redraw_Ad_Chart() {
 }
 
 function Redraw_Domain_Chart() {
-	barDataReqDomains = [];
+	barDataDomains = [];
 	barLabelsReqDomains = [];
 	GenChartDataDomains();
 	Draw_Domain_Chart();
@@ -126,9 +126,9 @@ function Draw_Domain_Chart() {
 	};
 	var barDatasetDomains = {
 		labels: barLabelsDomains,
-		datasets: [{data: barDataReqDomains,
+		datasets: [{data: barDataDomains,
 			borderWidth: 1,
-			backgroundColor: poolColors(barDataReqDomains.length),
+			backgroundColor: poolColors(barDataDomains.length),
 			borderColor: "#000000",
 		}]
 	};
@@ -137,7 +137,7 @@ function Draw_Domain_Chart() {
 		options: barOptionsDomains,
 		data: barDatasetDomains
 	});
-	changeColour(E('colourads'),BarChartReqDomains,barDataReqDomains,colourdomains)
+	changeColour(E('colourads'),BarChartReqDomains,barDataDomains,colourdomains)
 }
 
 function initial(){
@@ -358,7 +358,7 @@ function changeLayout(e,chartname,cookiename) {
 <tr class='even'>
 <th width="40%">Style for charts</th>
 <td>
-<select style="width:100px" class="input_option" onchange='changeColour(this,BarChartReqDomains,barDataReqDomains,"colourdomains")' id='colourdomains'>
+<select style="width:100px" class="input_option" onchange='changeColour(this,BarChartReqDomains,barDataDomains,"colourdomains")' id='colourdomains'>
 <option value=0>Colour</option>
 <option value=1>Plain</option>
 </select>
