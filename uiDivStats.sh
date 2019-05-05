@@ -368,7 +368,7 @@ WriteData_ToJS(){
 	done < "$1"
 	contents=$(echo "$contents" | sed 's/.$//')
 	contents="$contents"");"
-	echo "$contents""\\r\\n""}""\\r\\n" >> "$2"
+	printf "$contents\\r\\n}\\r\\n" >> "$2"
 }
 
 # shellcheck disable=SC1090
