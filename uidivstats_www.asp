@@ -75,7 +75,8 @@ function draw_chart(){
 		datasets: [{data: barDataBlockedAds,
 			//label: barLabels,
 			borderWidth: 1,
-			backgroundColor: "rgba(2, 53, 135, 1)",
+			//backgroundColor: "rgba(2, 53, 135, 1)",
+			backgroundColor: poolColors(barDataBlockedAds.length),
 			borderColor: "#000000",
 		}]
 	};
