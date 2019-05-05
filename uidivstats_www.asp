@@ -31,6 +31,7 @@ font-weight: bolder;
 <script>
 var barDataBlockedAds, barLabels;
 var myBarChart;
+var charttype;
 Chart.defaults.global.defaultFontColor = "#CCC";
 
 function redraw() {
