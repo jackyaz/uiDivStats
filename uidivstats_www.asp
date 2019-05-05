@@ -189,7 +189,7 @@ function changeLayout(e,chartname,cookiename) {
 	{
 		charttype = "bar"
 	}
-	cookie.set('cookiename', layout, 31);
+	cookie.set(cookiename, layout, 31);
 	if ( chartname == "BarChartBlockedAds" )
 	{
 		Redraw_Ad_Chart();
