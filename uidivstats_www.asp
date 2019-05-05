@@ -33,13 +33,6 @@ var barDataBlockedAds, barLabels;
 var myBarChart;
 Chart.defaults.global.defaultFontColor = "#CCC";
 
-var s;
-if ((s = cookie.get('colour')) != null) {
-		if (s.match(/^([0-1])$/)) {
-			E('colour').value = colour = RegExp.$1 * 1;
-		}
-}
-
 function redraw()
 {
 	barDataBlockedAds = [];
@@ -95,6 +88,13 @@ function draw_chart(){
 	changeColour(colour);
 }
 function initial(){
+var s;
+if ((s = cookie.get('colour')) != null) {
+		if (s.match(/^([0-1])$/)) {
+			E('colour').value = cookie.get('colour') * 1;
+		}
+}
+
 show_menu();
 redraw();
 }
@@ -121,13 +121,11 @@ return pool;
 }
 function changeColour(e) {
 	colour = e.value * 1;
-	if ( colour == 0 )
-	{
-		myBarChart.config.data.datasets[0].backgroundColor = "rgba(2, 53, 135, 1)";
-	}
-	else
-	{
+	if ( colour == 0 ){
 		myBarChart.config.data.datasets[0].backgroundColor = poolColors(barDataBlockedAds.length);
+	}
+	else{
+		myBarChart.config.data.datasets[0].backgroundColor = "rgba(2, 53, 135, 1)";
 	}
 	myBarChart.update();
 	cookie.set('colour', colour, 31);
@@ -180,11 +178,9 @@ function changeColour(e) {
 </tr>
 </table>
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
-<thead>
 <tr class='even'>
-<th width="40%"><#Scale#></th>
 <td>
-<select style="width:70px" class="input_option" onchange='changeColour(this)' id='colours'>
+<select style="width:70px" class="input_option" onchange='changeColour(this)' id='colour'>
 <option value=0>Colour</option>
 <option value=1>Plain</option>
 </select>
