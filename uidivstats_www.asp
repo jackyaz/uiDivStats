@@ -29,7 +29,7 @@ font-weight: bolder;
 <script language="JavaScript" type="text/javascript" src="/ext/uidivstats.js"></script>
 
 <script>
-var barDataBlockedAds, barLabelsBlockedAds, barDataDomains, barLabelsReqDomains;
+var barDataBlockedAds, barLabelsBlockedAds, barDataDomains, barLabelsDomains;
 var BarChartBlockedAds, BarChartReqDomains;
 var charttypead, charttypedomain;
 Chart.defaults.global.defaultFontColor = "#CCC";
@@ -43,7 +43,7 @@ function Redraw_Ad_Chart() {
 
 function Redraw_Domain_Chart() {
 	barDataDomains = [];
-	barLabelsReqDomains = [];
+	barLabelsDomains = [];
 	GenChartDataDomains();
 	Draw_Domain_Chart();
 }
