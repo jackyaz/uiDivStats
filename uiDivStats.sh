@@ -404,7 +404,7 @@ Generate_Stats_Diversion(){
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
 	mkdir -p "$(readlink /www/ext)"
-	opkg remove --autoremove gnuplot 2>/dev/null
+	opkg remove --autoremove gnuplot >/dev/null 2>&1
 	
 	Print_Output "true" "Starting Diversion statistic generation..." "$PASS"
 	
