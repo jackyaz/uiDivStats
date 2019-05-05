@@ -31,6 +31,7 @@ font-weight: bolder;
 <script>
 var barDataBlockedAds, barLabels;
 var myBarChart;
+var charttype;
 Chart.defaults.global.defaultFontColor = "#CCC";
 
 function redraw()
@@ -62,11 +63,12 @@ function draw_chart(){
 		scales: {
 			xAxes: [{
 				gridLines: { display: true, color: "#282828" },
-				ticks: { display: true, beginAtZero: true}
+				ticks: { display: showXAxis(), beginAtZero: true}
 			}],
 			yAxes: [{
 				gridLines: { display: false, color: "#282828" },
-				scaleLabel: { display: false, labelString: "Blocks" }
+				scaleLabel: { display: false, labelString: "Blocks" },
+				ticks: { beginAtZero: true}
 			}]
 		}
 	};
@@ -81,11 +83,11 @@ function draw_chart(){
 		}]
 	};
 	myBarChart = new Chart(ctx, {
-		type: 'horizontalBar',
+		type: getChartType(),
 		options: barOptions,
 		data: barDataset
 	});
-	changeColour(colour);
+	changeColour(E('colour'));
 }
 function initial(){
 var s;
@@ -95,8 +97,16 @@ if ((s = cookie.get('colour')) != null) {
 		}
 }
 
+var t;
+if ((t = cookie.get('charttype')) != null) {
+		if (t.match(/^([0-1])$/)) {
+			E('charttype').value = cookie.get('charttype') * 1;
+		}
+}
+
 show_menu();
 redraw();
+changeLayout(E('charttype'));
 }
 function reload() {
 location.reload(true);
@@ -119,16 +129,56 @@ for(i = 0; i < a; i++) {
 }
 return pool;
 }
+function getChartType(){
+	if (charttype == null)
+	{
+		return 'horizontalBar';
+	}
+	else
+	{
+		return charttype;
+	}
+}
+function showXAxis()
+{
+	if (charttype == null)
+	{
+		return true;
+	}
+	else if (charttype == "bar")
+	{
+		return false;
+	}
+	else
+	{
+		return true;
+	}
+}
 function changeColour(e) {
 	colour = e.value * 1;
-	if ( colour == 0 ){
+	if ( colour == 0 )
+	{
 		myBarChart.config.data.datasets[0].backgroundColor = poolColors(barDataBlockedAds.length);
 	}
-	else{
+	else
+	{
 		myBarChart.config.data.datasets[0].backgroundColor = "rgba(2, 53, 135, 1)";
 	}
-	myBarChart.update();
 	cookie.set('colour', colour, 31);
+	myBarChart.update();
+}
+function changeLayout(e) {
+	layout = e.value * 1;
+	if ( layout == 0 )
+	{
+		charttype = "horizontalBar"
+	}
+	else
+	{
+		charttype = "bar"
+	}
+	cookie.set('charttype', layout, 31);
+	redraw();
 }
 </script>
 </head>
@@ -186,9 +236,18 @@ function changeColour(e) {
 <tr class='even'>
 <th width="40%">Style for charts</th>
 <td>
-<select style="width:70px" class="input_option" onchange='changeColour(this)' id='colour'>
+<select style="width:100px" class="input_option" onchange='changeColour(this)' id='colour'>
 <option value=0>Colour</option>
 <option value=1>Plain</option>
+</select>
+</td>
+</tr>
+<tr class='even'>
+<th width="40%">Layout for charts</th>
+<td>
+<select style="width:100px" class="input_option" onchange='changeLayout(this)' id='charttype'>
+<option value=0>Horizontal</option>
+<option value=1>Vertical</option>
 </select>
 </td>
 </tr>
