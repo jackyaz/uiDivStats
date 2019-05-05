@@ -34,15 +34,14 @@ var myBarChart;
 var charttype;
 Chart.defaults.global.defaultFontColor = "#CCC";
 
-function redraw()
-{
+function redraw() {
 	barDataBlockedAds = [];
 	barLabels = [];
 	GenChartData();
 	draw_chart();
 }
 
-function draw_chart(){
+function draw_chart() {
 	if (barLabels.length == 0) return;
 	if (myBarChart != undefined) myBarChart.destroy();
 	var ctx = document.getElementById("chart").getContext("2d");
@@ -75,9 +74,7 @@ function draw_chart(){
 	var barDataset = {
 		labels: barLabels,
 		datasets: [{data: barDataBlockedAds,
-			//label: barLabels,
 			borderWidth: 1,
-			//backgroundColor: "rgba(2, 53, 135, 1)",
 			backgroundColor: poolColors(barDataBlockedAds.length),
 			borderColor: "#000000",
 		}]
@@ -89,47 +86,53 @@ function draw_chart(){
 	});
 	changeColour(E('colour'));
 }
+
 function initial(){
-var s;
-if ((s = cookie.get('colour')) != null) {
-		if (s.match(/^([0-1])$/)) {
-			E('colour').value = cookie.get('colour') * 1;
-		}
+	var s;
+	if ((s = cookie.get('colour')) != null) {
+			if (s.match(/^([0-1])$/)) {
+				E('colour').value = cookie.get('colour') * 1;
+			}
+	}
+
+	var t;
+	if ((t = cookie.get('charttype')) != null) {
+			if (t.match(/^([0-1])$/)) {
+				E('charttype').value = cookie.get('charttype') * 1;
+			}
+	}
+
+	show_menu();
+	redraw();
+	changeLayout(E('charttype'));
 }
 
-var t;
-if ((t = cookie.get('charttype')) != null) {
-		if (t.match(/^([0-1])$/)) {
-			E('charttype').value = cookie.get('charttype') * 1;
-		}
-}
-
-show_menu();
-redraw();
-changeLayout(E('charttype'));
-}
 function reload() {
-location.reload(true);
+	location.reload(true);
 }
+
 function applyRule() {
-var action_script_tmp = "start_uiDivStats";
-document.form.action_script.value = action_script_tmp;
-document.form.submit();
+	var action_script_tmp = "start_uiDivStats";
+	document.form.action_script.value = action_script_tmp;
+	document.form.submit();
 }
+
 function getRandomColor() {
-var r = Math.floor(Math.random() * 255);
-var g = Math.floor(Math.random() * 255);
-var b = Math.floor(Math.random() * 255);
-return "rgba(" + r + "," + g + "," + b + ", 1)";
+	var r = Math.floor(Math.random() * 255);
+	var g = Math.floor(Math.random() * 255);
+	var b = Math.floor(Math.random() * 255);
+	return "rgba(" + r + "," + g + "," + b + ", 1)";
 }
+
 function poolColors(a) {
-var pool = [];
-for(i = 0; i < a; i++) {
-	pool.push(getRandomColor());
+	var pool = [];
+	for(i = 0; i < a; i++) {
+		pool.push(getRandomColor());
+	}
+	return pool;
 }
-return pool;
-}
-function getChartType(){
+
+function getChartType() {
 	if (charttype == null)
 	{
 		return 'horizontalBar';
@@ -139,8 +142,8 @@ function getChartType(){
 		return charttype;
 	}
 }
-function showXAxis()
-{
+
+function showXAxis() {
 	if (charttype == null)
 	{
 		return true;
@@ -154,6 +157,7 @@ function showXAxis()
 		return true;
 	}
 }
+
 function changeColour(e) {
 	colour = e.value * 1;
 	if ( colour == 0 )
@@ -167,6 +171,7 @@ function changeColour(e) {
 	cookie.set('colour', colour, 31);
 	myBarChart.update();
 }
+
 function changeLayout(e) {
 	layout = e.value * 1;
 	if ( layout == 0 )
