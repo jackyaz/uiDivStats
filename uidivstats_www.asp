@@ -92,7 +92,7 @@ function draw_chart(){
 		options: barOptions,
 		data: barDataset
 	});
-	changeColour();
+	changeColour(colour);
 }
 function initial(){
 show_menu();
@@ -119,7 +119,7 @@ for(i = 0; i < a; i++) {
 }
 return pool;
 }
-function changeColour() {
+function changeColour(e) {
 	colour = e.value * 1;
 	if ( colour == 0 )
 	{
