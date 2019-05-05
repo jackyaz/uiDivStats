@@ -68,13 +68,13 @@ function Draw_Ad_Chart() {
 		},
 		scales: {
 			xAxes: [{
-				gridLines: { display: true, color: "#282828" },
+				gridLines: { display: showXGrid(charttypead), color: "#282828" },
 				ticks: { display: showXAxis(charttypead), beginAtZero: true}
 			}],
 			yAxes: [{
 				gridLines: { display: false, color: "#282828" },
 				scaleLabel: { display: false, labelString: "Blocks" },
-				ticks: { beginAtZero: true}
+				ticks: { display: showYAxis(charttypead), beginAtZero: true }
 			}]
 		}
 	};
@@ -114,13 +114,13 @@ function Draw_Domain_Chart() {
 		},
 		scales: {
 			xAxes: [{
-				gridLines: { display: true, color: "#282828" },
+				gridLines: { display: showXGrid(charttypedomain), color: "#282828" },
 				ticks: { display: showXAxis(charttypedomain), beginAtZero: true}
 			}],
 			yAxes: [{
 				gridLines: { display: false, color: "#282828" },
 				scaleLabel: { display: false, labelString: "Domains" },
-				ticks: { beginAtZero: true}
+				ticks: { display: showYAxis(charttypedomain), beginAtZero: true }
 			}]
 		}
 	};
@@ -143,25 +143,25 @@ function Draw_Domain_Chart() {
 function initial(){
 	var s;
 	if ((s = cookie.get('colourads')) != null) {
-			if (s.match(/^([0-1])$/)) {
+			if (s.match(/^([0-2])$/)) {
 				E('colourads').value = cookie.get('colourads') * 1;
 			}
 	}
 	
 	if ((s = cookie.get('charttypeads')) != null) {
-			if (s.match(/^([0-1])$/)) {
+			if (s.match(/^([0-2])$/)) {
 				E('charttypeads').value = cookie.get('charttypeads') * 1;
 			}
 	}
 	
 	if ((s = cookie.get('colourdomains')) != null) {
-			if (s.match(/^([0-1])$/)) {
+			if (s.match(/^([0-2])$/)) {
 				E('colourdomains').value = cookie.get('colourdomains') * 1;
 			}
 	}
 	
 	if ((s = cookie.get('charttypedomains')) != null) {
-			if (s.match(/^([0-1])$/)) {
+			if (s.match(/^([0-2])$/)) {
 				E('charttypedomains').value = cookie.get('charttypedomains') * 1;
 			}
 	}
@@ -209,12 +209,46 @@ function getChartType(e) {
 	}
 }
 
+function showXGrid(e) {
+	if (e == null)
+	{
+		return true;
+	}
+	else if (e == "pie")
+	{
+		return false;
+	}
+	else
+	{
+		return true;
+	}
+}
+
 function showXAxis(e) {
 	if (e == null)
 	{
 		return true;
 	}
+	else if (e == "bar" || e == "pie")
+	{
+		return false;
+	}
+	else
+	{
+		return true;
+	}
+}
+
+function showYAxis(e) {
+	if (e == null)
+	{
+		return true;
+	}
 	else if (e == "bar")
+	{
+		return true;
+	}
+	else if (e == "pie")
 	{
 		return false;
 	}
@@ -251,7 +285,7 @@ function changeLayout(e,chartname,cookiename) {
 			charttypedomain = "horizontalBar"
 		}
 	}
-	else
+	else if ( layout == 1 )
 	{
 		if ( chartname == "BarChartBlockedAds" )
 		{
@@ -260,6 +294,17 @@ function changeLayout(e,chartname,cookiename) {
 		else
 		{
 			charttypedomain = "bar"
+		}
+	}
+	else if ( layout == 2 )
+	{
+		if ( chartname == "BarChartBlockedAds" )
+		{
+			charttypead = "pie"
+		}
+		else
+		{
+			charttypedomain = "pie"
 		}
 	}
 	cookie.set(cookiename, layout, 31);
@@ -340,6 +385,7 @@ function changeLayout(e,chartname,cookiename) {
 <select style="width:100px" class="input_option" onchange='changeLayout(this,"BarChartBlockedAds","charttypeads")' id='charttypeads'>
 <option value=0>Horizontal</option>
 <option value=1>Vertical</option>
+<option value=2>Pie</option>
 </select>
 </td>
 </tr>
@@ -370,6 +416,7 @@ function changeLayout(e,chartname,cookiename) {
 <select style="width:100px" class="input_option" onchange='changeLayout(this,"BarChartReqDomains","charttypedomains")' id='charttypedomains'>
 <option value=0>Horizontal</option>
 <option value=1>Vertical</option>
+<option value=2>Pie</option>
 </select>
 </td>
 </tr>
