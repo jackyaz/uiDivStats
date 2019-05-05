@@ -103,7 +103,7 @@ function initial(){
 	}
 
 	var t;
-	if ((t = cookie.get('charttype')) != null) {
+	if ((t = cookie.get('charttypeads')) != null) {
 			if (t.match(/^([0-1])$/)) {
 				E('charttypeads').value = cookie.get('charttypeads') * 1;
 			}
