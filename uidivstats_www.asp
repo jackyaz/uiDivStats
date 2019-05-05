@@ -91,7 +91,7 @@ function Draw_Ad_Chart() {
 		options: barOptionsAds,
 		data: barDatasetAds
 	});
-	changeColour(E('colourads'),BarChartBlockedAds,barDataBlockedAds,colourads)
+	changeColour(E('colourads'),BarChartBlockedAds,barDataBlockedAds,"colourads")
 }
 
 function Draw_Domain_Chart() {
@@ -137,7 +137,7 @@ function Draw_Domain_Chart() {
 		options: barOptionsDomains,
 		data: barDatasetDomains
 	});
-	changeColour(E('colourads'),BarChartReqDomains,barDataDomains,colourdomains)
+	changeColour(E('colourdomains'),BarChartReqDomains,barDataDomains,"colourdomains")
 }
 
 function initial(){
