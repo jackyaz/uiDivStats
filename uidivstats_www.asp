@@ -111,7 +111,7 @@ function initial(){
 
 	show_menu();
 	Redraw_Ad_Chart();
-	changeLayout(E('charttypeads'));
+	changeLayout(E('charttypeads'),BarChartReqDomains,charttypedomains);
 }
 
 function reload() {
@@ -179,7 +179,7 @@ function changeColour(e,chartname,datasetname,cookiename) {
 	chartname.update();
 }
 
-function changeLayout(e) {
+function changeLayout(e,chartname,cookiename) {
 	layout = e.value * 1;
 	if ( layout == 0 )
 	{
@@ -189,7 +189,7 @@ function changeLayout(e) {
 	{
 		charttype = "bar"
 	}
-	cookie.set('charttype', layout, 31);
+	cookie.set('cookiename', layout, 31);
 	Redraw_Ad_Chart();
 }
 </script>
@@ -257,7 +257,7 @@ function changeLayout(e) {
 <tr class='even'>
 <th width="40%">Layout for charts</th>
 <td>
-<select style="width:100px" class="input_option" onchange='changeLayout(this)' id='charttypeads'>
+<select style="width:100px" class="input_option" onchange='changeLayout(this,BarChartBlockedAds,charttypeads)' id='charttypeads'>
 <option value=0>Horizontal</option>
 <option value=1>Vertical</option>
 </select>
@@ -287,7 +287,7 @@ function changeLayout(e) {
 <tr class='even'>
 <th width="40%">Layout for charts</th>
 <td>
-<select style="width:100px" class="input_option" onchange='changeLayout(this)' id='charttypedomains'>
+<select style="width:100px" class="input_option" onchange='changeLayout(this,BarChartReqDomains,charttypedomains)' id='charttypedomains'>
 <option value=0>Horizontal</option>
 <option value=1>Vertical</option>
 </select>
