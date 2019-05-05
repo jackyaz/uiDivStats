@@ -41,6 +41,13 @@ function Redraw_Ad_Chart() {
 	Draw_Ad_Chart();
 }
 
+function Redraw_Domain_Chart() {
+	barDataReqDomains = [];
+	barLabelsReqDomains = [];
+	GenChartDataDomains();
+	Draw_Domain_Chart();
+}
+
 function Draw_Ad_Chart() {
 	if (barLabelsBlockedAds.length == 0) return;
 	if (BarChartBlockedAds != undefined) BarChartBlockedAds.destroy();
@@ -52,7 +59,7 @@ function Draw_Ad_Chart() {
 		animationSteps : 100,
 		animateScale : true,
 		legend: { display: false, position: "bottom", onClick: null },
-		title: { display: true, text: "Top 10 blocked ad domains" },
+		title: { display: false },
 		tooltips: {
 			callbacks: {
 				title: function (tooltipItem, data) { return data.labels[tooltipItem[0].index]; },
@@ -71,7 +78,7 @@ function Draw_Ad_Chart() {
 			}]
 		}
 	};
-	var barDataset = {
+	var barDatasetAds = {
 		labels: barLabelsBlockedAds,
 		datasets: [{data: barDataBlockedAds,
 			borderWidth: 1,
@@ -82,29 +89,29 @@ function Draw_Ad_Chart() {
 	BarChartBlockedAds = new Chart(ctx, {
 		type: getChartType(),
 		options: barOptionsAds,
-		data: barDataset
+		data: barDatasetAds
 	});
-	changeColour(E('colour'));
+	changeColour(E('colourads'));
 }
 
 function initial(){
 	var s;
-	if ((s = cookie.get('colour')) != null) {
+	if ((s = cookie.get('colourads')) != null) {
 			if (s.match(/^([0-1])$/)) {
-				E('colour').value = cookie.get('colour') * 1;
+				E('colourads').value = cookie.get('colourads') * 1;
 			}
 	}
 
 	var t;
 	if ((t = cookie.get('charttype')) != null) {
 			if (t.match(/^([0-1])$/)) {
-				E('charttype').value = cookie.get('charttype') * 1;
+				E('charttypeads').value = cookie.get('charttypeads') * 1;
 			}
 	}
 
 	show_menu();
 	Redraw_Ad_Chart();
-	changeLayout(E('charttype'));
+	changeLayout(E('charttypeads'));
 }
 
 function reload() {
@@ -235,13 +242,13 @@ function changeLayout(e) {
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 <thead>
 <tr>
-<td colspan="2">In the last week</td>
+<td colspan="2">Top 10 blocked ad domains</td>
 </tr>
 </thead>
 <tr class='even'>
 <th width="40%">Style for charts</th>
 <td>
-<select style="width:100px" class="input_option" onchange='changeColour(this)' id='colour'>
+<select style="width:100px" class="input_option" onchange='changeColour(this)' id='colourads'>
 <option value=0>Colour</option>
 <option value=1>Plain</option>
 </select>
@@ -250,7 +257,7 @@ function changeLayout(e) {
 <tr class='even'>
 <th width="40%">Layout for charts</th>
 <td>
-<select style="width:100px" class="input_option" onchange='changeLayout(this)' id='charttype'>
+<select style="width:100px" class="input_option" onchange='changeLayout(this)' id='charttypeads'>
 <option value=0>Horizontal</option>
 <option value=1>Vertical</option>
 </select>
@@ -262,28 +269,36 @@ function changeLayout(e) {
 </td>
 </tr>
 </table>
-<!--<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
-<thead>
-<tr>
-<td colspan="2">Last 24 Hours</td>
-</tr>
-</thead>
-<tr>
-<td colspan="2" align="center">
-</td>
-</tr>
-</table>
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 <thead>
 <tr>
-<td colspan="2">Last 7 Days</td>
+<td colspan="2">Top 10 requested domains</td>
 </tr>
 </thead>
-<tr>
-<td colspan="2" align="center">
+<tr class='even'>
+<th width="40%">Style for charts</th>
+<td>
+<select style="width:100px" class="input_option" onchange='changeColour(this)' id='colourdomains'>
+<option value=0>Colour</option>
+<option value=1>Plain</option>
+</select>
 </td>
 </tr>
-</table>-->
+<tr class='even'>
+<th width="40%">Layout for charts</th>
+<td>
+<select style="width:100px" class="input_option" onchange='changeLayout(this)' id='charttypedomains'>
+<option value=0>Horizontal</option>
+<option value=1>Vertical</option>
+</select>
+</td>
+</tr>
+<tr>
+<td colspan="2">
+<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="ChartDomains" height="240"></div>
+</td>
+</tr>
+</table>
 </td>
 </tr>
 </tbody>

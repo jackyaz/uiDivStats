@@ -353,6 +353,7 @@ WriteStats_ToJS(){
 
 WriteData_ToJS(){
 	echo 'function '"$3"'() {' >> "$2"
+	contents=""
 	contents="$contents""$4"'.unshift('
 	while IFS='' read -r line || [ -n "$line" ]; do
 		contents="$contents""$(echo "$line" | awk 'BEGIN{FS="   *"}{ print $1 }' | awk '{$1=$1};1')"","
@@ -367,9 +368,7 @@ WriteData_ToJS(){
 	done < "$1"
 	contents=$(echo "$contents" | sed 's/.$//')
 	contents="$contents"");"
-	echo "$contents" >> "$2"
-	echo "}" >> "$2"
-	echo "" >> "$2"
+	echo "$contents\\r\\n}\\r\\n" >> "$2"
 }
 
 # shellcheck disable=SC1090
