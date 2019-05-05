@@ -384,6 +384,7 @@ Generate_Stats_Diversion(){
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
 	mkdir -p "$(readlink /www/ext)"
+	opkg remove --autoremove gnuplot
 	
 	Print_Output "true" "Starting Diversion statistic generation..." "$PASS"
 	
@@ -657,11 +658,8 @@ Generate_Stats_Diversion(){
 		sed -i '/^\s*$/d' /tmp/uidivstats/div-iphostleases.tmp
 		cat /tmp/uidivstats/div-iphostleases.tmp | sort -t . -k 4,4n -u > "${DIVERSION_DIR}/backup/diversion_stats-iphostleases"
 		
-		#Generate_GNUPLOT_Graphs /tmp/uidivstats/div-tah /www/ext/uidivstats-blockeddomains.png
-		#cp /tmp/uidivstats/div-tah /jffs/div-tah
 		WriteData_ToJS /tmp/uidivstats/div-tah "/www/ext/uidivstatsblockedads.js"
 		
-		rm -f /jffs/div-tah
 		rm -rf /tmp/uidivstats
 		
 		# show file sizes
@@ -700,26 +698,6 @@ Generate_Stats_Diversion(){
 	else
 		Print_Output "true" "Diversion configuration not found, exiting!" "$ERR"
 	fi
-}
-
-# shellcheck disable=SC2016
-Generate_GNUPLOT_Graphs(){
-	{ echo 'set terminal png nocrop enhanced large size 753,500 background rgb "#475A5F"'
-echo 'set output "'"$2"'"'
-echo 'set boxwidth 0.5'
-echo 'set style fill solid 1.0 border -1'
-echo 'unset grid'
-echo 'set ytics 100 nomirror'
-echo 'set ylabel "Number of blocks" textcolor rgb "white"'
-echo 'set yrange [0:*]'
-echo 'set xtics rotate'
-echo 'set border lc rgb "white"'
-echo 'set xtics textcolor rgb "white"'
-echo 'set ytics textcolor rgb "white"'
-echo 'plot "'"$1"'" using 0:1:xtic(2) notitle with boxes lc rgb "white" , "'"$1"'" using 0:($1-35):1 notitle with labels lc rgb "black"'; } > /tmp/gnuplot.script
-	gnuplot /tmp/gnuplot.script
-	#cp "$1" /tmp/bak.dat
-	rm -f /tmp/gnuplot.script
 }
 
 Generate_RRD_Graphs(){
@@ -1006,7 +984,6 @@ Menu_Install(){
 	
 	opkg update
 	opkg install rrdtool
-	opkg install gnuplot
 	
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
@@ -1068,8 +1045,6 @@ Menu_Uninstall(){
 	umount /www/Advanced_MultiSubnet_Content.asp 2>/dev/null
 	sed -i '/{url: "Advanced_MultiSubnet_Content.asp", tabName: "Diversion Statistics"}/d' "/jffs/scripts/custom_menuTree.js"
 	umount /www/require/modules/menuTree.js 2>/dev/null
-	
-	opkg remove --autoremove gnuplot
 	
 	if [ ! -f "/jffs/scripts/ntpmerlin" ] && [ ! -f "/jffs/scripts/spdmerlin" ] && [ ! -f "/jffs/scripts/connmon" ]; then
 		opkg remove --autoremove rrdtool
