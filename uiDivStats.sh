@@ -352,8 +352,8 @@ WriteStats_ToJS(){
 }
 
 WriteData_ToJS(){
-	echo 'function GenChartData() {' > "$2"
-	contents="$contents"'barDataBlockedAds.unshift('
+	echo 'function '"$3"'() {' >> "$2"
+	contents="$contents""$4"'.unshift('
 	while IFS='' read -r line || [ -n "$line" ]; do
 		contents="$contents""$(echo "$line" | awk 'BEGIN{FS="   *"}{ print $1 }' | awk '{$1=$1};1')"","
 	done < "$1"
@@ -361,7 +361,7 @@ WriteData_ToJS(){
 	contents="$contents"");"
 	echo "$contents" >> "$2"
 
-	contents='barLabels.unshift('
+	contents="$5"'.unshift('
 	while IFS='' read -r line || [ -n "$line" ]; do
 		contents="$contents""'""$(echo "$line" | awk 'BEGIN{FS="   *"}{ print $2 }' | awk '{$1=$1};1')""'"","
 	done < "$1"
@@ -369,6 +369,7 @@ WriteData_ToJS(){
 	contents="$contents"");"
 	echo "$contents" >> "$2"
 	echo "}" >> "$2"
+	echo "" >> "$2"
 }
 
 # shellcheck disable=SC1090
@@ -678,7 +679,9 @@ Generate_Stats_Diversion(){
 		sed -i '/^\s*$/d' /tmp/uidivstats/div-iphostleases.tmp
 		cat /tmp/uidivstats/div-iphostleases.tmp | sort -t . -k 4,4n -u > "${DIVERSION_DIR}/backup/diversion_stats-iphostleases"
 		
-		WriteData_ToJS /tmp/uidivstats/div-tah "/www/ext/uidivstatsblockedads.js"
+		rm -f "/www/ext/uidivstats.js"
+		WriteData_ToJS /tmp/uidivstats/div-tah "/www/ext/uidivstats.js" "GenChartDataAds" "barDataBlockedAds" "barLabelsBlockedAds"
+		WriteData_ToJS /tmp/uidivstats/div-th "/www/ext/uidivstats.js" "GenChartDataDomains" "barDataDomains" "barLabelsDomains"
 		
 		rm -rf /tmp/uidivstats
 		
@@ -712,116 +715,13 @@ Generate_Stats_Diversion(){
 		#printf "\\n%-37s%s\\n$LINE" " Total time to compile stats:" "$(($endCount-$startCount))" >>${statsFile}
 		
 		printf "$LINE\\n End of stats report\\n\\n$LINE\\n" >>${statsFile}
-		WriteStats_ToJS "$statsFile" "/www/ext/uidivstats.js"
+		WriteStats_ToJS "$statsFile" "/www/ext/uidivstatstext.js"
 		rm -f $statsFile
 		CacheStats cache 2>/dev/null
 		Print_Output "true" "Diversion statistic generation completed successfully!" "$PASS"
 	else
 		Print_Output "true" "Diversion configuration not found, exiting!" "$ERR"
 	fi
-}
-
-Generate_RRD_Graphs(){
-	Auto_Startup create 2>/dev/null
-	Auto_Cron create 2>/dev/null
-	Auto_ServiceEvent create 2>/dev/null
-	mkdir -p "$(readlink /www/ext)"
-	
-	#Print_Output "false" "30 second ping test to $(ShowPingServer) starting..." "$PASS"
-	WriteStats_ToJS "$statsFile" "/www/ext/uidivstats.js"
-	TZ=$(cat /etc/TZ)
-	export TZ
-	DATE=$(date "+%a %b %e %H:%M %Y")
-	
-	#Print_Output "false" "Test results - Ping $ping ms - Jitter - $jitter ms - Line Quality $pktloss %%" "$PASS"
-	
-	RDB=/jffs/scripts/uidivstats_rrd.rrd
-	#rrdtool update $RDB N:"$ping":"$jitter":"$pktloss"
-	
-	COMMON="-c SHADEA#475A5F -c SHADEB#475A5F -c BACK#475A5F -c CANVAS#92A0A520 -c AXIS#92a0a520 -c FONT#ffffff -c ARROW#475A5F -n TITLE:9 -n AXIS:8 -n LEGEND:9 -w 650 -h 200"
-	
-	D_COMMON='--start -86400 --x-grid MINUTE:20:HOUR:2:HOUR:2:0:%H:%M'
-	W_COMMON='--start -604800 --x-grid HOUR:3:DAY:1:DAY:1:0:%Y-%m-%d'
-	
-	#shellcheck disable=SC2086
-	rrdtool graph --imgformat PNG /www/ext/nstats-uidivstats-ping.png \
-		$COMMON $D_COMMON \
-		--title "Ping - $DATE" \
-		--vertical-label "Milliseconds" \
-		DEF:ping="$RDB":ping:LAST \
-		CDEF:nping=ping,1000,/ \
-		LINE1.5:ping#fc8500:"ping (ms)" \
-		GPRINT:ping:MIN:"Min\: %3.3lf" \
-		GPRINT:ping:MAX:"Max\: %3.3lf" \
-		GPRINT:ping:AVERAGE:"Avg\: %3.3lf" \
-		GPRINT:ping:LAST:"Curr\: %3.3lf\n" >/dev/null 2>&1
-	
-	#shellcheck disable=SC2086
-	rrdtool graph --imgformat PNG /www/ext/nstats-uidivstats-jitter.png \
-		$COMMON $D_COMMON \
-		--title "Jitter - $DATE" \
-		--vertical-label "Milliseconds" \
-		DEF:jitter="$RDB":jitter:LAST \
-		CDEF:njitter=jitter,1000,/ \
-		LINE1.5:jitter#c4fd3d:"jitter (ms)" \
-		GPRINT:jitter:MIN:"Min\: %3.3lf" \
-		GPRINT:jitter:MAX:"Max\: %3.3lf" \
-		GPRINT:jitter:AVERAGE:"Avg\: %3.3lf" \
-		GPRINT:jitter:LAST:"Curr\: %3.3lf\n" >/dev/null 2>&1
-	
-	#shellcheck disable=SC2086
-	rrdtool graph --imgformat PNG /www/ext/nstats-uidivstats-pktloss.png \
-		$COMMON $D_COMMON \
-		--title "Line Quality - $DATE" \
-		--vertical-label "%" \
-		DEF:pktloss="$RDB":pktloss:LAST \
-		CDEF:npktloss=pktloss,1000,/ \
-		AREA:pktloss#778787:"line quality (%)" \
-		GPRINT:pktloss:MIN:"Min\: %3.3lf" \
-		GPRINT:pktloss:MAX:"Max\: %3.3lf" \
-		GPRINT:pktloss:AVERAGE:"Avg\: %3.3lf" \
-		GPRINT:pktloss:LAST:"Curr\: %3.3lf\n" >/dev/null 2>&1
-	
-	#shellcheck disable=SC2086
-	rrdtool graph --imgformat PNG /www/ext/nstats-week-uidivstats-ping.png \
-		$COMMON $W_COMMON \
-		--title "Ping - $DATE" \
-		--vertical-label "Milliseconds" \
-		DEF:ping="$RDB":ping:LAST \
-		CDEF:nping=ping,1000,/ \
-		LINE1.5:nping#fc8500:"ping (ms)" \
-		GPRINT:ping:MIN:"Min\: %3.3lf" \
-		GPRINT:ping:MAX:"Max\: %3.3lf" \
-		GPRINT:ping:AVERAGE:"Avg\: %3.3lf" \
-		GPRINT:ping:LAST:"Curr\: %3.3lf\n" >/dev/null 2>&1
-	
-	#shellcheck disable=SC2086
-	rrdtool graph --imgformat PNG /www/ext/nstats-week-uidivstats-jitter.png \
-		$COMMON $W_COMMON \
-		--title "Jitter - $DATE" \
-		--vertical-label "Milliseconds" \
-		DEF:jitter="$RDB":jitter:LAST \
-		CDEF:njitter=jitter,1000,/ \
-		LINE1.5:njitter#c4fd3d:"ping (ms)" \
-		GPRINT:jitter:MIN:"Min\: %3.3lf" \
-		GPRINT:jitter:MAX:"Max\: %3.3lf" \
-		GPRINT:jitter:AVERAGE:"Avg\: %3.3lf" \
-		GPRINT:jitter:LAST:"Curr\: %3.3lf\n" >/dev/null 2>&1
-	
-	#shellcheck disable=SC2086
-	rrdtool graph --imgformat PNG /www/ext/nstats-week-uidivstats-pktloss.png \
-		$COMMON $W_COMMON --alt-autoscale-max \
-		--title "Line Quality - $DATE" \
-		--vertical-label "%" \
-		DEF:pktloss="$RDB":pktloss:LAST \
-		CDEF:npktloss=pktloss,1000,/ \
-		AREA:pktloss#778787:"line quality (ms)" \
-		GPRINT:pktloss:MIN:"Min\: %3.3lf" \
-		GPRINT:pktloss:MAX:"Max\: %3.3lf" \
-		GPRINT:pktloss:AVERAGE:"Avg\: %3.3lf" \
-		GPRINT:pktloss:LAST:"Curr\: %3.3lf\n" >/dev/null 2>&1
-		
-	Clear_Lock
 }
 
 Shortcut_script(){

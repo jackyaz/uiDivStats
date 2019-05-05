@@ -26,26 +26,26 @@ font-weight: bolder;
 <script language="JavaScript" type="text/javascript" src="/tmmenu.js"></script>
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <script language="JavaScript" type="text/javascript" src="/validator.js"></script>
-<script language="JavaScript" type="text/javascript" src="/ext/uidivstatsblockedads.js"></script>
+<script language="JavaScript" type="text/javascript" src="/ext/uidivstats.js"></script>
 
 <script>
-var barDataBlockedAds, barLabels;
-var myBarChart;
+var barDataBlockedAds, barLabelsBlockedAds, barDataReqDomains, barLabelsReqDomains;
+var BarChartBlockedAds, BarChartReqDomains;
 var charttype;
 Chart.defaults.global.defaultFontColor = "#CCC";
 
-function redraw() {
+function Redraw_Ad_Chart() {
 	barDataBlockedAds = [];
-	barLabels = [];
-	GenChartData();
-	draw_chart();
+	barLabelsBlockedAds = [];
+	GenChartDataAds();
+	Draw_Ad_Chart();
 }
 
-function draw_chart() {
-	if (barLabels.length == 0) return;
-	if (myBarChart != undefined) myBarChart.destroy();
-	var ctx = document.getElementById("chart").getContext("2d");
-	var barOptions = {
+function Draw_Ad_Chart() {
+	if (barLabelsBlockedAds.length == 0) return;
+	if (BarChartBlockedAds != undefined) BarChartBlockedAds.destroy();
+	var ctx = document.getElementById("ChartAds").getContext("2d");
+	var barOptionsAds = {
 		segmentShowStroke : false,
 		segmentStrokeColor : "#000",
 		animationEasing : "easeOutQuart",
@@ -72,16 +72,16 @@ function draw_chart() {
 		}
 	};
 	var barDataset = {
-		labels: barLabels,
+		labels: barLabelsBlockedAds,
 		datasets: [{data: barDataBlockedAds,
 			borderWidth: 1,
 			backgroundColor: poolColors(barDataBlockedAds.length),
 			borderColor: "#000000",
 		}]
 	};
-	myBarChart = new Chart(ctx, {
+	BarChartBlockedAds = new Chart(ctx, {
 		type: getChartType(),
-		options: barOptions,
+		options: barOptionsAds,
 		data: barDataset
 	});
 	changeColour(E('colour'));
@@ -103,7 +103,7 @@ function initial(){
 	}
 
 	show_menu();
-	redraw();
+	Redraw_Ad_Chart();
 	changeLayout(E('charttype'));
 }
 
@@ -162,14 +162,14 @@ function changeColour(e) {
 	colour = e.value * 1;
 	if ( colour == 0 )
 	{
-		myBarChart.config.data.datasets[0].backgroundColor = poolColors(barDataBlockedAds.length);
+		BarChartBlockedAds.config.data.datasets[0].backgroundColor = poolColors(barDataBlockedAds.length);
 	}
 	else
 	{
-		myBarChart.config.data.datasets[0].backgroundColor = "rgba(2, 53, 135, 1)";
+		BarChartBlockedAds.config.data.datasets[0].backgroundColor = "rgba(2, 53, 135, 1)";
 	}
 	cookie.set('colour', colour, 31);
-	myBarChart.update();
+	BarChartBlockedAds.update();
 }
 
 function changeLayout(e) {
@@ -183,7 +183,7 @@ function changeLayout(e) {
 		charttype = "bar"
 	}
 	cookie.set('charttype', layout, 31);
-	redraw();
+	Redraw_Ad_Chart();
 }
 </script>
 </head>
@@ -228,7 +228,7 @@ function changeLayout(e) {
 <tr>
 <td>
 <textarea cols="63" rows="35" wrap="off" readonly="readonly" id="divstats" class="textarea_log_table" style="font-family:'Courier New', Courier, mono; font-size:11px;">"Stats will show here"</textarea>
-<script language="JavaScript" type="text/javascript" src="/ext/uidivstats.js"></script>
+<script language="JavaScript" type="text/javascript" src="/ext/uidivstatstext.js"></script>
 </td>
 </tr>
 </table>
@@ -258,7 +258,7 @@ function changeLayout(e) {
 </tr>
 <tr>
 <td colspan="2">
-<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="chart" height="240"></div>
+<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="ChartAds" height="240"></div>
 </td>
 </tr>
 </table>
