@@ -680,7 +680,7 @@ Generate_Stats_Diversion(){
 		
 		WriteData_ToJS /tmp/uidivstats/div-tah "/www/ext/uidivstatsblockedads.js"
 		
-		#rm -rf /tmp/uidivstats
+		rm -rf /tmp/uidivstats
 		
 		# show file sizes
 		#printf "\\n\\n File sizes:\\n$LINE" >>${statsFile}
