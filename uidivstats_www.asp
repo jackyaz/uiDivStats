@@ -103,6 +103,7 @@ function Draw_Domain_Chart() {
 		segmentStrokeColor : "#000",
 		animationEasing : "easeOutQuart",
 		animationSteps : 100,
+		maintainAspectRatio: false,
 		animateScale : true,
 		legend: { display: false, position: "bottom", onClick: null },
 		title: { display: false },
