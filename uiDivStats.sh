@@ -415,8 +415,9 @@ Generate_Stats_Diversion(){
 		#startCount=$(date +%s)
 		diversion count_ads
 		. "${DIVERSION_DIR}/.conf/diversion.conf"
-		wsTopHosts=10
-		wsTopClients=5
+		wsTopHosts=15
+		wsTopClients=10
+		wsFilterLN=on
 		
 		case "$EDITION" in
 			Lite)		this_blockingIP=0.0.0.0;;
@@ -551,13 +552,13 @@ Generate_Stats_Diversion(){
 		# show if found in any of these lists
 		for i in $(awk '{print $2}' /tmp/uidivstats/div-th); do
 			i=$(echo $i | sed -e 's/\./\\./g')
-			if /opt/bin/grep -q " $i$" "${DIVERSION_DIR}/list/blockinglist"; then
+			if /opt/bin/grep -q " $i$\| $i " "${DIVERSION_DIR}/list/blockinglist"; then
 				echo "blocked" >>/tmp/uidivstats/div-bwl
-			elif /opt/bin/grep -q " $i$" /tmp/uidivstats/div-blacklist; then
+			elif /opt/bin/grep -q " $i$\| $i " /tmp/uidivstats/div-blacklist; then
 				echo "blacklisted" >>/tmp/uidivstats/div-bwl
-			elif /opt/bin/grep -q "$i$" /tmp/uidivstats/div-wc_blacklist; then
+			elif /opt/bin/grep -q " $i$\| $i " /tmp/uidivstats/div-wc_blacklist; then
 				echo "wc_blacklisted" >>/tmp/uidivstats/div-bwl
-			elif /opt/bin/grep -q "$i$" /tmp/uidivstats/div-whitelist; then
+			elif /opt/bin/grep -q " $i$\| $i " /tmp/uidivstats/div-whitelist; then
 				echo "whitelisted" >>/tmp/uidivstats/div-bwl
 			else
 				echo >>/tmp/uidivstats/div-bwl
@@ -574,11 +575,11 @@ Generate_Stats_Diversion(){
 		# show if found in any of these lists
 		for i in $(awk '{print $2}' /tmp/uidivstats/div-tah); do
 			i=$(echo $i | sed -e 's/\./\\./g')
-			if /opt/bin/grep -q " $i$" "${DIVERSION_DIR}/list/blockinglist"; then
+			if /opt/bin/grep -q " $i$\| $i " "${DIVERSION_DIR}/list/blockinglist"; then
 				echo "blocked" >>/tmp/uidivstats/div-bw
-			elif /opt/bin/grep -q " $i$" /tmp/uidivstats/div-blacklist; then
+			elif /opt/bin/grep -q " $i$\| $i " /tmp/uidivstats/div-blacklist; then
 				echo "blacklisted" >>/tmp/uidivstats/div-bw
-			elif /opt/bin/grep -q "$i$" /tmp/uidivstats/div-wc_blacklist; then
+			elif /opt/bin/grep -q " $i$\| $i " /tmp/uidivstats/div-wc_blacklist; then
 				echo "wc_blacklisted" >>/tmp/uidivstats/div-bw
 			fi
 		done
@@ -619,13 +620,13 @@ Generate_Stats_Diversion(){
 		# show if found in any of these lists
 		for i in $(awk '{print $2}' /tmp/uidivstats/div2); do
 			i=$(echo $i | sed -e 's/\./\\./g')
-			if /opt/bin/grep -q " $i$" "${DIVERSION_DIR}/list/blockinglist"; then
+			if /opt/bin/grep -q " $i$\| $i " "${DIVERSION_DIR}/list/blockinglist"; then
 				echo "blocked" >>/tmp/uidivstats/div-noisy
-			elif /opt/bin/grep -q " $i$" /tmp/uidivstats/div-blacklist; then
+			elif /opt/bin/grep -q " $i$\| $i " /tmp/uidivstats/div-blacklist; then
 				echo "blacklisted" >>/tmp/uidivstats/div-noisy
-			elif /opt/bin/grep -q "$i$" /tmp/uidivstats/div-wc_blacklist; then
+			elif /opt/bin/grep -q " $i$\| $i " /tmp/uidivstats/div-wc_blacklist; then
 				echo "wc_blacklisted" >>/tmp/uidivstats/div-noisy
-			elif /opt/bin/grep -q "$i$" /tmp/uidivstats/div-whitelist; then
+			elif /opt/bin/grep -q " $i$\| $i " /tmp/uidivstats/div-whitelist; then
 				echo "whitelisted" >>/tmp/uidivstats/div-noisy
 			else
 				echo >>/tmp/uidivstats/div-noisy
@@ -656,13 +657,13 @@ Generate_Stats_Diversion(){
 			# show if found in any of these lists
 			for i in $(awk '{print $2}' /tmp/uidivstats/div-thtc); do
 				i=$(echo $i | sed -e 's/\./\\./g')
-				if /opt/bin/grep -q " $i$" "${DIVERSION_DIR}/list/blockinglist"; then
+				if /opt/bin/grep -q " $i$\| $i " "${DIVERSION_DIR}/list/blockinglist"; then
 					echo "blocked" >>/tmp/uidivstats/div-toptop
-				elif /opt/bin/grep -q " $i$" /tmp/uidivstats/div-blacklist; then
+				elif /opt/bin/grep -q " $i$\| $i " /tmp/uidivstats/div-blacklist; then
 					echo "blacklisted" >>/tmp/uidivstats/div-toptop
-				elif /opt/bin/grep -q "$i$" /tmp/uidivstats/div-wc_blacklist; then
+				elif /opt/bin/grep -q " $i$\| $i " /tmp/uidivstats/div-wc_blacklist; then
 					echo "wc_blacklisted" >>/tmp/uidivstats/div-toptop
-				elif /opt/bin/grep -q "$i$" /tmp/uidivstats/div-whitelist; then
+				elif /opt/bin/grep -q " $i$\| $i " /tmp/uidivstats/div-whitelist; then
 					echo "whitelisted" >>/tmp/uidivstats/div-toptop
 				else
 					echo >>/tmp/uidivstats/div-toptop
