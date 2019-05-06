@@ -356,7 +356,7 @@ WriteData_ToJS(){
 	contents=""
 	contents="$contents""$4"'.unshift('
 	while IFS='' read -r line || [ -n "$line" ]; do
-		contents="$contents""'""$(echo "$line" | awk '{$1=$1};1' | awk 'BEGIN{FS=" *"}{ print $1 }')""'"","
+		contents="$contents""'""$(echo "$line" | awk '{$1=$1};1' | awk 'BEGIN{FS="  *"}{ print $1 }')""'"","
 	done < "$1"
 	contents=$(echo "$contents" | sed 's/.$//')
 	contents="$contents"");"
@@ -364,7 +364,7 @@ WriteData_ToJS(){
 
 	contents="$5"'.unshift('
 	while IFS='' read -r line || [ -n "$line" ]; do
-		contents="$contents""'""$(echo "$line" | awk '{$1=$1};1' | awk 'BEGIN{FS=" *"}{ print $2 }')""'"","
+		contents="$contents""'""$(echo "$line" | awk '{$1=$1};1' | awk 'BEGIN{FS="  *"}{ print $2 }')""'"","
 	done < "$1"
 	contents=$(echo "$contents" | sed 's/.$//')
 	contents="$contents"");"
