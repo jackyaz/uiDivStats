@@ -57,6 +57,7 @@ function Draw_Ad_Chart() {
 		segmentStrokeColor : "#000",
 		animationEasing : "easeOutQuart",
 		animationSteps : 100,
+		maintainAspectRatio: false,
 		animateScale : true,
 		legend: { display: false, position: "bottom", onClick: null },
 		title: { display: false },
@@ -392,7 +393,7 @@ function changeLayout(e,chartname,cookiename) {
 </tr>
 <tr>
 <td colspan="2">
-<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="ChartAds" height="240"></div>
+<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="ChartAds" height="360"></div>
 </td>
 </tr>
 </table>
@@ -423,7 +424,7 @@ function changeLayout(e,chartname,cookiename) {
 </tr>
 <tr>
 <td colspan="2">
-<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="ChartDomains" height="240"></div>
+<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="ChartDomains" height="360"></div>
 </td>
 </tr>
 </table>
