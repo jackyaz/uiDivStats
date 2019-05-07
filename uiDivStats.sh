@@ -439,11 +439,20 @@ Generate_Stats_Diversion(){
 		printf "\\n Ad-Blocking stats:" >>${statsFile}
 		printf "\\n$LINE" >>${statsFile}
 		
-		BD=$(/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/blockinglist" "${DIVERSION_DIR}/list/blacklist" "${DIVERSION_DIR}/list/wc_blacklist" | wc -l)
+		if /opt/bin/grep -qm1 'devEnv' /opt/bin/diversion; then
+			BD="$(($(/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/blockinglist" | wc -w)-$(/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/blockinglist" | wc -l)))"
+			BD="$(($BD+$(/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/blacklist" "${DIVERSION_DIR}/list/wc_blacklist" | wc -l)))"
+			BL="$(($(/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/blockinglist" | wc -w)-$(/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/blockinglist" | wc -l)))"
+			[ "$bfFs" = "on" ] && BLfs="$(($(/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/blockinglist_fs" | wc -w)-$(/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/blockinglist_fs" | wc -l)))"
+		else
+			BD=$(/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/blockinglist" "${DIVERSION_DIR}/list/blacklist" "${DIVERSION_DIR}/list/wc_blacklist" | wc -l)
+			BL=$(/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/blockinglist" | wc -l)
+			[ "$bfFs" = "on" ] && BLfs=$(/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/blockinglist_fs" | wc -l)
+		fi
+		
 		printf "%-13s%s\\n" " $(echo $BD | human_number)" "domains in total are blocked" >>${statsFile}
-		BL=$(/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/blockinglist" | wc -l)
 		if [ "$bfFs" = "on" ]; then
-			BLfs=$(/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/blockinglist_fs" | wc -l)
+			#BLfs=$(/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/blockinglist_fs" | wc -l)
 			if [ "$bfTypeinUse" = "primary" ]; then
 				printf "%-13s%s\\n" " $(echo $BL | human_number)" "blocked by primary blocking list in use" >>${statsFile}
 				printf "%-13s%s\\n" " $(echo $BLfs | human_number)" "(blocked by secondary blocking list)" >>${statsFile}
