@@ -229,14 +229,6 @@ Download_File(){
 	/usr/sbin/curl -fsL --retry 3 "$1" -o "$2"
 }
 
-RRD_Initialise(){
-	if [ ! -f /jffs/scripts/uidivstats_rrd.rrd ]; then
-		Download_File "$SCRIPT_REPO/uidivstats_xml.xml" "/jffs/scripts/uidivstats_xml.xml"
-		rrdtool restore -f /jffs/scripts/uidivstats_xml.xml /jffs/scripts/uidivstats_rrd.rrd
-		rm -f /jffs/scripts/uidivstats_xml.xml
-	fi
-}
-
 Get_CONNMON_UI(){
 	if [ -f /www/AdaptiveQoS_ROG.asp ]; then
 		echo "AdaptiveQoS_ROG.asp"
@@ -870,7 +862,6 @@ Menu_Install(){
 	fi
 	
 	opkg update
-	opkg install rrdtool
 	opkg install grep
 	
 	Auto_Startup create 2>/dev/null
@@ -879,7 +870,6 @@ Menu_Install(){
 	Shortcut_script create
 	Mount_WebUI
 	Modify_WebUI_File
-	RRD_Initialise
 	Menu_GenerateStats
 	
 	Clear_Lock
@@ -892,7 +882,6 @@ Menu_Startup(){
 	Shortcut_script create
 	Mount_WebUI
 	Modify_WebUI_File
-	RRD_Initialise
 	CacheStats extract 2>/dev/null
 	Clear_Lock
 }
@@ -941,7 +930,6 @@ Menu_Uninstall(){
 	umount /www/require/modules/menuTree.js 2>/dev/null
 	
 	if [ ! -f "/jffs/scripts/ntpmerlin" ] && [ ! -f "/jffs/scripts/spdmerlin" ] && [ ! -f "/jffs/scripts/connmon" ]; then
-		opkg remove --autoremove rrdtool
 		rm -f "/jffs/scripts/custom_menuTree.js" 2>/dev/null
 	else
 		mount -o bind "/jffs/scripts/custom_menuTree.js" "/www/require/modules/menuTree.js"
