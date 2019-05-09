@@ -15,7 +15,7 @@
 
 ### Start of script variables ###
 readonly SCRIPT_NAME="uiDivStats"
-readonly SCRIPT_VERSION="v0.5.2"
+readonly SCRIPT_VERSION="v0.5.3"
 readonly SCRIPT_BRANCH="master"
 readonly SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/""$SCRIPT_NAME""/""$SCRIPT_BRANCH"
 readonly SCRIPT_CONF="/jffs/configs/$SCRIPT_NAME.config"
@@ -39,7 +39,7 @@ Print_Output(){
 	fi
 }
 
-### Code for this function courtesy of https://github.com/decoderman- credit to @thelonelycoder ###
+### Code for this function courtesy of https://github.com/decoderman - credit to @thelonelycoder ###
 Firmware_Version_Check(){
 	echo "$1" | awk -F. '{ printf("%d%03d%03d%03d\n", $1,$2,$3,$4); }'
 }
@@ -387,15 +387,7 @@ WriteData_ToJS(){
 # shellcheck disable=SC2004
 # shellcheck disable=SC1003
 Generate_Stats_Diversion(){
-	# Diversion is free to use under the GNU General Public License version 3 (GPL-3.0)
-	# https://opensource.org/licenses/GPL-3.0
-	
-	# Proudly coded by thelonelycoder
-	# Copyright (C) 2016-2019 thelonelycoder - All Rights Reserved
-	# https://www.snbforums.com/members/thelonelycoder.25480/
-	# https://diversion.ch
-	
-	# Script Version 4.0.7
+	### Code for this function courtesy of https://github.com/decoderman - credit to @thelonelycoder ###
 	
 	# set environment PATH to system binaries
 	export PATH=/sbin:/bin:/usr/sbin:/usr/bin:$PATH
@@ -411,8 +403,7 @@ Generate_Stats_Diversion(){
 	
 	DIVERSION_DIR=/opt/share/diversion
 	
-	if [ -f "${DIVERSION_DIR}/.conf/diversion.conf" ]; then
-		#startCount=$(date +%s)
+	if [ -f "${DIVERSION_DIR}/.conf/diversion.conf" ] && [ -s /opt/var/log/dnsmasq.log ]; then
 		diversion count_ads
 		. "${DIVERSION_DIR}/.conf/diversion.conf"
 		wsTopHosts=15
@@ -427,15 +418,12 @@ Generate_Stats_Diversion(){
 		lanIPaddr=$(nvram get lan_ipaddr | sed 's/\.[0-9]*$/./')
 		human_number(){	sed -re " :restart ; s/([0-9])([0-9]{3})($|[^0-9])/\1,\2\3/ ; t restart ";}
 		LINE=" --------------------------------------------------------\\n"
-		[ -z "$(nvram get odmpid)" ] && routerModel=$(nvram get productid) || routerModel=$(nvram get odmpid)
-		[ -z "$FRIENDLY_ROUTER_NAME" ] && FRIENDLY_ROUTER_NAME=$routerModel
 		statsFile="/tmp/uidivstats.txt"
 		
 		# start of the output for the stats
 		printf "\\n Router Stats $(date +"%c")\\n$LINE" >${statsFile}
-		printf " $FRIENDLY_ROUTER_NAME ($routerModel) Firmware-$(nvram get buildno) @ $(nvram get lan_ipaddr)\\n" >>${statsFile}
 		[ "$thisM_VERSION" ] && THIS_VERSION="${thisVERSION}.$thisM_VERSION" || THIS_VERSION=$thisVERSION
-		printf " Compiled by $NAME $THIS_VERSION\\n$LINE" >>${statsFile}
+		printf " Compiled by $NAME $THIS_VERSION\\n" >>${statsFile}
 		printf "\\n Ad-Blocking stats:" >>${statsFile}
 		printf "\\n$LINE" >>${statsFile}
 		
@@ -478,11 +466,11 @@ Generate_Stats_Diversion(){
 			printf " Combined ad-blocking totals:\\n" >>${statsFile}
 			printf "%-13s%s\\n" " $(echo $(($adsBlocked+$adsBlockedAlt)) | human_number)" "ads in total blocked" >>${statsFile}
 			printf "%-13s%s\\n" " $(echo $(($adsWeek+$adsWeekAlt)) | human_number)" "ads this week, since last $bfUpdateDay" >>${statsFile}
-			printf "%-13s%s\\n$LINE" " $(echo $(($adsNew+$adsNewAlt)) | human_number)" "new ads, since $adsPrevCount" >>${statsFile}
+			printf "%-13s%s\\n" " $(echo $(($adsNew+$adsNewAlt)) | human_number)" "new ads, since $adsPrevCount" >>${statsFile}
 		else
 			printf "%-13s%s\\n" " $(echo $adsBlocked | human_number)" "ads in total blocked" >>${statsFile}
 			printf "%-13s%s\\n" " $(echo $adsWeek | human_number)" "ads this week, since last $bfUpdateDay" >>${statsFile}
-			printf "%-13s%s\\n$LINE" " $(echo $adsNew | human_number)" "new ads, since $adsPrevCount" >>${statsFile}
+			printf "%-13s%s\\n" " $(echo $adsNew | human_number)" "new ads, since $adsPrevCount" >>${statsFile}
 		fi
 		
 		[ -d /tmp/uidivstats ] && rm -rf /tmp/uidivstats
@@ -498,33 +486,41 @@ Generate_Stats_Diversion(){
 		[ -s /etc/hosts.dnsmasq ] && awk '{print $1}' /etc/hosts.dnsmasq >>/tmp/uidivstats/div-allips.tmp
 		# from dnsmasq.leases
 		[ -s /var/lib/misc/dnsmasq.leases ] && awk '{print $3}' /var/lib/misc/dnsmasq.leases >>/tmp/uidivstats/div-allips.tmp
-		# remove duplicates, sort by last octet
-		cat /tmp/uidivstats/div-allips.tmp | sort -t . -k 4,4n -u > /tmp/uidivstats/div-allips
+		# don't run the clients specific code if none are found
+		if [ -s /tmp/uidivstats/div-allips.tmp ]; then
+			# remove duplicates, sort by last octet
+			cat /tmp/uidivstats/div-allips.tmp | sort -t . -k 4,4n -u > /tmp/uidivstats/div-allips
+			foundClients=1
+		else
+			wsFilterLN=off
+		fi
 		
 		# add reverse router IP
 		echo "$lanIPaddr" | awk -F. '{print "."$3"." $2"."$1}' >>/tmp/uidivstats/div-ipleases
 		
-		# create local client files
-		for i in $(awk '{print $1}' /tmp/uidivstats/div-allips); do
-			if [ -s /etc/hosts.dnsmasq ] && /opt/bin/grep -wq $i /etc/hosts.dnsmasq; then
-				echo "$(awk -v var="$i" -F' ' '$1 == var{print $2}' /etc/hosts.dnsmasq)" >>/tmp/uidivstats/div-hostleases
-				echo "$(awk -v var="$i" -F' ' '$1 == var{print $1, $2}' /etc/hosts.dnsmasq)" >>/tmp/uidivstats/div-iphostleases
-				echo "$(awk -v var="$i" -F' ' '$1 == var{print $1}' /etc/hosts.dnsmasq)" >>/tmp/uidivstats/div-ipleases
-				# add the reverse client IP addresses
-				echo "$i" | awk -F. '{print $4"."$3"." $2"."$1}' >>/tmp/uidivstats/div-ipleases
-			elif /opt/bin/grep -wq "$i \*" /var/lib/misc/dnsmasq.leases; then
-				echo "$i Name-N/A" >>/tmp/uidivstats/div-iphostleases
-				echo "$i" >>/tmp/uidivstats/div-ipleases
-				# add the reverse client IP addresses
-				echo "$i" | awk -F. '{print $4"."$3"." $2"."$1}' >>/tmp/uidivstats/div-ipleases
-			else
-				echo "$(awk -v var="$i" -F' ' '$3 == var{print $4}' /var/lib/misc/dnsmasq.leases)" >>/tmp/uidivstats/div-hostleases
-				echo "$(awk -v var="$i" -F' ' '$3 == var{print $3, $4}' /var/lib/misc/dnsmasq.leases)" >>/tmp/uidivstats/div-iphostleases
-				echo "$(awk -v var="$i" -F' ' '$3 == var{print $3}' /var/lib/misc/dnsmasq.leases)" >>/tmp/uidivstats/div-ipleases
-				# add the reverse client IP addresses
-				echo "$i" | awk -F. '{print $4"."$3"." $2"."$1}' >>/tmp/uidivstats/div-ipleases
-			fi
-		done
+		# create local client files if any were found
+		if [ "$foundClients" ]; then
+			for i in $(awk '{print $1}' /tmp/uidivstats/div-allips); do
+				if [ -s /etc/hosts.dnsmasq ] && /opt/bin/grep -wq $i /etc/hosts.dnsmasq; then
+					echo "$(awk -v var="$i" -F' ' '$1 == var{print $2}' /etc/hosts.dnsmasq)" >>/tmp/uidivstats/div-hostleases
+					echo "$(awk -v var="$i" -F' ' '$1 == var{print $1, $2}' /etc/hosts.dnsmasq)" >>/tmp/uidivstats/div-iphostleases
+					echo "$(awk -v var="$i" -F' ' '$1 == var{print $1}' /etc/hosts.dnsmasq)" >>/tmp/uidivstats/div-ipleases
+					# add the reverse client IP addresses
+					echo "$i" | awk -F. '{print $4"."$3"." $2"."$1}' >>/tmp/uidivstats/div-ipleases
+				elif /opt/bin/grep -Fq "$i * " /var/lib/misc/dnsmasq.leases; then
+					echo "$i Name-N/A" >>/tmp/uidivstats/div-iphostleases
+					echo "$i" >>/tmp/uidivstats/div-ipleases
+					# add the reverse client IP addresses
+					echo "$i" | awk -F. '{print $4"."$3"." $2"."$1}' >>/tmp/uidivstats/div-ipleases
+				else
+					echo "$(awk -v var="$i" -F' ' '$3 == var{print $4}' /var/lib/misc/dnsmasq.leases)" >>/tmp/uidivstats/div-hostleases
+					echo "$(awk -v var="$i" -F' ' '$3 == var{print $3, $4}' /var/lib/misc/dnsmasq.leases)" >>/tmp/uidivstats/div-iphostleases
+					echo "$(awk -v var="$i" -F' ' '$3 == var{print $3}' /var/lib/misc/dnsmasq.leases)" >>/tmp/uidivstats/div-ipleases
+					# add the reverse client IP addresses
+					echo "$i" | awk -F. '{print $4"."$3"." $2"."$1}' >>/tmp/uidivstats/div-ipleases
+				fi
+			done
+		fi
 		
 		# overwrite with empty files if filtering is off
 		[ "$wsFilterLN" = "off" ] && >/tmp/uidivstats/div-hostleases >/tmp/uidivstats/div-ipleases
@@ -532,28 +528,8 @@ Generate_Stats_Diversion(){
 		# write empty backup file if not found for [Client Name*] list
 		[ ! -f "${DIVERSION_DIR}/backup/diversion_stats-iphostleases" ] && > "${DIVERSION_DIR}/backup/diversion_stats-iphostleases"
 		
-		# show what settings were used to compile
-		#printf "\\n Stats settings applied:\\n$LINE" >>${statsFile}
-		#[ "$bfFs" = "on" ] && printf " Info: blocking list fast switch (fs) is enabled.\\n Stats are always run towards the primary blocking list.\\n\\n" >>${statsFile}
-		#printf " Filter local client names set to: $wsFilterLN\\n" >>${statsFile}
-		#printf " Compiling top $wsTopHosts domains for $wsTopClients clients\\n" >>${statsFile}
-		#if [ "$domainNeeded" = "on" ]; then
-		#	printf " Domain needed (set in [ds]): $domainNeeded\\n" >>${statsFile}
-		#fi
-		#printf "$LINE" >>${statsFile}
-		
-		# lists key for the listing
-		#printf "\\n Lists key:\\n$LINE client names resolved at stats creation time\\n\\n" >>${statsFile}
-		#printf "%-17s%s\\n" " Name-N/A" "= name could not be resolved" >>${statsFile}
-		#printf "%-17s%s\\n" " Client Name*" "= name resolved from saved file, may not be accurate" >>${statsFile}
-		#printf "%-17s%s\\n" " blocked" "= blocked by blockinglist" >>${statsFile}
-		#printf "%-17s%s\\n" " blacklisted" "= blocked by blacklist" >>${statsFile}
-		#printf "%-17s%s\\n" " wc_blacklisted" "= blocked by wildcard blacklist" >>${statsFile}
-		#printf "%-17s%s\\n$LINE" " whitelisted" "= whitelisted by whitelist" >>${statsFile}
-		
 		# begin of stats computing
-		startCountwsTopHosts=$(date +%s)
-		printf "\\n\\n The top $wsTopHosts requested domains were:\\n$LINE" >>${statsFile}
+		printf "\\n The top $wsTopHosts requested domains were:\\n$LINE" >>${statsFile}
 		awk '/query\[AAAA]|query\[A]/ {print $(NF-2)}' /opt/var/log/dnsmasq.log* |
 		awk '{for(i=1;i<=NF;i++)a[$i]++}END{for(o in a) printf "\n %-6s %-40s""%s %s",a[o],o}' | sort -nr |
 		/opt/bin/grep -viF -f /tmp/uidivstats/div-hostleases | /opt/bin/grep -viF -f /tmp/uidivstats/div-ipleases | head -$wsTopHosts >>/tmp/uidivstats/div-th
@@ -574,12 +550,10 @@ Generate_Stats_Diversion(){
 		done
 		awk 'NR==FNR{a[FNR]=$0 "";next} {print a[FNR],$0}' /tmp/uidivstats/div-th /tmp/uidivstats/div-bwl >>${statsFile}
 		
-		startCountTopAdHosts=$(date +%s)
-		printf "\\n\\n The top $wsTopHosts blocked ad domains were:\\n$LINE" >>${statsFile}
+		printf "\\n The top $wsTopHosts blocked ad domains were:\\n$LINE" >>${statsFile}
 		awk '/is '$this_blockingIP'|is 0.0.0.0/ {print $(NF-2)}' /opt/var/log/dnsmasq.log* |
 		awk '{for(i=1;i<=NF;i++)a[$i]++}END{for(o in a) printf "\n %-6s %-40s""%s %s",a[o],o}' | sort -nr |
 		head -$wsTopHosts >>/tmp/uidivstats/div-tah
-		
 		# show if found in any of these lists
 		for i in $(awk '{print $2}' /tmp/uidivstats/div-tah); do
 			i=$(echo $i | sed -e 's/\./\\./g')
@@ -594,99 +568,111 @@ Generate_Stats_Diversion(){
 		[ ! -f /tmp/uidivstats/div-bw ] && >/tmp/uidivstats/div-bw
 		awk 'NR==FNR{a[FNR]=$0 "";next} {print a[FNR],$0}' /tmp/uidivstats/div-tah /tmp/uidivstats/div-bw >>${statsFile}
 		
-		AL=1 # prevent divide by zero
-		startCountNoisyClients=$(date +%s)
-		printf "\\n\\n The top $wsTopClients noisiest name clients:\\n$LINE\\n" >>${statsFile}
-		printf " count for IP, client name: count for domain - percentage\\n$LINE" >>${statsFile}
-		awk -F " " '/from '$lanIPaddr'/ {print $NF}' /opt/var/log/dnsmasq.log* |
-		awk '{for(i=1;i<=NF;i++)a[$i]++}END{for(o in a) printf "\n %-6s %-15s""%s %s",a[o],o}' | sort -nr |
-		head -$wsTopClients >/tmp/uidivstats/div1
-		for i in $(awk '{print $2}' /tmp/uidivstats/div1); do
-			i=$(echo $i | sed -e 's/\./\\./g')
-			/opt/bin/grep -w $i /opt/var/log/dnsmasq.log* | awk '{print $(NF-2)}' |
-			awk '{for(i=1;i<=NF;i++)a[$i]++}END{for(o in a) printf "\n %-6s %-40s""%s %s",a[o],o}' | sort -nr |
-			/opt/bin/grep -viF -f /tmp/uidivstats/div-hostleases | /opt/bin/grep -viF -f /tmp/uidivstats/div-ipleases |
-			head -1 >>/tmp/uidivstats/div2
-			CH="$(awk 'END{print $1}' /tmp/uidivstats/div2)"
-			TH="$(awk -v AL="$AL" 'FNR==AL{print $1}' /tmp/uidivstats/div1)"
-			AL=$(( AL + 1))
-			awk -v CH="$CH" -v TH="$TH" 'BEGIN{printf "%-5.2f%s\n", ((CH * 100)/TH), "%"}' >>/tmp/uidivstats/div3
-		done
-		
-		# add client names
-		for i in $(awk '{print $2}' /tmp/uidivstats/div1); do
-			i=$(echo $i | sed -e 's/\./\\./g')
-			if /opt/bin/grep -wq $i /tmp/uidivstats/div-iphostleases; then
-				printf "%-26s\\n" "$(awk -v var="$i" -F' ' '$1 == var{print $2}' /tmp/uidivstats/div-iphostleases):" >>/tmp/uidivstats/div5
-			elif /opt/bin/grep -wq $i "${DIVERSION_DIR}/backup/diversion_stats-iphostleases"; then
-				printf "%-26s\\n" "$(awk -v var="$i" -F' ' '$1 == var{print $2}' ${DIVERSION_DIR}/backup/diversion_stats-iphostleases)*:" >>/tmp/uidivstats/div5
-			else
-				printf "%-26s\\n" "Name-N/A:" >>/tmp/uidivstats/div5
-			fi
-		done
-		
-		# show if found in any of these lists
-		for i in $(awk '{print $2}' /tmp/uidivstats/div2); do
-			i=$(echo $i | sed -e 's/\./\\./g')
-			if /opt/bin/grep -q " $i$\| $i " "${DIVERSION_DIR}/list/blockinglist"; then
-				echo "blocked" >>/tmp/uidivstats/div-noisy
-			elif /opt/bin/grep -q " $i$" /tmp/uidivstats/div-blacklist; then
-				echo "blacklisted" >>/tmp/uidivstats/div-noisy
-			elif /opt/bin/grep -q "$i$" /tmp/uidivstats/div-wc_blacklist; then
-				echo "wc_blacklisted" >>/tmp/uidivstats/div-noisy
-			elif /opt/bin/grep -q "$i$" /tmp/uidivstats/div-whitelist; then
-				echo "whitelisted" >>/tmp/uidivstats/div-noisy
-			else
-				echo >>/tmp/uidivstats/div-noisy
-			fi
-		done
-		
-		# assemble the tables and print
-		awk 'NR==FNR{a[FNR]=$0 "-";next} {print a[FNR],$0}' /tmp/uidivstats/div2 /tmp/uidivstats/div3 >/tmp/uidivstats/div4
-		awk 'NR==FNR{a[FNR]=$0 "";next} {print a[FNR],$0}' /tmp/uidivstats/div4 /tmp/uidivstats/div-noisy >/tmp/uidivstats/div7
-		awk 'NR==FNR{a[FNR]=$0 "";next} {print a[FNR],$0}' /tmp/uidivstats/div1 /tmp/uidivstats/div5 >/tmp/uidivstats/div6
-		awk 'NR==FNR{a[FNR]=$0 "";next} {print a[FNR],$0}' /tmp/uidivstats/div6 /tmp/uidivstats/div7 >>${statsFile}
-		
-		startCountwsTopHostsClients=$(date +%s)
-		printf "\\n\\n Top $wsTopHosts domains for top $wsTopClients clients:\\n$LINE" >>${statsFile}
-		for i in $(awk '{print $2}' /tmp/uidivstats/div1); do
-			if /opt/bin/grep -wq $i /tmp/uidivstats/div-iphostleases; then
-				printf "\\n $i, $(awk -v var="$i" -F' ' '$1 == var{print $2}' /tmp/uidivstats/div-iphostleases):\\n$LINE" >>${statsFile}
-			elif /opt/bin/grep -wq $i "${DIVERSION_DIR}/backup/diversion_stats-iphostleases"; then
-				printf "\\n $i, $(awk -v var="$i" -F' ' '$1 == var{print $2}' ${DIVERSION_DIR}/backup/diversion_stats-iphostleases)*:\\n$LINE" >>${statsFile}
-			else
-				printf "\\n $i, Name-N/A:\\n$LINE" >>${statsFile}
-			fi
-			# remove files for next client compiling run
-			rm -f /tmp/uidivstats/div-thtc /tmp/uidivstats/div-toptop
-			/opt/bin/grep -w $i /opt/var/log/dnsmasq.log* | awk '{print $(NF-2)}'|
-			awk '{for(i=1;i<=NF;i++)a[$i]++}END{for(o in a) printf "\n %-6s %-40s""%s %s",a[o],o}' | sort -nr |
-			/opt/bin/grep -viF -f /tmp/uidivstats/div-hostleases | /opt/bin/grep -viF -f /tmp/uidivstats/div-ipleases | head -$wsTopHosts >>/tmp/uidivstats/div-thtc
-			# show if found in any of these lists
-			for i in $(awk '{print $2}' /tmp/uidivstats/div-thtc); do
+		# compile client stats if any were found
+		if [ "$foundClients" ]; then
+			AL=1 # prevent divide by zero
+			printf "\\n The top $wsTopClients noisiest name clients:\\n$LINE\\n" >>${statsFile}
+			printf " count for IP, client name: count for domain - percentage\\n$LINE" >>${statsFile}
+			awk -F " " '/from '$lanIPaddr'/ {print $NF}' /opt/var/log/dnsmasq.log* |
+			awk '{for(i=1;i<=NF;i++)a[$i]++}END{for(o in a) printf "\n %-6s %-15s""%s %s",a[o],o}' | sort -nr |
+			head -$wsTopClients >/tmp/uidivstats/div1
+			for i in $(awk '{print $2}' /tmp/uidivstats/div1); do
 				i=$(echo $i | sed -e 's/\./\\./g')
-				if /opt/bin/grep -q " $i$\| $i " "${DIVERSION_DIR}/list/blockinglist"; then
-					echo "blocked" >>/tmp/uidivstats/div-toptop
-				elif /opt/bin/grep -q " $i$" /tmp/uidivstats/div-blacklist; then
-					echo "blacklisted" >>/tmp/uidivstats/div-toptop
-				elif /opt/bin/grep -q "$i$" /tmp/uidivstats/div-wc_blacklist; then
-					echo "wc_blacklisted" >>/tmp/uidivstats/div-toptop
-				elif /opt/bin/grep -q "$i$" /tmp/uidivstats/div-whitelist; then
-					echo "whitelisted" >>/tmp/uidivstats/div-toptop
+				/opt/bin/grep -w $i /opt/var/log/dnsmasq.log* | awk '{print $(NF-2)}' |
+				awk '{for(i=1;i<=NF;i++)a[$i]++}END{for(o in a) printf "\n %-6s %-40s""%s %s",a[o],o}' | sort -nr |
+				/opt/bin/grep -viF -f /tmp/uidivstats/div-hostleases | /opt/bin/grep -viF -f /tmp/uidivstats/div-ipleases |
+				head -1 >>/tmp/uidivstats/div2
+				CH="$(awk 'END{print $1}' /tmp/uidivstats/div2)"
+				TH="$(awk -v AL="$AL" 'FNR==AL{print $1}' /tmp/uidivstats/div1)"
+				AL=$(( AL + 1))
+				awk -v CH="$CH" -v TH="$TH" 'BEGIN{printf "%-5.2f%s\n", ((CH * 100)/TH), "%"}' >>/tmp/uidivstats/div3
+			done
+			
+			# add client names
+			for i in $(awk '{print $2}' /tmp/uidivstats/div1); do
+				i=$(echo $i | sed -e 's/\./\\./g')
+				if /opt/bin/grep -wq $i /tmp/uidivstats/div-iphostleases; then
+					printf "%-26s\\n" "$(awk -v var="$i" -F' ' '$1 == var{print $2}' /tmp/uidivstats/div-iphostleases):" >>/tmp/uidivstats/div5
+				elif /opt/bin/grep -wq $i "${DIVERSION_DIR}/backup/diversion_stats-iphostleases"; then
+					if [ "$(awk -v var="$i" -F' ' '$1 == var{print $2}' ${DIVERSION_DIR}/backup/diversion_stats-iphostleases)" != "*" ]; then
+						printf "%-26s\\n" "$(awk -v var="$i" -F' ' '$1 == var{print $2}' ${DIVERSION_DIR}/backup/diversion_stats-iphostleases)*:" >>/tmp/uidivstats/div5
+					else
+						printf "%-26s\\n" "Name-N/A*:" >>/tmp/uidivstats/div5
+					fi
 				else
-					echo >>/tmp/uidivstats/div-toptop
+					printf "%-26s\\n" "Name-N/A:" >>/tmp/uidivstats/div5
 				fi
 			done
-			awk 'NR==FNR{a[FNR]=$0 "";next} {print a[FNR],$0}' /tmp/uidivstats/div-thtc /tmp/uidivstats/div-toptop  >>${statsFile}
-		done
-		
-		# preserve /tmp/uidivstats/div-iphostleases for next run for [Client Name*] list
-		# remove unknown ip to name resolves, add empty line
-		sed -i '/Name-N/d; $a\' /tmp/uidivstats/div-iphostleases
-		# combine new and backup, sort by ip, remove dupes and empty lines
-		cat /tmp/uidivstats/div-iphostleases "${DIVERSION_DIR}/backup/diversion_stats-iphostleases" > /tmp/uidivstats/div-iphostleases.tmp
-		sed -i '/^\s*$/d' /tmp/uidivstats/div-iphostleases.tmp
-		cat /tmp/uidivstats/div-iphostleases.tmp | sort -t . -k 4,4n -u > "${DIVERSION_DIR}/backup/diversion_stats-iphostleases"
+			
+			# show if found in any of these lists
+			for i in $(awk '{print $2}' /tmp/uidivstats/div2); do
+				i=$(echo $i | sed -e 's/\./\\./g')
+				if /opt/bin/grep -q " $i$\| $i " "${DIVERSION_DIR}/list/blockinglist"; then
+					echo "blocked" >>/tmp/uidivstats/div-noisy
+				elif /opt/bin/grep -q " $i$" /tmp/uidivstats/div-blacklist; then
+					echo "blacklisted" >>/tmp/uidivstats/div-noisy
+				elif /opt/bin/grep -q "$i$" /tmp/uidivstats/div-wc_blacklist; then
+					echo "wc_blacklisted" >>/tmp/uidivstats/div-noisy
+				elif /opt/bin/grep -q "$i$" /tmp/uidivstats/div-whitelist; then
+					echo "whitelisted" >>/tmp/uidivstats/div-noisy
+				else
+					echo >>/tmp/uidivstats/div-noisy
+				fi
+			done
+			
+			# assemble the tables and print
+			awk 'NR==FNR{a[FNR]=$0 "-";next} {print a[FNR],$0}' /tmp/uidivstats/div2 /tmp/uidivstats/div3 >/tmp/uidivstats/div4
+			awk 'NR==FNR{a[FNR]=$0 "";next} {print a[FNR],$0}' /tmp/uidivstats/div4 /tmp/uidivstats/div-noisy >/tmp/uidivstats/div7
+			awk 'NR==FNR{a[FNR]=$0 "";next} {print a[FNR],$0}' /tmp/uidivstats/div1 /tmp/uidivstats/div5 >/tmp/uidivstats/div6
+			awk 'NR==FNR{a[FNR]=$0 "";next} {print a[FNR],$0}' /tmp/uidivstats/div6 /tmp/uidivstats/div7 >>${statsFile}
+			
+			printf "\\n\\n Top $wsTopHosts domains for top $wsTopClients clients:\\n$LINE" >>${statsFile}
+			for i in $(awk '{print $2}' /tmp/uidivstats/div1); do
+				if /opt/bin/grep -wq $i /tmp/uidivstats/div-iphostleases; then
+					printf "\\n $i, $(awk -v var="$i" -F' ' '$1 == var{print $2}' /tmp/uidivstats/div-iphostleases):\\n$LINE" >>${statsFile}
+				elif /opt/bin/grep -wq $i "${DIVERSION_DIR}/backup/diversion_stats-iphostleases"; then
+					if [ "$(awk -v var="$i" -F' ' '$1 == var{print $2}' ${DIVERSION_DIR}/backup/diversion_stats-iphostleases)" != "*" ]; then
+						printf "\\n $i, $(awk -v var="$i" -F' ' '$1 == var{print $2}' ${DIVERSION_DIR}/backup/diversion_stats-iphostleases)*:\\n$LINE" >>${statsFile}
+					else
+						printf "\\n $i, Name-N/A*:\\n$LINE" >>${statsFile}
+					fi
+				else
+					printf "\\n $i, Name-N/A:\\n$LINE" >>${statsFile}
+				fi
+				# remove files for next client compiling run
+				rm -f /tmp/uidivstats/div-thtc /tmp/uidivstats/div-toptop
+				/opt/bin/grep -w $i /opt/var/log/dnsmasq.log* | awk '{print $(NF-2)}'|
+				awk '{for(i=1;i<=NF;i++)a[$i]++}END{for(o in a) printf "\n %-6s %-40s""%s %s",a[o],o}' | sort -nr |
+				/opt/bin/grep -viF -f /tmp/uidivstats/div-hostleases | /opt/bin/grep -viF -f /tmp/uidivstats/div-ipleases | head -$wsTopHosts >>/tmp/uidivstats/div-thtc
+				# show if found in any of these lists
+				for i in $(awk '{print $2}' /tmp/uidivstats/div-thtc); do
+					i=$(echo $i | sed -e 's/\./\\./g')
+					if /opt/bin/grep -q " $i$\| $i " "${DIVERSION_DIR}/list/blockinglist"; then
+						echo "blocked" >>/tmp/uidivstats/div-toptop
+					elif /opt/bin/grep -q " $i$" /tmp/uidivstats/div-blacklist; then
+						echo "blacklisted" >>/tmp/uidivstats/div-toptop
+					elif /opt/bin/grep -q "$i$" /tmp/uidivstats/div-wc_blacklist; then
+						echo "wc_blacklisted" >>/tmp/uidivstats/div-toptop
+					elif /opt/bin/grep -q "$i$" /tmp/uidivstats/div-whitelist; then
+						echo "whitelisted" >>/tmp/uidivstats/div-toptop
+					else
+						echo >>/tmp/uidivstats/div-toptop
+					fi
+				done
+				awk 'NR==FNR{a[FNR]=$0 "";next} {print a[FNR],$0}' /tmp/uidivstats/div-thtc /tmp/uidivstats/div-toptop  >>${statsFile}
+			done
+			
+			# preserve /tmp/uidivstats/div-iphostleases for next run for [Client Name*] list
+			# remove unknown ip to name resolves, add empty line
+			sed -i '/Name-N/d; $a\' /tmp/uidivstats/div-iphostleases
+			# combine new and backup, sort by ip, remove dupes and empty lines
+			cat /tmp/uidivstats/div-iphostleases "${DIVERSION_DIR}/backup/diversion_stats-iphostleases" > /tmp/uidivstats/div-iphostleases.tmp
+			sed -i '/^\s*$/d' /tmp/uidivstats/div-iphostleases.tmp
+			cat /tmp/uidivstats/div-iphostleases.tmp | sort -t . -k 4,4n -u > "${DIVERSION_DIR}/backup/diversion_stats-iphostleases"
+			printf "\\n" >>${statsFile}
+		else
+			printf "\\n No stats for connected clients were compiled.\\n This router provided no client list.\\n" >>${statsFile}
+		fi
 		
 		rm -f "/www/ext/uidivstats.js"
 		WriteData_ToJS /tmp/uidivstats/div-tah "/www/ext/uidivstats.js" "GenChartDataAds" "barDataBlockedAds" "barLabelsBlockedAds"
@@ -694,42 +680,13 @@ Generate_Stats_Diversion(){
 		
 		rm -rf /tmp/uidivstats
 		
-		# show file sizes
-		#printf "\\n\\n File sizes:\\n$LINE" >>${statsFile}
-		#file_size(){ [ "$1" -lt "1024" ] && echo $1 bytes || echo $1 | awk '{ sum=$1 ; hum[1024**3]="GB";hum[1024**2]="MB";hum[1024]="KB"; for (x=1024**3; x>=1024; x/=1024){ if (sum>=x) { printf "%.2f %s\n",sum/x,hum[x];break } }}';}
-		#if [ "$bfFs" = "on" ]; then
-		#	printf "%-20s%s\\n" " blockinglist" "$(file_size $(wc -c < ${DIVERSION_DIR}/list/blockinglist))" >>${statsFile}
-		#	printf "%-20s%s\\n" " blockinglist_fs" "$(file_size $(wc -c < ${DIVERSION_DIR}/list/blockinglist_fs))" >>${statsFile}
-		#else
-		#	printf "%-20s%s\\n" " blockinglist" "$(file_size $(wc -c < ${DIVERSION_DIR}/list/blockinglist))" >>${statsFile}
-		#fi
-		#printf "%-20s%s\\n" " blacklist" "$(file_size $(wc -c < ${DIVERSION_DIR}/list/blacklist))" >>${statsFile}
-		#printf "%-20s%s\\n" " wildcard blacklist" "$(file_size $(wc -c < ${DIVERSION_DIR}/list/wc_blacklist))" >>${statsFile}
-		#printf "%-20s%s\\n" " whitelist" "$(file_size $(wc -c < ${DIVERSION_DIR}/list/whitelist))" >>${statsFile}
-		#for file in $(find /opt/var/log/ -name "dnsmasq.log*"); do
-		#	printf "%-20s%s\\n" " $(basename $file)" "$(file_size $(wc -c < $file))" >>${statsFile}
-		#done
-		#[ "$bfFs" = "on" ] && [ "$alternateBF" = "on" ] && printf "\\n *.log - *.log2  are primary ad-blocking log files\\n" >>${statsFile}
-		#[ "$bfFs" = "on" ] && [ "$alternateBF" = "on" ] && printf " *.log3 - *.log4 are alternate ad-blocking log files\\n" >>${statsFile}
-		#printf "$LINE" >>${statsFile}
-		
-		# stats about the stats
-		#endCount=$(date +%s)
-		#printf "\\n Stats compiling times, in seconds:\\n$LINE" >>${statsFile}
-		#printf "%-37s%s\\n" " Ad-Blocking stats:" "$(($startCountwsTopHosts-$startCount))" >>${statsFile}
-		#printf "%-37s%s\\n" " The top $wsTopHosts requested domains:" "$(($startCountTopAdHosts-$startCountwsTopHosts))" >>${statsFile}
-		#printf "%-37s%s\\n" " The top $wsTopHosts blocked ad domains:" "$(($startCountNoisyClients-$startCountTopAdHosts))" >>${statsFile}
-		#printf "%-37s%s\\n" " The top $wsTopClients noisiest name clients:" "$(($startCountwsTopHostsClients-$startCountNoisyClients))" >>${statsFile}
-		#printf "%-37s%s\\n" " Top $wsTopHosts domains for top $wsTopClients clients:" "$(($endCount-$startCountwsTopHostsClients))" >>${statsFile}
-		#printf "\\n%-37s%s\\n$LINE" " Total time to compile stats:" "$(($endCount-$startCount))" >>${statsFile}
-		
-		printf "$LINE\\n End of stats report\\n\\n$LINE\\n" >>${statsFile}
+		printf "$LINE End of stats report\\n" >>${statsFile}
 		WriteStats_ToJS "$statsFile" "/www/ext/uidivstatstext.js"
 		rm -f $statsFile
 		CacheStats cache 2>/dev/null
 		Print_Output "true" "Diversion statistic generation completed successfully!" "$PASS"
 	else
-		Print_Output "true" "Diversion configuration not found, exiting!" "$ERR"
+		Print_Output "true" "Diversion configuration not found or empty dnsmasq.log file, exiting!" "$ERR"
 	fi
 }
 
@@ -941,7 +898,12 @@ Menu_Startup(){
 }
 
 Menu_GenerateStats(){
-	Generate_Stats_Diversion
+	if /opt/bin/grep -q 'log-facility=/opt/var/log/dnsmasq.log' /etc/dnsmasq.conf; then
+		Generate_Stats_Diversion
+	else
+		Print_Output "true" "Diversion logging not enabled!" "$ERR"
+		Print_Output "true" "Open Diversion and use option l to enable logging" ""
+	fi
 	Clear_Lock
 }
 
