@@ -688,8 +688,8 @@ Generate_Stats_Diversion(){
 						echo >>/tmp/uidivstats/div-toptop
 					fi
 				done
-				awk 'NR==FNR{a[FNR]=$0 "";next} {print a[FNR],$0}' /tmp/uidivstats/div-thtc /tmp/uidivstats/div-toptop  >>${statsFile}
 				WriteData_ToJS /tmp/uidivstats/div-thtc "$SCRIPT_WEB_DIR/uidivstats.js" "barDataDomains$COUNTER" "barLabelsDomains$COUNTER"
+				awk 'NR==FNR{a[FNR]=$0 "";next} {print a[FNR],$0}' /tmp/uidivstats/div-thtc /tmp/uidivstats/div-toptop  >>${statsFile}
 				COUNTER=$((COUNTER + 1))
 			done
 			
