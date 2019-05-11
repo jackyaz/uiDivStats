@@ -29,24 +29,9 @@ font-weight: bolder;
 <script language="JavaScript" type="text/javascript" src="/ext/uiDivStats/uidivstats.js"></script>
 
 <script>
-var barDataBlockedAds, barLabelsBlockedAds, barDataDomains, barLabelsDomains;
-var BarChartBlockedAds, BarChartReqDomains;
+var BarChartBlockedAds,BarChartReqDomains;
 var charttypead, charttypedomain;
 Chart.defaults.global.defaultFontColor = "#CCC";
-
-function Redraw_Ad_Chart() {
-	barDataBlockedAds = [];
-	barLabelsBlockedAds = [];
-	GenChartDataAds();
-	Draw_Ad_Chart();
-}
-
-function Redraw_Domain_Chart() {
-	barDataDomains = [];
-	barLabelsDomains = [];
-	GenChartDataDomains();
-	Draw_Domain_Chart();
-}
 
 function Draw_Ad_Chart() {
 	if (barLabelsBlockedAds.length == 0) return;
@@ -96,7 +81,7 @@ function Draw_Ad_Chart() {
 }
 
 function Draw_Domain_Chart() {
-	if (barLabelsDomains.length == 0) return;
+	if (barLabelsDomains0.length == 0) return;
 	if (BarChartReqDomains != undefined) BarChartReqDomains.destroy();
 	var ctx = document.getElementById("ChartDomains").getContext("2d");
 	var barOptionsDomains = {
@@ -127,10 +112,10 @@ function Draw_Domain_Chart() {
 		}
 	};
 	var barDatasetDomains = {
-		labels: barLabelsDomains,
-		datasets: [{data: barDataDomains,
+		labels: barLabelsDomains0,
+		datasets: [{data: barDataDomains0,
 			borderWidth: 1,
-			backgroundColor: poolColors(barDataDomains.length),
+			backgroundColor: poolColors(barDataDomains0.length),
 			borderColor: "#000000",
 		}]
 	};
@@ -139,7 +124,7 @@ function Draw_Domain_Chart() {
 		options: barOptionsDomains,
 		data: barDatasetDomains
 	});
-	changeColour(E('colourdomains'),BarChartReqDomains,barDataDomains,"colourdomains")
+	changeColour(E('colourdomains'),BarChartReqDomains,barDataDomains0,"colourdomains")
 }
 
 function initial(){
@@ -169,9 +154,9 @@ function initial(){
 	}
 	
 	show_menu();
-	Redraw_Ad_Chart();
+	Draw_Ad_Chart();
 	changeLayout(E('charttypeads'),"BarChartBlockedAds","charttypeads");
-	Redraw_Domain_Chart();
+	Draw_Domain_Chart();
 	changeLayout(E('charttypedomains'),"BarChartReqDomains","charttypedomains");
 }
 
@@ -312,11 +297,11 @@ function changeLayout(e,chartname,cookiename) {
 	cookie.set(cookiename, layout, 31);
 	if ( chartname == "BarChartBlockedAds" )
 	{
-		Redraw_Ad_Chart();
+		Draw_Ad_Chart();
 	}
 	else if ( chartname == "BarChartReqDomains" )
 	{
-		Redraw_Domain_Chart();
+		Draw_Domain_Chart();
 	}
 }
 </script>

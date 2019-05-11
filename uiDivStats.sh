@@ -15,8 +15,8 @@
 
 ### Start of script variables ###
 readonly SCRIPT_NAME="uiDivStats"
-readonly SCRIPT_VERSION="v0.6.0"
-readonly SCRIPT_BRANCH="master"
+readonly SCRIPT_VERSION="v0.7.0"
+readonly SCRIPT_BRANCH="develop"
 readonly SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/""$SCRIPT_NAME""/""$SCRIPT_BRANCH"
 readonly SCRIPT_CONF="/jffs/configs/$SCRIPT_NAME.config"
 readonly SCRIPT_DIR="/jffs/scripts/$SCRIPT_NAME.d"
@@ -378,9 +378,12 @@ WriteStats_ToJS(){
 }
 
 WriteData_ToJS(){
-	echo 'function '"$3"'() {' >> "$2"
+	{
+	echo "var $3 , $4;"
+	echo "$3 = [];"
+	echo "$4 = [];"; } >> "$2"
 	contents=""
-	contents="$contents""$4"'.unshift('
+	contents="$contents""$3"'.unshift('
 	while IFS='' read -r line || [ -n "$line" ]; do
 		contents="$contents""'""$(echo "$line" | awk '{$1=$1};1' | awk 'BEGIN{FS="  *"}{ print $1 }')""'"","
 	done < "$1"
@@ -388,7 +391,7 @@ WriteData_ToJS(){
 	contents="$contents"");"
 	echo "$contents" >> "$2"
 
-	contents="$5"'.unshift('
+	contents="$4"'.unshift('
 	while IFS='' read -r line || [ -n "$line" ]; do
 		contents="$contents""'""$(echo "$line" | awk '{$1=$1};1' | awk 'BEGIN{FS="  *"}{ print $2 }')""'"","
 	done < "$1"
@@ -652,6 +655,7 @@ Generate_Stats_Diversion(){
 			awk 'NR==FNR{a[FNR]=$0 "";next} {print a[FNR],$0}' /tmp/uidivstats/div6 /tmp/uidivstats/div7 >>${statsFile}
 			
 			printf "\\n\\n Top $wsTopHosts domains for top $wsTopClients clients:\\n$LINE" >>${statsFile}
+			COUNTER=1
 			for i in $(awk '{print $2}' /tmp/uidivstats/div1); do
 				if /opt/bin/grep -wq $i /tmp/uidivstats/div-iphostleases; then
 					printf "\\n $i, $(awk -v var="$i" -F' ' '$1 == var{print $2}' /tmp/uidivstats/div-iphostleases):\\n$LINE" >>${statsFile}
@@ -685,6 +689,8 @@ Generate_Stats_Diversion(){
 					fi
 				done
 				awk 'NR==FNR{a[FNR]=$0 "";next} {print a[FNR],$0}' /tmp/uidivstats/div-thtc /tmp/uidivstats/div-toptop  >>${statsFile}
+				WriteData_ToJS /tmp/uidivstats/div-thtc "$SCRIPT_WEB_DIR/uidivstats.js" "barDataDomains$COUNTER" "barLabelsDomains$COUNTER"
+				COUNTER=$((COUNTER + 1))
 			done
 			
 			# preserve /tmp/uidivstats/div-iphostleases for next run for [Client Name*] list
@@ -700,8 +706,8 @@ Generate_Stats_Diversion(){
 		fi
 		
 		rm -f "$SCRIPT_WEB_DIR/uidivstats.js"
-		WriteData_ToJS /tmp/uidivstats/div-tah "$SCRIPT_WEB_DIR/uidivstats.js" "GenChartDataAds" "barDataBlockedAds" "barLabelsBlockedAds"
-		WriteData_ToJS /tmp/uidivstats/div-th "$SCRIPT_WEB_DIR/uidivstats.js" "GenChartDataDomains" "barDataDomains" "barLabelsDomains"
+		WriteData_ToJS /tmp/uidivstats/div-tah "$SCRIPT_WEB_DIR/uidivstats.js" "barDataBlockedAds" "barLabelsBlockedAds"
+		WriteData_ToJS /tmp/uidivstats/div-th "$SCRIPT_WEB_DIR/uidivstats.js" "barDataDomains0" "barLabelsDomains0"
 		
 		rm -rf /tmp/uidivstats
 		
