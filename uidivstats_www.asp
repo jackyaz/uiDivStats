@@ -26,7 +26,7 @@ font-weight: bolder;
 <script language="JavaScript" type="text/javascript" src="/tmmenu.js"></script>
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <script language="JavaScript" type="text/javascript" src="/validator.js"></script>
-<script language="JavaScript" type="text/javascript" src="/ext/uidivstats.js"></script>
+<script language="JavaScript" type="text/javascript" src="/ext/uiDivStats/uidivstats.js"></script>
 
 <script>
 var barDataBlockedAds, barLabelsBlockedAds, barDataDomains, barLabelsDomains;
@@ -362,14 +362,14 @@ function changeLayout(e,chartname,cookiename) {
 <tr>
 <td>
 <textarea cols="63" rows="35" wrap="off" readonly="readonly" id="divstats" class="textarea_log_table" style="font-family:'Courier New', Courier, mono; font-size:11px;">"Stats will show here"</textarea>
-<script language="JavaScript" type="text/javascript" src="/ext/uidivstatstext.js"></script>
+<script language="JavaScript" type="text/javascript" src="/ext/uiDivStats/uidivstatstext.js"></script>
 </td>
 </tr>
 </table>
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 <thead>
 <tr>
-<td colspan="2">Top 10 blocked ad domains</td>
+<td colspan="2">Top 15 blocked ad domains</td>
 </tr>
 </thead>
 <tr class='even'>
@@ -400,7 +400,7 @@ function changeLayout(e,chartname,cookiename) {
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 <thead>
 <tr>
-<td colspan="2">Top 10 requested domains</td>
+<td colspan="2">Top 15 requested domains</td>
 </tr>
 </thead>
 <tr class='even'>

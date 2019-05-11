@@ -15,10 +15,13 @@
 
 ### Start of script variables ###
 readonly SCRIPT_NAME="uiDivStats"
-readonly SCRIPT_VERSION="v0.5.3"
+readonly SCRIPT_VERSION="v0.6.0"
 readonly SCRIPT_BRANCH="master"
 readonly SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/""$SCRIPT_NAME""/""$SCRIPT_BRANCH"
 readonly SCRIPT_CONF="/jffs/configs/$SCRIPT_NAME.config"
+readonly SCRIPT_DIR="/jffs/scripts/$SCRIPT_NAME.d"
+readonly SCRIPT_WEB_DIR="$(readlink /www/ext)/$SCRIPT_NAME"
+readonly SHARED_DIR="/jffs/scripts/shared-jy"
 [ -z "$(nvram get odmpid)" ] && ROUTER_MODEL=$(nvram get productid) || ROUTER_MODEL=$(nvram get odmpid)
 ### End of script variables ###
 
@@ -129,14 +132,28 @@ Update_File(){
 	if [ "$1" = "uidivstats_www.asp" ]; then
 		tmpfile="/tmp/$1"
 		Download_File "$SCRIPT_REPO/$1" "$tmpfile"
-		if ! diff -q "$tmpfile" "/jffs/scripts/$1" >/dev/null 2>&1; then
+		if ! diff -q "$tmpfile" "$SCRIPT_DIR/$1" >/dev/null 2>&1; then
 			Print_Output "true" "New version of $1 downloaded" "$PASS"
-			rm -f "/jffs/scripts/$1"
+			rm -f "$SCRIPT_DIR/$1"
 			Mount_WebUI
 		fi
 		rm -f "$tmpfile"
 	else
 		return 1
+	fi
+}
+
+Create_Dirs(){
+	if [ ! -d "$SCRIPT_DIR" ]; then
+		mkdir -p "$SCRIPT_DIR"
+	fi
+	
+	if [ ! -d "$SHARED_DIR" ]; then
+		mkdir -p "$SHARED_DIR"
+	fi
+	
+	if [ ! -d "$SCRIPT_WEB_DIR" ]; then
+		mkdir -p "$SCRIPT_WEB_DIR"
 	fi
 }
 
@@ -239,11 +256,16 @@ Get_CONNMON_UI(){
 
 Mount_WebUI(){
 	umount /www/Advanced_MultiSubnet_Content.asp 2>/dev/null
-	if [ ! -f /jffs/scripts/uidivstats_www.asp ]; then
-		Download_File "$SCRIPT_REPO/uidivstats_www.asp" "/jffs/scripts/uidivstats_www.asp"
+	
+	if [ -f "/jffs/scripts/uidivstats_www.asp" ]; then
+		mv "/jffs/scripts/uidivstats_www.asp" "$SCRIPT_DIR/uidivstats_www.asp"
 	fi
 	
-	mount -o bind /jffs/scripts/uidivstats_www.asp "/www/Advanced_MultiSubnet_Content.asp"
+	if [ ! -f /jffs/scripts/uidivstats_www.asp ]; then
+		Download_File "$SCRIPT_REPO/uidivstats_www.asp" "$SCRIPT_DIR/uidivstats_www.asp"
+	fi
+	
+	mount -o bind "$SCRIPT_DIR/uidivstats_www.asp" "/www/Advanced_MultiSubnet_Content.asp"
 }
 
 Modify_WebUI_File(){
@@ -272,13 +294,21 @@ Modify_WebUI_File(){
 		sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "Feedback_Info.asp", tabName: "NTP Daemon"},' "$tmpfile"
 	fi
 	
-	if ! diff -q "$tmpfile" "/jffs/scripts/custom_menuTree.js" >/dev/null 2>&1; then
-		cp "$tmpfile" "/jffs/scripts/custom_menuTree.js"
+	if [ -f /jffs/scripts/custom_menuTree.js ]; then
+		mv /jffs/scripts/custom_menuTree.js "$SHARED_DIR/custom_menuTree.js"
+	fi
+	
+	if [ ! -f "$SHARED_DIR/custom_menuTree.js" ]; then
+		cp "$tmpfile" "$SHARED_DIR/custom_menuTree.js"
+	fi
+	
+	if ! diff -q "$tmpfile" "$SHARED_DIR/custom_menuTree.js" >/dev/null 2>&1; then
+		cp "$tmpfile" "$SHARED_DIR/custom_menuTree.js"
 	fi
 	
 	rm -f "$tmpfile"
 	
-	mount -o bind "/jffs/scripts/custom_menuTree.js" "/www/require/modules/menuTree.js"
+	mount -o bind "$SHARED_DIR/custom_menuTree.js" "/www/require/modules/menuTree.js"
 	### ###
 	
 	### start_apply.htm ###
@@ -300,35 +330,39 @@ Modify_WebUI_File(){
 	
 	sed -i -e '/else if(current_page.indexOf("Feedback") != -1){/i else if(current_page.indexOf("Advanced_MultiSubnet_Content.asp") != -1){'"\\r\\n"'parent.showLoading(restart_time, "waiting");'"\\r\\n"'setTimeout(function(){ getXMLAndRedirect(); alert("Please force-reload this page (e.g. Ctrl+F5)");}, restart_time*1000);'"\\r\\n"'}' "$tmpfile"
 	
-	if [ ! -f /jffs/scripts/custom_start_apply.htm ]; then
-		cp "/www/start_apply.htm" "/jffs/scripts/custom_start_apply.htm"
+	if [ -f /jffs/scripts/custom_start_apply.htm ]; then
+		mv /jffs/scripts/custom_start_apply.htm "$SHARED_DIR/custom_start_apply.htm"
 	fi
 	
-	if ! diff -q "$tmpfile" "/jffs/scripts/custom_start_apply.htm" >/dev/null 2>&1; then
-		cp "$tmpfile" "/jffs/scripts/custom_start_apply.htm"
+	if [ ! -f "$SHARED_DIR/custom_start_apply.htm" ]; then
+		cp "/www/start_apply.htm" "$SHARED_DIR/custom_start_apply.htm"
+	fi
+	
+	if ! diff -q "$tmpfile" "$SHARED_DIR/custom_start_apply.htm" >/dev/null 2>&1; then
+		cp "$tmpfile" "$SHARED_DIR/custom_start_apply.htm"
 	fi
 	
 	rm -f "$tmpfile"
 	
-	mount -o bind /jffs/scripts/custom_start_apply.htm /www/start_apply.htm
+	mount -o bind "$SHARED_DIR/custom_start_apply.htm" /www/start_apply.htm
 	### ###
 }
 
 CacheStats(){
 	case "$1" in
 		cache)
-			if [ "$(/usr/bin/find /www/ext/uidivstats*.js 2>/dev/null | wc -l)" -ge "1" ]; then
+			if [ "$(/usr/bin/find "$SCRIPT_WEB_DIR/*.js" 2>/dev/null | wc -l)" -ge "1" ]; then
 				CACHEPATH="/tmp/""$SCRIPT_NAME""Cache"
 				mkdir -p "$CACHEPATH"
-				cp /www/ext/uidivstats*.js "$CACHEPATH"
-				rm -f "/jffs/scripts/""$SCRIPT_NAME""_cache.tar.gz" 2>/dev/null
-				tar -czf "/jffs/scripts/""$SCRIPT_NAME""_cache.tar.gz" -C "$CACHEPATH" .
+				cp "$SCRIPT_WEB_DIR/*.js" "$CACHEPATH"
+				rm -f "$SCRIPT_DIR/$SCRIPT_NAME""_cache.tar.gz" 2>/dev/null
+				tar -czf "$SCRIPT_DIR/$SCRIPT_NAME""_cache.tar.gz" -C "$CACHEPATH" .
 				rm -rf "$CACHEPATH" 2>/dev/null
 			fi
 		;;
 		extract)
-			if [ -f "/jffs/scripts/""$SCRIPT_NAME""_cache.tar.gz" ] && [ "$(/usr/bin/find /www/ext/uidivstats*.js 2>/dev/null | wc -l)" -eq "0" ]; then
-				tar -C /www/ext/ -xzf "/jffs/scripts/""$SCRIPT_NAME""_cache.tar.gz"
+			if [ -f "$SCRIPT_DIR/$SCRIPT_NAME""_cache.tar.gz" ] && [ "$(/usr/bin/find "$SCRIPT_WEB_DIR/*.js" 2>/dev/null | wc -l)" -eq "0" ]; then
+				tar -C /www/ext/ -xzf "$SCRIPT_DIR/$SCRIPT_NAME""_cache.tar.gz"
 			fi
 		;;
 	esac
@@ -387,9 +421,8 @@ Generate_Stats_Diversion(){
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
-	mkdir -p "$(readlink /www/ext)"
-	opkg remove --autoremove gnuplot >/dev/null 2>&1
-	opkg install /opt/bin/grep >/dev/null 2>&1
+	Shortcut_script create
+	Create_Dirs
 	
 	Print_Output "true" "Starting Diversion statistic generation..." "$PASS"
 	
@@ -666,14 +699,14 @@ Generate_Stats_Diversion(){
 			printf "\\n No stats for connected clients were compiled.\\n This router provided no client list.\\n" >>${statsFile}
 		fi
 		
-		rm -f "/www/ext/uidivstats.js"
-		WriteData_ToJS /tmp/uidivstats/div-tah "/www/ext/uidivstats.js" "GenChartDataAds" "barDataBlockedAds" "barLabelsBlockedAds"
-		WriteData_ToJS /tmp/uidivstats/div-th "/www/ext/uidivstats.js" "GenChartDataDomains" "barDataDomains" "barLabelsDomains"
+		rm -f "$SCRIPT_WEB_DIR/uidivstats.js"
+		WriteData_ToJS /tmp/uidivstats/div-tah "$SCRIPT_WEB_DIR/uidivstats.js" "GenChartDataAds" "barDataBlockedAds" "barLabelsBlockedAds"
+		WriteData_ToJS /tmp/uidivstats/div-th "$SCRIPT_WEB_DIR/uidivstats.js" "GenChartDataDomains" "barDataDomains" "barLabelsDomains"
 		
 		rm -rf /tmp/uidivstats
 		
 		printf "$LINE End of stats report\\n" >>${statsFile}
-		WriteStats_ToJS "$statsFile" "/www/ext/uidivstatstext.js"
+		WriteStats_ToJS "$statsFile" "$SCRIPT_WEB_DIR/uidivstatstext.js"
 		rm -f $statsFile
 		CacheStats cache 2>/dev/null
 		Print_Output "true" "Diversion statistic generation completed successfully!" "$PASS"
@@ -733,7 +766,6 @@ ScriptHeader(){
 
 MainMenu(){
 	printf "1.    Generate Diversion Statistics now\\n\\n"
-	#printf "2.    Set preferred ping server\\n      Currently: %s\\n\\n" ""
 	printf "u.    Check for updates\\n"
 	printf "uf.   Update %s with latest version (force update)\\n\\n" "$SCRIPT_NAME"
 	printf "e.    Exit %s\\n\\n" "$SCRIPT_NAME"
@@ -858,11 +890,14 @@ Menu_Install(){
 		Print_Output "true" "Requirements for $SCRIPT_NAME not met, please see above for the reason(s)" "$CRIT"
 		PressEnter
 		Clear_Lock
+		rm -f "/jffs/scripts/$SCRIPT_NAME" 2>/dev/null
 		exit 1
 	fi
 	
 	opkg update
 	opkg install grep
+	
+	Create_Dirs
 	
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
@@ -880,6 +915,7 @@ Menu_Startup(){
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
 	Shortcut_script create
+	Create_Dirs
 	Mount_WebUI
 	Modify_WebUI_File
 	CacheStats extract 2>/dev/null
@@ -911,36 +947,42 @@ Menu_Uninstall(){
 	Auto_Startup delete 2>/dev/null
 	Auto_Cron delete 2>/dev/null
 	Auto_ServiceEvent delete 2>/dev/null
-	while true; do
-		printf "\\n\\e[1mDo you want to delete %s stats? (y/n)\\e[0m\\n" "$SCRIPT_NAME"
-		read -r "confirm"
-		case "$confirm" in
-			y|Y)
-				rm -f "/jffs/scripts/uidivstats_rrd.rrd" 2>/dev/null
-				break
-			;;
-			*)
-				break
-			;;
-		esac
-	done
+	#while true; do
+	#	printf "\\n\\e[1mDo you want to delete %s stats? (y/n)\\e[0m\\n" "$SCRIPT_NAME"
+	#	read -r "confirm"
+	#	case "$confirm" in
+	#		y|Y)
+	#			rm -f "/jffs/scripts/uidivstats_rrd.rrd" 2>/dev/null
+	#			break
+	#		;;
+	#		*)
+	#			break
+	#		;;
+	#	esac
+	#done
 	Shortcut_script delete
 	umount /www/Advanced_MultiSubnet_Content.asp 2>/dev/null
 	sed -i '/{url: "Advanced_MultiSubnet_Content.asp", tabName: "Diversion Statistics"}/d' "/jffs/scripts/custom_menuTree.js"
 	umount /www/require/modules/menuTree.js 2>/dev/null
 	
 	if [ ! -f "/jffs/scripts/ntpmerlin" ] && [ ! -f "/jffs/scripts/spdmerlin" ] && [ ! -f "/jffs/scripts/connmon" ]; then
-		rm -f "/jffs/scripts/custom_menuTree.js" 2>/dev/null
+		rm -f "$SHARED_DIR/custom_menuTree.js" 2>/dev/null
 	else
-		mount -o bind "/jffs/scripts/custom_menuTree.js" "/www/require/modules/menuTree.js"
+		mount -o bind "$SHARED_DIR/custom_menuTree.js" "/www/require/modules/menuTree.js"
 	fi
-	rm -f "/jffs/scripts/uidivstats_www.asp" 2>/dev/null
+	rm -f "$SCRIPT_DIR/uidivstats_www.asp" 2>/dev/null
 	rm -f "/jffs/scripts/$SCRIPT_NAME" 2>/dev/null
 	Clear_Lock
 	Print_Output "true" "Uninstall completed" "$PASS"
 }
 
 if [ -z "$1" ]; then
+	Create_Dirs
+	Auto_Startup create 2>/dev/null
+	Auto_Cron create 2>/dev/null
+	Auto_ServiceEvent create 2>/dev/null
+	Shortcut_script create
+	Clear_Lock
 	ScriptHeader
 	MainMenu
 	exit 0
