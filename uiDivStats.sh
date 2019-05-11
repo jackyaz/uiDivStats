@@ -351,7 +351,7 @@ Modify_WebUI_File(){
 CacheStats(){
 	case "$1" in
 		cache)
-			if [ "$(/usr/bin/find "$SCRIPT_WEB_DIR/*.js" 2>/dev/null | wc -l)" -ge "1" ]; then
+			if [ "$(/usr/bin/find "$SCRIPT_WEB_DIR" -name "*.js" 2>/dev/null | wc -l)" -ge "1" ]; then
 				CACHEPATH="/tmp/""$SCRIPT_NAME""Cache"
 				mkdir -p "$CACHEPATH"
 				cp "$SCRIPT_WEB_DIR/*.js" "$CACHEPATH"
@@ -361,8 +361,8 @@ CacheStats(){
 			fi
 		;;
 		extract)
-			if [ -f "$SCRIPT_DIR/$SCRIPT_NAME""_cache.tar.gz" ] && [ "$(/usr/bin/find "$SCRIPT_WEB_DIR/*.js" 2>/dev/null | wc -l)" -eq "0" ]; then
-				tar -C /www/ext/ -xzf "$SCRIPT_DIR/$SCRIPT_NAME""_cache.tar.gz"
+			if [ -f "$SCRIPT_DIR/$SCRIPT_NAME""_cache.tar.gz" ] && [ "$(/usr/bin/find "$SCRIPT_WEB_DIR" -name "*.js" 2>/dev/null | wc -l)" -eq "0" ]; then
+				tar -C "$SCRIPT_DIR" -xzf "$SCRIPT_DIR/$SCRIPT_NAME""_cache.tar.gz"
 			fi
 		;;
 	esac
