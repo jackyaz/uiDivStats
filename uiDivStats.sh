@@ -354,7 +354,7 @@ CacheStats(){
 			if [ "$(/usr/bin/find "$SCRIPT_WEB_DIR" -name "*.js" 2>/dev/null | wc -l)" -ge "1" ]; then
 				CACHEPATH="/tmp/""$SCRIPT_NAME""Cache"
 				mkdir -p "$CACHEPATH"
-				cp "$SCRIPT_WEB_DIR/*.js" "$CACHEPATH"
+				cp "$SCRIPT_WEB_DIR"/*.js "$CACHEPATH"
 				rm -f "$SCRIPT_DIR/$SCRIPT_NAME""_cache.tar.gz" 2>/dev/null
 				tar -czf "$SCRIPT_DIR/$SCRIPT_NAME""_cache.tar.gz" -C "$CACHEPATH" .
 				rm -rf "$CACHEPATH" 2>/dev/null
@@ -362,7 +362,7 @@ CacheStats(){
 		;;
 		extract)
 			if [ -f "$SCRIPT_DIR/$SCRIPT_NAME""_cache.tar.gz" ] && [ "$(/usr/bin/find "$SCRIPT_WEB_DIR" -name "*.js" 2>/dev/null | wc -l)" -eq "0" ]; then
-				tar -C "$SCRIPT_DIR" -xzf "$SCRIPT_DIR/$SCRIPT_NAME""_cache.tar.gz"
+				tar -C "$SCRIPT_WEB_DIR" -xzf "$SCRIPT_DIR/$SCRIPT_NAME""_cache.tar.gz"
 			fi
 		;;
 	esac
