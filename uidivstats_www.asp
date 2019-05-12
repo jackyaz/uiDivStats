@@ -50,6 +50,9 @@ font-weight: bolder;
 var BarChartBlockedAds,BarChartReqDomains;
 var charttypead, charttypedomain;
 Chart.defaults.global.defaultFontColor = "#CCC";
+Chart.Tooltip.positioners.cursor = function(chartElements, coordinates) {
+  return coordinates;
+};
 
 function Draw_Ad_Chart() {
 	if (barLabelsBlockedAds.length == 0) return;
@@ -68,17 +71,20 @@ function Draw_Ad_Chart() {
 			callbacks: {
 				title: function (tooltipItem, data) { return data.labels[tooltipItem[0].index]; },
 				label: function (tooltipItem, data) { return comma(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index]); },
-			}
+			},
+			mode: 'point',
+			position: 'cursor',
+			intersect: true
 		},
 		scales: {
 			xAxes: [{
 				gridLines: { display: showXGrid(charttypead), color: "#282828" },
-				ticks: { display: showXAxis(charttypead), beginAtZero: true}
+				ticks: { display: showXAxis(charttypead), beginAtZero: false }
 			}],
 			yAxes: [{
 				gridLines: { display: false, color: "#282828" },
 				scaleLabel: { display: false, labelString: "Blocks" },
-				ticks: { display: showYAxis(charttypead), beginAtZero: true }
+				ticks: { display: showYAxis(charttypead), beginAtZero: false }
 			}]
 		}
 	};
@@ -115,17 +121,20 @@ function Draw_Domain_Chart() {
 			callbacks: {
 				title: function (tooltipItem, data) { return data.labels[tooltipItem[0].index]; },
 				label: function (tooltipItem, data) { return comma(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index]); },
-			}
+			},
+			mode: 'point',
+			position: 'cursor',
+			intersect: true
 		},
 		scales: {
 			xAxes: [{
 				gridLines: { display: showXGrid(charttypedomain), color: "#282828" },
-				ticks: { display: showXAxis(charttypedomain), beginAtZero: true, max: getAvg(window["barDataDomains"+document.getElementById("clientdomains").value]) + getSDev(window["barDataDomains"+document.getElementById("clientdomains").value]) }
+				ticks: { display: showXAxis(charttypedomain), beginAtZero: false } //, max: getAvg(window["barDataDomains"+document.getElementById("clientdomains").value]) + getSDev(window["barDataDomains"+document.getElementById("clientdomains").value]) }
 			}],
 			yAxes: [{
 				gridLines: { display: false, color: "#282828" },
 				scaleLabel: { display: false, labelString: "Domains" },
-				ticks: { display: showYAxis(charttypedomain), beginAtZero: true, max: getAvg(window["barDataDomains"+document.getElementById("clientdomains").value]) + getSDev(window["barDataDomains"+document.getElementById("clientdomains").value]) }
+				ticks: { display: showYAxis(charttypedomain), beginAtZero: false } //, max: getAvg(window["barDataDomains"+document.getElementById("clientdomains").value]) + getSDev(window["barDataDomains"+document.getElementById("clientdomains").value]) }
 			}]
 		}
 	};
