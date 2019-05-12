@@ -189,8 +189,15 @@ function applyRule() {
 }
 
 function getAverage(datasetname) {
-	average = datasetname => datasetname.reduce((a,b) => a + b, 0) / datasetname.length;
-	return average;
+	var sum, avg = 0;
+	
+	if (arr.length)
+	{
+		sum = arr.reduce(function(a, b) { return a + b; });
+		avg = sum / arr.length;
+	}
+	
+	return avg;
 }
 
 function getRandomColor() {
