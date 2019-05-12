@@ -81,7 +81,7 @@ function Draw_Ad_Chart() {
 }
 
 function Draw_Domain_Chart() {
-	if (barLabelsDomains0.length == 0) return;
+	if (window["barLabelsDomains"+document.getElementById("clientdomains").value]length == 0) return;
 	if (BarChartReqDomains != undefined) BarChartReqDomains.destroy();
 	var ctx = document.getElementById("ChartDomains").getContext("2d");
 	var barOptionsDomains = {
@@ -112,10 +112,10 @@ function Draw_Domain_Chart() {
 		}
 	};
 	var barDatasetDomains = {
-		labels: barLabelsDomains0,
-		datasets: [{data: barDataDomains0,
+		labels: window["barLabelsDomains"+document.getElementById("clientdomains").value],
+		datasets: [{data: window["barDataDomains"+document.getElementById("clientdomains").value],
 			borderWidth: 1,
-			backgroundColor: poolColors(barDataDomains0.length),
+			backgroundColor: poolColors(window["barDataDomains"+document.getElementById("clientdomains").value].length),
 			borderColor: "#000000",
 		}]
 	};
@@ -124,7 +124,7 @@ function Draw_Domain_Chart() {
 		options: barOptionsDomains,
 		data: barDatasetDomains
 	});
-	changeColour(E('colourdomains'),BarChartReqDomains,barDataDomains0,"colourdomains")
+	changeColour(E('colourdomains'),BarChartReqDomains,window["barDataDomains"+document.getElementById("clientdomains").value],"colourdomains")
 }
 
 function initial(){
@@ -150,6 +150,12 @@ function initial(){
 	if ((s = cookie.get('charttypedomains')) != null) {
 			if (s.match(/^([0-2])$/)) {
 				E('charttypedomains').value = cookie.get('charttypedomains') * 1;
+			}
+	}
+	
+	if ((s = cookie.get('clientdomains')) != null) {
+			if (s.match(/^([0-10])$/)) {
+				E('clientdomains').value = cookie.get('clientdomains') * 1;
 			}
 	}
 	
@@ -243,6 +249,12 @@ function showYAxis(e) {
 	{
 		return true;
 	}
+}
+
+function changeColour(e,chartname,cookiename) {
+	index = e.value * 1;
+	cookie.set(cookiename, index, 31);
+	Draw_Domain_Chart();
 }
 
 function changeColour(e,chartname,datasetname,cookiename) {
@@ -388,6 +400,15 @@ function changeLayout(e,chartname,cookiename) {
 <td colspan="2">Top 15 requested domains</td>
 </tr>
 </thead>
+<tr class='even'>
+<th width="40%">Client to display</th>
+<td>
+<select style="width:100px" class="input_option" onchange='changeClient(this,BarChartReqDomains,"clientdomains")' id='clientdomains'>
+<option value=0>All Clients</option>
+<option value=1>Plain</option>
+</select>
+</td>
+</tr>
 <tr class='even'>
 <th width="40%">Style for charts</th>
 <td>
