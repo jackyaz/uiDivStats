@@ -368,6 +368,27 @@ CacheStats(){
 	esac
 }
 
+WriteOptions_ToJS(){
+	{
+	echo "var clients"
+	echo "clients = [];"; } >> "$2"
+	contents=""
+	contents="$contents"'clients.unshift('
+	while IFS='' read -r line || [ -n "$line" ]; do
+		contents="$contents""'""$(echo "$line" | awk '{$1=$1};1' | awk 'BEGIN{FS="  *"}{ print $2 ($1)}')""'"","
+	done < "$1"
+	contents=$(echo "$contents" | sed 's/.$//')
+	contents="$contents"");"
+	echo "$contents" >> "$2"
+	
+	{
+	echo "selectField = document.getElementById(\"clientdomains\");"
+	echo "selectField.options.length = 0;"
+	echo "for (i=0; i<clients.length; i++)"
+	echo "{"
+	echo "selectField.options[selectField.length] = new Option(clients[i], i+1);" ; } >> "$2"
+}
+
 WriteStats_ToJS(){
 	echo "function $3(){" >> "$2"
 	html='document.getElementById("'"$4"'").innerHTML="'
@@ -719,6 +740,8 @@ Generate_Stats_Diversion(){
 		WriteStats_ToJS "$statsFile" "/tmp/uidivstatstext.js" "SetDivStatsText" "divstats"
 		mv "/tmp/uidivstatstext.js" "$SCRIPT_WEB_DIR/uidivstatstext.js"
 		
+		WriteOptions_ToJS "$clientsFile" "/tmp/uidivstats.js"
+		
 		psstatsFile="$SCRIPT_WEB_DIR/psstats.htm"
 		
 		if [ "$EDITION" = "Standard" ]; then
@@ -729,6 +752,7 @@ Generate_Stats_Diversion(){
 		
 		CacheStats cache 2>/dev/null
 		rm -f $statsFile
+		rm -f $clientsFile
 		rm -f "/tmp/uidivstats.js"
 		rm -f "/tmp/uidivstatstext.js"
 		rm -rf /tmp/uidivstats
