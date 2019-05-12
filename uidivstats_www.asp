@@ -171,12 +171,6 @@ function initial(){
 			}
 	}
 	
-	if ((s = cookie.get('clientdomains')) != null) {
-			if (s.match(/^([0-10])$/)) {
-				E('clientdomains').value = cookie.get('clientdomains') * 1;
-			}
-	}
-	
 	show_menu();
 	Draw_Ad_Chart();
 	changeLayout(E('charttypeads'),"BarChartBlockedAds","charttypeads");
@@ -192,6 +186,10 @@ function applyRule() {
 	var action_script_tmp = "start_uiDivStats";
 	document.form.action_script.value = action_script_tmp;
 	document.form.submit();
+}
+
+function getAverage(datasetname) {
+	return datasetname => datasetname.reduce((a,b) => a + b, 0) / datasetname.length
 }
 
 function getRandomColor() {
@@ -490,6 +488,12 @@ function changeLayout(e,chartname,cookiename) {
 <script>
 SetDivStatsText();
 SetClients();
+
+if ((s = cookie.get('clientdomains')) != null) {
+	if (s.match(/^([0-10])$/)) {
+		E('clientdomains').value = cookie.get('clientdomains') * 1;
+	}
+}
 </script>
 <div id="footer">
 </div>
