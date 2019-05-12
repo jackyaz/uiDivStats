@@ -736,11 +736,11 @@ Generate_Stats_Diversion(){
 		
 		WriteData_ToJS /tmp/uidivstats/div-tah "/tmp/uidivstats.js" "barDataBlockedAds" "barLabelsBlockedAds"
 		WriteData_ToJS /tmp/uidivstats/div-th "/tmp/uidivstats.js" "barDataDomains0" "barLabelsDomains0"
+		WriteOptions_ToJS "$clientsFile" "/tmp/uidivstats.js"
 		mv "/tmp/uidivstats.js" "$SCRIPT_WEB_DIR/uidivstats.js"
+		
 		WriteStats_ToJS "$statsFile" "/tmp/uidivstatstext.js" "SetDivStatsText" "divstats"
 		mv "/tmp/uidivstatstext.js" "$SCRIPT_WEB_DIR/uidivstatstext.js"
-		
-		WriteOptions_ToJS "$clientsFile" "/tmp/uidivstats.js"
 		
 		psstatsFile="$SCRIPT_WEB_DIR/psstats.htm"
 		
