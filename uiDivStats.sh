@@ -373,7 +373,7 @@ WriteOptions_ToJS(){
 	echo "var clients"
 	echo "clients = [];"; } >> "$2"
 	contents=""
-	contents="$contents"'clients.unshift(All Clients,'
+	contents="$contents""clients.unshift('All Clients',"
 	while IFS='' read -r line || [ -n "$line" ]; do
 		contents="$contents""'""$(echo "$line" | awk '{$1=$1};1' | awk 'BEGIN{FS="  *"}{ print $2" ("$1")"}')""'"","
 	done < "$1"
