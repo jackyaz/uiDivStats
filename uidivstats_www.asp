@@ -449,7 +449,7 @@ function changeLayout(e,chartname,cookiename) {
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#4D595D" class="FormTable">
 <thead class="collapsible" >
 <tr>
-<td colspan="2">Diversion Statistics Report(click to expand/collapse)</td>
+<td colspan="2">Diversion Statistics Report (click to expand/collapse)</td>
 </tr>
 </thead>
 <tr>
@@ -464,7 +464,7 @@ function changeLayout(e,chartname,cookiename) {
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#4D595D" class="FormTable">
 <thead class="collapsible" >
 <tr>
-<td colspan="2">Pixelserv Statistics Report(click to expand/collapse)</td>
+<td colspan="2">Pixelserv Statistics Report (click to expand/collapse)</td>
 </tr>
 </thead>
 <tr>
