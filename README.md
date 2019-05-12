@@ -9,7 +9,7 @@ See statistics and graphs for Diversion Ad-blocking on your router.
 
 uiDivStats is free to use under the [GNU General Public License version 3](https://opensource.org/licenses/GPL-3.0) (GPL 3.0).
 
-![Menu UI](https://puu.sh/DmAwA/29cd37e2cc.png)
+![Menu UI](https://puu.sh/DrqWN/ca8911697b.png)
 
 ### Supporting development
 Love the script and want to support future development? Any and all donations gratefully received!
