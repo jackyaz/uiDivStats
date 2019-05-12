@@ -370,7 +370,7 @@ CacheStats(){
 
 WriteOptions_ToJS(){
 	{
-	echo "var clients"
+	echo "var clients;"
 	echo "clients = [];"; } >> "$2"
 	contents=""
 	contents="$contents""clients.unshift('All Clients',"

@@ -382,7 +382,7 @@ function changeLayout(e,chartname,cookiename) {
 <tr class='even'>
 <th width="40%">Style for charts</th>
 <td>
-<select style="width:150px" class="input_option" onchange='changeColour(this,BarChartBlockedAds,barDataBlockedAds,"colourads")' id='colourads'>
+<select style="width:100px" class="input_option" onchange='changeColour(this,BarChartBlockedAds,barDataBlockedAds,"colourads")' id='colourads'>
 <option value=0>Colour</option>
 <option value=1>Plain</option>
 </select>
@@ -391,7 +391,7 @@ function changeLayout(e,chartname,cookiename) {
 <tr class='even'>
 <th width="40%">Layout for charts</th>
 <td>
-<select style="width:150px" class="input_option" onchange='changeLayout(this,"BarChartBlockedAds","charttypeads")' id='charttypeads'>
+<select style="width:100px" class="input_option" onchange='changeLayout(this,"BarChartBlockedAds","charttypeads")' id='charttypeads'>
 <option value=0>Horizontal</option>
 <option value=1>Vertical</option>
 <option value=2>Pie</option>
@@ -414,7 +414,7 @@ function changeLayout(e,chartname,cookiename) {
 <tr class='even'>
 <th width="40%">Client to display</th>
 <td>
-<select style="width:150px" class="input_option" onchange='changeClient(this,BarChartReqDomains,"clientdomains")' id='clientdomains'>
+<select style="width:300px" class="input_option" onchange='changeClient(this,BarChartReqDomains,"clientdomains")' id='clientdomains'>
 <option value=0>All Clients</option>
 <option value=1>Plain</option>
 </select>
@@ -423,7 +423,7 @@ function changeLayout(e,chartname,cookiename) {
 <tr class='even'>
 <th width="40%">Style for charts</th>
 <td>
-<select style="width:150px" class="input_option" onchange='changeColour(this,BarChartReqDomains,barDataDomains,"colourdomains")' id='colourdomains'>
+<select style="width:100px" class="input_option" onchange='changeColour(this,BarChartReqDomains,barDataDomains,"colourdomains")' id='colourdomains'>
 <option value=0>Colour</option>
 <option value=1>Plain</option>
 </select>
@@ -432,7 +432,7 @@ function changeLayout(e,chartname,cookiename) {
 <tr class='even'>
 <th width="40%">Layout for charts</th>
 <td>
-<select style="width:150px" class="input_option" onchange='changeLayout(this,"BarChartReqDomains","charttypedomains")' id='charttypedomains'>
+<select style="width:100px" class="input_option" onchange='changeLayout(this,"BarChartReqDomains","charttypedomains")' id='charttypedomains'>
 <option value=0>Horizontal</option>
 <option value=1>Vertical</option>
 <option value=2>Pie</option>
@@ -489,6 +489,7 @@ function changeLayout(e,chartname,cookiename) {
 </table>
 <script>
 SetDivStatsText();
+SetClients();
 </script>
 <div id="footer">
 </div>
