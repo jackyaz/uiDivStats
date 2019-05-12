@@ -448,6 +448,7 @@ Generate_Stats_Diversion(){
 		human_number(){	sed -re " :restart ; s/([0-9])([0-9]{3})($|[^0-9])/\1,\2\3/ ; t restart ";}
 		LINE=" --------------------------------------------------------\\n"
 		statsFile="/tmp/uidivstats.txt"
+		clientsFile="/tmp/uidivclients.txt"
 		
 		# start of the output for the stats
 		printf "\\n Router Stats $(date +"%c")\\n$LINE" >${statsFile}
@@ -669,6 +670,10 @@ Generate_Stats_Diversion(){
 				else
 					printf "\\n $i, Name-N/A:\\n$LINE" >>${statsFile}
 				fi
+				
+				clientname="$(tail -n 2 "$statsFile" | head -n 1)"
+				printf "%s" "$clientname" >> "$clientsFile"
+				
 				# remove files for next client compiling run
 				rm -f /tmp/uidivstats/div-thtc /tmp/uidivstats/div-toptop
 				/opt/bin/grep -w $i /opt/var/log/dnsmasq.log* | awk '{print $(NF-2)}'|
