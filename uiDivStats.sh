@@ -552,7 +552,7 @@ Generate_Stats_Diversion(){
 		# add reverse router IP
 		echo "$lanIPaddr" | awk -F. '{print "."$3"." $2"."$1}' >>/tmp/uidivstats/div-ipleases
 		
-		foundClients=false
+		foundClients=0
 		
 		# create local client files if any were found
 		if [ "$foundClients" ]; then
