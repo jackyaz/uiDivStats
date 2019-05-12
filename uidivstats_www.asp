@@ -191,10 +191,10 @@ function applyRule() {
 function getAverage(datasetname) {
 	var sum, avg = 0;
 	
-	if (arr.length)
+	if (datasetname.length)
 	{
-		sum = arr.reduce(function(a, b) { return a + b; });
-		avg = sum / arr.length;
+		sum = datasetname.reduce(function(a, b) { return a + b; });
+		avg = sum / datasetname.length;
 	}
 	
 	return avg;
