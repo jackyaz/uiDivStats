@@ -189,7 +189,8 @@ function applyRule() {
 }
 
 function getAverage(datasetname) {
-	return datasetname => datasetname.reduce((a,b) => a + b, 0) / datasetname.length
+	average = datasetname => datasetname.reduce((a,b) => a + b, 0) / datasetname.length;
+	return average;
 }
 
 function getRandomColor() {
@@ -490,7 +491,7 @@ SetDivStatsText();
 SetClients();
 
 if ((s = cookie.get('clientdomains')) != null) {
-	if (s.match(/^([0-10])$/)) {
+	if (s.match(/^([0-9]*[0-9])$/)) {
 		E('clientdomains').value = cookie.get('clientdomains') * 1;
 	}
 }
