@@ -393,6 +393,9 @@ function changeLayout(e,chartname,cookiename) {
 </tr>
 </div>
 </table>
+<script>
+SetDivStatsText();
+</script>
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 <thead>
 <tr>
