@@ -15,6 +15,29 @@
 p{
 font-weight: bolder;
 }
+.collapsible {
+  /*background-color: #777;*/
+  color: white;
+  /*cursor: pointer;*/
+  padding: 18px;
+  width: 100%;
+  border: none;
+  text-align: left;
+  outline: none;
+  font-size: 15px;
+}
+
+.active, .collapsible:hover {
+  background-color: #555;
+}
+
+.content {
+  padding: 0 18px;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.2s ease-out;
+  /*background-color: #f1f1f1;*/
+}
 </style>
 <script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
 <script language="JavaScript" type="text/javascript" src="/js/chart.min.js"></script>
@@ -27,6 +50,7 @@ font-weight: bolder;
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <script language="JavaScript" type="text/javascript" src="/validator.js"></script>
 <script language="JavaScript" type="text/javascript" src="/ext/uiDivStats/uidivstats.js"></script>
+<script language="JavaScript" type="text/javascript" src="/ext/uiDivStats/uidivstatstext.js"></script>
 
 <script>
 var BarChartBlockedAds,BarChartReqDomains;
@@ -349,19 +373,25 @@ function changeLayout(e,chartname,cookiename) {
 <tr bgcolor="#4D595D">
 <td valign="top">
 <div style="line-height:10px;">&nbsp;</div>
-<div class="formfonttitle" style="margin-bottom:0px;">Diversion Statistics</div>
+<!--<div class="formfonttitle" style="margin-bottom:0px;">Diversion Statistics</div>-->
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#4D595D">
 <!--<tr class="apply_gen" valign="top" height="35px">
 <td>
 <input type="button" onClick="applyRule();" value="Update Diversion Statistics" class="button_gen" name="button">
 </td>
 </tr>-->
+<thead>
+<tr>
+<td colspan="2">Diversion Statistics</td>
+</tr>
+</thead>
+<div class="content">
 <tr>
 <td>
 <textarea cols="63" rows="35" wrap="off" readonly="readonly" id="divstats" class="textarea_log_table" style="font-family:'Courier New', Courier, mono; font-size:11px;">"Stats will show here"</textarea>
-<script language="JavaScript" type="text/javascript" src="/ext/uiDivStats/uidivstatstext.js"></script>
 </td>
 </tr>
+</div>
 </table>
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 <thead>
