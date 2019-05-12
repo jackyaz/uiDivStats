@@ -373,7 +373,7 @@ WriteOptions_ToJS(){
 	echo "var clients;"
 	echo "clients = [];"; } >> "$2"
 	contents=""
-	contents="$contents""clients.unshift('All Clients',"
+	contents="$contents""clients.unshift("
 	while IFS='' read -r line || [ -n "$line" ]; do
 		contents="$contents""'""$(echo "$line" | awk '{$1=$1};1' | awk 'BEGIN{FS="  *"}{ print $2" ("$1")"}')""'"","
 	done < "$1"
@@ -551,6 +551,8 @@ Generate_Stats_Diversion(){
 		
 		# add reverse router IP
 		echo "$lanIPaddr" | awk -F. '{print "."$3"." $2"."$1}' >>/tmp/uidivstats/div-ipleases
+		
+		foundClients=false
 		
 		# create local client files if any were found
 		if [ "$foundClients" ]; then
@@ -732,6 +734,7 @@ Generate_Stats_Diversion(){
 			cat /tmp/uidivstats/div-iphostleases.tmp | sort -t . -k 4,4n -u > "${DIVERSION_DIR}/backup/diversion_stats-iphostleases"
 			printf "\\n" >>${statsFile}
 		else
+			printf "%s\\n" "*    All Clients" >> "$clientsFile"
 			printf "\\n No stats for connected clients were compiled.\\n This router provided no client list.\\n" >>${statsFile}
 		fi
 		
