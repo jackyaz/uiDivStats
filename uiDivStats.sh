@@ -717,7 +717,7 @@ Generate_Stats_Diversion(){
 		psstatsFile="$SCRIPT_WEB_DIR/psstats.htm"
 		
 		if [ "$EDITION" = "Standard" ]; then
-			/usr/sbin/curl --retry 3 "http://$psIP/servstats" -o "$psstatsFile"
+			/usr/sbin/curl -s --retry 3 "http://$psIP/servstats" -o "$psstatsFile"
 		else
 			echo "Pixelserv not installed" > "$psstatsFile"
 		fi
