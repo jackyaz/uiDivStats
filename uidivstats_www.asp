@@ -31,7 +31,7 @@ font-weight: bolder;
   background-color: #555;
 }
 
-.content {
+.collapsiblecontent {
   padding: 0 18px;
   max-height: 0;
   overflow: hidden;
@@ -385,13 +385,13 @@ function changeLayout(e,chartname,cookiename) {
 <td colspan="2">Diversion Statistics</td>
 </tr>
 </thead>
-<div class="content">
 <tr>
 <td>
+<div class="collapsiblecontent">
 <textarea cols="63" rows="35" wrap="off" readonly="readonly" id="divstats" class="textarea_log_table" style="font-family:'Courier New', Courier, mono; font-size:11px;">"Stats will show here"</textarea>
+</div>
 </td>
 </tr>
-</div>
 </table>
 <script>
 SetDivStatsText();
