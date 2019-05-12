@@ -15,8 +15,8 @@
 
 ### Start of script variables ###
 readonly SCRIPT_NAME="uiDivStats"
-readonly SCRIPT_VERSION="v0.7.0"
-readonly SCRIPT_BRANCH="develop"
+readonly SCRIPT_VERSION="v0.9.9"
+readonly SCRIPT_BRANCH="master"
 readonly SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/""$SCRIPT_NAME""/""$SCRIPT_BRANCH"
 readonly SCRIPT_CONF="/jffs/configs/$SCRIPT_NAME.config"
 readonly SCRIPT_DIR="/jffs/scripts/$SCRIPT_NAME.d"
@@ -551,8 +551,6 @@ Generate_Stats_Diversion(){
 		
 		# add reverse router IP
 		echo "$lanIPaddr" | awk -F. '{print "."$3"." $2"."$1}' >>/tmp/uidivstats/div-ipleases
-		
-		foundClients=0
 		
 		# create local client files if any were found
 		if [ "$foundClients" -eq 1 ]; then
