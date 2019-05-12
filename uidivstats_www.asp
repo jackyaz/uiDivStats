@@ -460,6 +460,21 @@ function changeLayout(e,chartname,cookiename) {
 </td>
 </tr>
 </table>
+<div style="line-height:10px;">&nbsp;</div>
+<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#4D595D" class="FormTable">
+<thead class="collapsible" >
+<tr>
+<td colspan="2">Pixelserv Statistics Report(click to expand/collapse)</td>
+</tr>
+</thead>
+<tr>
+<td style="padding: 0px;">
+<div class="collapsiblecontent">
+<iframe src="/ext/uiDivStats/psstats.htm" style="width:100%;height:420px;"></iframe>
+</div>
+</td>
+</tr>
+</table>
 </td>
 </tr>
 </tbody>

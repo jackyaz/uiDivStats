@@ -369,8 +369,8 @@ CacheStats(){
 }
 
 WriteStats_ToJS(){
-	echo "function SetDivStatsText(){" > "$2"
-	html='document.getElementById("divstats").innerHTML="'
+	echo "function $3(){" >> "$2"
+	html='document.getElementById("'"$4"'").innerHTML="'
 	while IFS='' read -r line || [ -n "$line" ]; do
 		html="$html""$line""\\r\\n"
 	done < "$1"
@@ -711,11 +711,21 @@ Generate_Stats_Diversion(){
 		WriteData_ToJS /tmp/uidivstats/div-tah "/tmp/uidivstats.js" "barDataBlockedAds" "barLabelsBlockedAds"
 		WriteData_ToJS /tmp/uidivstats/div-th "/tmp/uidivstats.js" "barDataDomains0" "barLabelsDomains0"
 		mv "/tmp/uidivstats.js" "$SCRIPT_WEB_DIR/uidivstats.js"
-		WriteStats_ToJS "$statsFile" "$SCRIPT_WEB_DIR/uidivstatstext.js"
+		WriteStats_ToJS "$statsFile" "/tmp/uidivstatstext.js" "SetDivStatsText" "divstats"
+		mv "/tmp/uidivstatstext.js" "$SCRIPT_WEB_DIR/uidivstatstext.js"
+		
+		psstatsFile="$SCRIPT_WEB_DIR/psstats.htm"
+		
+		if [ "$EDITION" = "Standard" ]; then
+			/usr/sbin/curl --retry 3 "http://$psIP/servstats" -o "$psstatsFile"
+		else
+			echo "Pixelserv not installed" > "$psstatsFile"
+		fi
 		
 		CacheStats cache 2>/dev/null
 		rm -f $statsFile
 		rm -f "/tmp/uidivstats.js"
+		rm -f "/tmp/uidivstatstext.js"
 		rm -rf /tmp/uidivstats
 		
 		Print_Output "true" "Diversion statistic generation completed successfully!" "$PASS"
