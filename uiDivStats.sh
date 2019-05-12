@@ -369,12 +369,13 @@ CacheStats(){
 }
 
 WriteStats_ToJS(){
+	echo "function SetDivStatsText(){" > "$2"
 	html='document.getElementById("divstats").innerHTML="'
 	while IFS='' read -r line || [ -n "$line" ]; do
 		html="$html""$line""\\r\\n"
 	done < "$1"
 	html="$html"'"'
-	echo "$html" > "$2"
+	printf "%s\\r\\n}\\r\\n" "$html" >> "$2"
 }
 
 WriteData_ToJS(){
