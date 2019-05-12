@@ -120,12 +120,12 @@ function Draw_Domain_Chart() {
 		scales: {
 			xAxes: [{
 				gridLines: { display: showXGrid(charttypedomain), color: "#282828" },
-				ticks: { display: showXAxis(charttypedomain), beginAtZero: true}
+				ticks: { display: showXAxis(charttypedomain), beginAtZero: true, max: getAvg(window["barDataDomains"+document.getElementById("clientdomains").value]) + getSDev(window["barDataDomains"+document.getElementById("clientdomains").value]) }
 			}],
 			yAxes: [{
 				gridLines: { display: false, color: "#282828" },
 				scaleLabel: { display: false, labelString: "Domains" },
-				ticks: { display: showYAxis(charttypedomain), beginAtZero: true }
+				ticks: { display: showYAxis(charttypedomain), beginAtZero: true, max: getAvg(window["barDataDomains"+document.getElementById("clientdomains").value]) + getSDev(window["barDataDomains"+document.getElementById("clientdomains").value]) }
 			}]
 		}
 	};
@@ -188,7 +188,22 @@ function applyRule() {
 	document.form.submit();
 }
 
-function getAverage(datasetname) {
+function getSDev(datasetname){
+	var avg = getAvg(values);
+	
+	var squareDiffs = datasetname.map(function(value){
+		var diff = value - avg;
+		var sqrDiff = diff * diff;
+		return sqrDiff;
+	});
+	
+	var avgSquareDiff = getAvg(squareDiffs);
+	
+	var stdDev = Math.sqrt(avgSquareDiff);
+	return stdDev;
+}
+
+function getAvg(datasetname) {
 	var sum, avg = 0;
 	
 	if (datasetname.length)
