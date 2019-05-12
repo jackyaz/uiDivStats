@@ -16,27 +16,21 @@ p{
 font-weight: bolder;
 }
 .collapsible {
-  /*background-color: #777;*/
   color: white;
-  /*cursor: pointer;*/
-  padding: 18px;
+  padding: 0px;
   width: 100%;
   border: none;
   text-align: left;
   outline: none;
-  font-size: 15px;
-}
-
-.active, .collapsible:hover {
-  background-color: #555;
+  cursor: pointer;
 }
 
 .collapsiblecontent {
-  padding: 0 18px;
+  padding: 0px;
   max-height: 0;
   overflow: hidden;
+  border: none;
   transition: max-height 0.2s ease-out;
-  /*background-color: #f1f1f1;*/
 }
 </style>
 <script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
@@ -374,28 +368,11 @@ function changeLayout(e,chartname,cookiename) {
 <td valign="top">
 <div style="line-height:10px;">&nbsp;</div>
 <!--<div class="formfonttitle" style="margin-bottom:0px;">Diversion Statistics</div>-->
-<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#4D595D">
 <!--<tr class="apply_gen" valign="top" height="35px">
 <td>
 <input type="button" onClick="applyRule();" value="Update Diversion Statistics" class="button_gen" name="button">
 </td>
 </tr>-->
-<thead>
-<tr>
-<td colspan="2">Diversion Statistics</td>
-</tr>
-</thead>
-<tr>
-<td>
-<div class="collapsiblecontent">
-<textarea cols="63" rows="35" wrap="off" readonly="readonly" id="divstats" class="textarea_log_table" style="font-family:'Courier New', Courier, mono; font-size:11px;">"Stats will show here"</textarea>
-</div>
-</td>
-</tr>
-</table>
-<script>
-SetDivStatsText();
-</script>
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 <thead>
 <tr>
@@ -427,6 +404,7 @@ SetDivStatsText();
 </td>
 </tr>
 </table>
+<div style="line-height:10px;">&nbsp;</div>
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 <thead>
 <tr>
@@ -467,6 +445,21 @@ SetDivStatsText();
 </td>
 </tr>
 </table>
+<div style="line-height:10px;">&nbsp;</div>
+<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#4D595D" class="FormTable">
+<thead class="collapsible" >
+<tr>
+<td colspan="2">Diversion Statistics Report(click to expand/collapse)</td>
+</tr>
+</thead>
+<tr>
+<td style="padding: 0px;">
+<div class="collapsiblecontent">
+<textarea cols="75" rows="35" wrap="off" readonly="readonly" id="divstats" class="textarea_log_table" style="font-family:'Courier New', Courier, mono; font-size:11px;border: none;padding: 0px;">"Stats will show here"</textarea>
+</div>
+</td>
+</tr>
+</table>
 </td>
 </tr>
 </tbody>
@@ -479,7 +472,26 @@ SetDivStatsText();
 <td width="10" align="center" valign="top">&nbsp;</td>
 </tr>
 </table>
+<script>
+SetDivStatsText();
+</script>
 <div id="footer">
 </div>
+<script>
+var coll = document.getElementsByClassName("collapsible");
+var i;
+
+for (i = 0; i < coll.length; i++) {
+  coll[i].addEventListener("click", function() {
+    this.classList.toggle("active");
+    var content = this.nextElementSibling.firstElementChild.firstElementChild.firstElementChild;
+    if (content.style.maxHeight){
+      content.style.maxHeight = null;
+    } else {
+      content.style.maxHeight = content.scrollHeight + "px";
+    }
+  });
+}
+</script>
 </body>
 </html>
