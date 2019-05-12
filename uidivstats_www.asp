@@ -189,7 +189,7 @@ function applyRule() {
 }
 
 function getSDev(datasetname){
-	var avg = getAvg(values);
+	var avg = getAvg(datasetname);
 	
 	var squareDiffs = datasetname.map(function(value){
 		var diff = value - avg;
@@ -444,7 +444,7 @@ function changeLayout(e,chartname,cookiename) {
 <tr class='even'>
 <th width="40%">Style for charts</th>
 <td>
-<select style="width:100px" class="input_option" onchange='changeColour(this,BarChartReqDomains,barDataDomains,"colourdomains")' id='colourdomains'>
+<select style="width:100px" class="input_option" onchange='changeColour(this,BarChartReqDomains,window["barDataDomains"+document.getElementById("clientdomains").value],"colourdomains")' id='colourdomains'>
 <option value=0>Colour</option>
 <option value=1>Plain</option>
 </select>
