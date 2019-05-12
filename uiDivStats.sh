@@ -373,7 +373,7 @@ WriteOptions_ToJS(){
 	echo "var clients"
 	echo "clients = [];"; } >> "$2"
 	contents=""
-	contents="$contents"'clients.unshift('
+	contents="$contents"'clients.unshift(All Clients,'
 	while IFS='' read -r line || [ -n "$line" ]; do
 		contents="$contents""'""$(echo "$line" | awk '{$1=$1};1' | awk 'BEGIN{FS="  *"}{ print $2" ("$1")"}')""'"","
 	done < "$1"
@@ -382,11 +382,13 @@ WriteOptions_ToJS(){
 	echo "$contents" >> "$2"
 	
 	{
+	echo "function SetClients(){"
 	echo "selectField = document.getElementById(\"clientdomains\");"
 	echo "selectField.options.length = 0;"
 	echo "for (i=0; i<clients.length; i++)"
 	echo "{"
-	echo "selectField.options[selectField.length] = new Option(clients[i], i+1);"
+	echo "selectField.options[selectField.length] = new Option(clients[i], i);"
+	echo "}"
 	echo "}" ; } >> "$2"
 }
 
