@@ -251,7 +251,7 @@ function showYAxis(e) {
 	}
 }
 
-function changeColour(e,chartname,cookiename) {
+function changeClient(e,chartname,cookiename) {
 	index = e.value * 1;
 	cookie.set(cookiename, index, 31);
 	Draw_Domain_Chart();
