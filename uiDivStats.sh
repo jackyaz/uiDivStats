@@ -375,7 +375,7 @@ WriteOptions_ToJS(){
 	contents=""
 	contents="$contents"'clients.unshift('
 	while IFS='' read -r line || [ -n "$line" ]; do
-		contents="$contents""'""$(echo "$line" | awk '{$1=$1};1' | awk 'BEGIN{FS="  *"}{ print $2 ($1)}')""'"","
+		contents="$contents""'""$(echo "$line" | awk '{$1=$1};1' | awk 'BEGIN{FS="  *"}{ print $2" ("$1")"}')""'"","
 	done < "$1"
 	contents=$(echo "$contents" | sed 's/.$//')
 	contents="$contents"");"
@@ -386,7 +386,8 @@ WriteOptions_ToJS(){
 	echo "selectField.options.length = 0;"
 	echo "for (i=0; i<clients.length; i++)"
 	echo "{"
-	echo "selectField.options[selectField.length] = new Option(clients[i], i+1);" ; } >> "$2"
+	echo "selectField.options[selectField.length] = new Option(clients[i], i+1);"
+	echo "}" ; } >> "$2"
 }
 
 WriteStats_ToJS(){
