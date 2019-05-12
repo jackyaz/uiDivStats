@@ -15,6 +15,23 @@
 p{
 font-weight: bolder;
 }
+.collapsible {
+  color: white;
+  padding: 0px;
+  width: 100%;
+  border: none;
+  text-align: left;
+  outline: none;
+  cursor: pointer;
+}
+
+.collapsiblecontent {
+  padding: 0px;
+  max-height: 0;
+  overflow: hidden;
+  border: none;
+  transition: max-height 0.2s ease-out;
+}
 </style>
 <script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
 <script language="JavaScript" type="text/javascript" src="/js/chart.min.js"></script>
@@ -27,26 +44,15 @@ font-weight: bolder;
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <script language="JavaScript" type="text/javascript" src="/validator.js"></script>
 <script language="JavaScript" type="text/javascript" src="/ext/uiDivStats/uidivstats.js"></script>
+<script language="JavaScript" type="text/javascript" src="/ext/uiDivStats/uidivstatstext.js"></script>
 
 <script>
-var barDataBlockedAds, barLabelsBlockedAds, barDataDomains, barLabelsDomains;
-var BarChartBlockedAds, BarChartReqDomains;
+var BarChartBlockedAds,BarChartReqDomains;
 var charttypead, charttypedomain;
 Chart.defaults.global.defaultFontColor = "#CCC";
-
-function Redraw_Ad_Chart() {
-	barDataBlockedAds = [];
-	barLabelsBlockedAds = [];
-	GenChartDataAds();
-	Draw_Ad_Chart();
-}
-
-function Redraw_Domain_Chart() {
-	barDataDomains = [];
-	barLabelsDomains = [];
-	GenChartDataDomains();
-	Draw_Domain_Chart();
-}
+Chart.Tooltip.positioners.cursor = function(chartElements, coordinates) {
+  return coordinates;
+};
 
 function Draw_Ad_Chart() {
 	if (barLabelsBlockedAds.length == 0) return;
@@ -65,17 +71,20 @@ function Draw_Ad_Chart() {
 			callbacks: {
 				title: function (tooltipItem, data) { return data.labels[tooltipItem[0].index]; },
 				label: function (tooltipItem, data) { return comma(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index]); },
-			}
+			},
+			mode: 'point',
+			position: 'cursor',
+			intersect: true
 		},
 		scales: {
 			xAxes: [{
 				gridLines: { display: showXGrid(charttypead), color: "#282828" },
-				ticks: { display: showXAxis(charttypead), beginAtZero: true}
+				ticks: { display: showXAxis(charttypead), beginAtZero: false }
 			}],
 			yAxes: [{
 				gridLines: { display: false, color: "#282828" },
 				scaleLabel: { display: false, labelString: "Blocks" },
-				ticks: { display: showYAxis(charttypead), beginAtZero: true }
+				ticks: { display: showYAxis(charttypead), beginAtZero: false }
 			}]
 		}
 	};
@@ -96,7 +105,7 @@ function Draw_Ad_Chart() {
 }
 
 function Draw_Domain_Chart() {
-	if (barLabelsDomains.length == 0) return;
+	if (window["barLabelsDomains"+document.getElementById("clientdomains").value].length == 0) return;
 	if (BarChartReqDomains != undefined) BarChartReqDomains.destroy();
 	var ctx = document.getElementById("ChartDomains").getContext("2d");
 	var barOptionsDomains = {
@@ -112,25 +121,28 @@ function Draw_Domain_Chart() {
 			callbacks: {
 				title: function (tooltipItem, data) { return data.labels[tooltipItem[0].index]; },
 				label: function (tooltipItem, data) { return comma(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index]); },
-			}
+			},
+			mode: 'point',
+			position: 'cursor',
+			intersect: true
 		},
 		scales: {
 			xAxes: [{
 				gridLines: { display: showXGrid(charttypedomain), color: "#282828" },
-				ticks: { display: showXAxis(charttypedomain), beginAtZero: true}
+				ticks: { display: showXAxis(charttypedomain), beginAtZero: false } //, max: getAvg(window["barDataDomains"+document.getElementById("clientdomains").value]) + getSDev(window["barDataDomains"+document.getElementById("clientdomains").value]) }
 			}],
 			yAxes: [{
 				gridLines: { display: false, color: "#282828" },
 				scaleLabel: { display: false, labelString: "Domains" },
-				ticks: { display: showYAxis(charttypedomain), beginAtZero: true }
+				ticks: { display: showYAxis(charttypedomain), beginAtZero: false } //, max: getAvg(window["barDataDomains"+document.getElementById("clientdomains").value]) + getSDev(window["barDataDomains"+document.getElementById("clientdomains").value]) }
 			}]
 		}
 	};
 	var barDatasetDomains = {
-		labels: barLabelsDomains,
-		datasets: [{data: barDataDomains,
+		labels: window["barLabelsDomains"+document.getElementById("clientdomains").value],
+		datasets: [{data: window["barDataDomains"+document.getElementById("clientdomains").value],
 			borderWidth: 1,
-			backgroundColor: poolColors(barDataDomains.length),
+			backgroundColor: poolColors(window["barDataDomains"+document.getElementById("clientdomains").value].length),
 			borderColor: "#000000",
 		}]
 	};
@@ -139,7 +151,7 @@ function Draw_Domain_Chart() {
 		options: barOptionsDomains,
 		data: barDatasetDomains
 	});
-	changeColour(E('colourdomains'),BarChartReqDomains,barDataDomains,"colourdomains")
+	changeColour(E('colourdomains'),BarChartReqDomains,window["barDataDomains"+document.getElementById("clientdomains").value],"colourdomains")
 }
 
 function initial(){
@@ -169,9 +181,9 @@ function initial(){
 	}
 	
 	show_menu();
-	Redraw_Ad_Chart();
+	Draw_Ad_Chart();
 	changeLayout(E('charttypeads'),"BarChartBlockedAds","charttypeads");
-	Redraw_Domain_Chart();
+	Draw_Domain_Chart();
 	changeLayout(E('charttypedomains'),"BarChartReqDomains","charttypedomains");
 }
 
@@ -183,6 +195,33 @@ function applyRule() {
 	var action_script_tmp = "start_uiDivStats";
 	document.form.action_script.value = action_script_tmp;
 	document.form.submit();
+}
+
+function getSDev(datasetname){
+	var avg = getAvg(datasetname);
+	
+	var squareDiffs = datasetname.map(function(value){
+		var diff = value - avg;
+		var sqrDiff = diff * diff;
+		return sqrDiff;
+	});
+	
+	var avgSquareDiff = getAvg(squareDiffs);
+	
+	var stdDev = Math.sqrt(avgSquareDiff);
+	return stdDev;
+}
+
+function getAvg(datasetname) {
+	var sum, avg = 0;
+	
+	if (datasetname.length)
+	{
+		sum = datasetname.reduce(function(a, b) { return a*1 + b*1; });
+		avg = sum / datasetname.length;
+	}
+	
+	return avg;
 }
 
 function getRandomColor() {
@@ -260,6 +299,12 @@ function showYAxis(e) {
 	}
 }
 
+function changeClient(e,chartname,cookiename) {
+	index = e.value * 1;
+	cookie.set(cookiename, index, 31);
+	Draw_Domain_Chart();
+}
+
 function changeColour(e,chartname,datasetname,cookiename) {
 	colour = e.value * 1;
 	if ( colour == 0 )
@@ -312,11 +357,11 @@ function changeLayout(e,chartname,cookiename) {
 	cookie.set(cookiename, layout, 31);
 	if ( chartname == "BarChartBlockedAds" )
 	{
-		Redraw_Ad_Chart();
+		Draw_Ad_Chart();
 	}
 	else if ( chartname == "BarChartReqDomains" )
 	{
-		Redraw_Domain_Chart();
+		Draw_Domain_Chart();
 	}
 }
 </script>
@@ -352,20 +397,12 @@ function changeLayout(e,chartname,cookiename) {
 <tr bgcolor="#4D595D">
 <td valign="top">
 <div style="line-height:10px;">&nbsp;</div>
-<div class="formfonttitle" style="margin-bottom:0px;">Diversion Statistics</div>
-<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#4D595D">
+<!--<div class="formfonttitle" style="margin-bottom:0px;">Diversion Statistics</div>-->
 <!--<tr class="apply_gen" valign="top" height="35px">
 <td>
 <input type="button" onClick="applyRule();" value="Update Diversion Statistics" class="button_gen" name="button">
 </td>
 </tr>-->
-<tr>
-<td>
-<textarea cols="63" rows="35" wrap="off" readonly="readonly" id="divstats" class="textarea_log_table" style="font-family:'Courier New', Courier, mono; font-size:11px;">"Stats will show here"</textarea>
-<script language="JavaScript" type="text/javascript" src="/ext/uiDivStats/uidivstatstext.js"></script>
-</td>
-</tr>
-</table>
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 <thead>
 <tr>
@@ -397,6 +434,7 @@ function changeLayout(e,chartname,cookiename) {
 </td>
 </tr>
 </table>
+<div style="line-height:10px;">&nbsp;</div>
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 <thead>
 <tr>
@@ -404,9 +442,18 @@ function changeLayout(e,chartname,cookiename) {
 </tr>
 </thead>
 <tr class='even'>
+<th width="40%">Client to display</th>
+<td>
+<select style="width:300px" class="input_option" onchange='changeClient(this,BarChartReqDomains,"clientdomains")' id='clientdomains'>
+<option value=0>All Clients</option>
+<option value=1>Plain</option>
+</select>
+</td>
+</tr>
+<tr class='even'>
 <th width="40%">Style for charts</th>
 <td>
-<select style="width:100px" class="input_option" onchange='changeColour(this,BarChartReqDomains,barDataDomains,"colourdomains")' id='colourdomains'>
+<select style="width:100px" class="input_option" onchange='changeColour(this,BarChartReqDomains,window["barDataDomains"+document.getElementById("clientdomains").value],"colourdomains")' id='colourdomains'>
 <option value=0>Colour</option>
 <option value=1>Plain</option>
 </select>
@@ -428,6 +475,36 @@ function changeLayout(e,chartname,cookiename) {
 </td>
 </tr>
 </table>
+<div style="line-height:10px;">&nbsp;</div>
+<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#4D595D" class="FormTable">
+<thead class="collapsible" >
+<tr>
+<td colspan="2">Diversion Statistics Report (click to expand/collapse)</td>
+</tr>
+</thead>
+<tr>
+<td style="padding: 0px;">
+<div class="collapsiblecontent">
+<textarea cols="75" rows="35" wrap="off" readonly="readonly" id="divstats" class="textarea_log_table" style="font-family:'Courier New', Courier, mono; font-size:11px;border: none;padding: 0px;">"Stats will show here"</textarea>
+</div>
+</td>
+</tr>
+</table>
+<div style="line-height:10px;">&nbsp;</div>
+<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#4D595D" class="FormTable">
+<thead class="collapsible" >
+<tr>
+<td colspan="2">Pixelserv Statistics Report (click to expand/collapse)</td>
+</tr>
+</thead>
+<tr>
+<td style="padding: 0px;">
+<div class="collapsiblecontent">
+<iframe src="/ext/uiDivStats/psstats.htm" style="width:100%;height:420px;"></iframe>
+</div>
+</td>
+</tr>
+</table>
 </td>
 </tr>
 </tbody>
@@ -440,7 +517,33 @@ function changeLayout(e,chartname,cookiename) {
 <td width="10" align="center" valign="top">&nbsp;</td>
 </tr>
 </table>
+<script>
+SetDivStatsText();
+SetClients();
+
+if ((s = cookie.get('clientdomains')) != null) {
+	if (s.match(/^([0-9]*[0-9])$/)) {
+		E('clientdomains').value = cookie.get('clientdomains') * 1;
+	}
+}
+</script>
 <div id="footer">
 </div>
+<script>
+var coll = document.getElementsByClassName("collapsible");
+var i;
+
+for (i = 0; i < coll.length; i++) {
+  coll[i].addEventListener("click", function() {
+    this.classList.toggle("active");
+    var content = this.nextElementSibling.firstElementChild.firstElementChild.firstElementChild;
+    if (content.style.maxHeight){
+      content.style.maxHeight = null;
+    } else {
+      content.style.maxHeight = content.scrollHeight + "px";
+    }
+  });
+}
+</script>
 </body>
 </html>

@@ -15,7 +15,7 @@
 
 ### Start of script variables ###
 readonly SCRIPT_NAME="uiDivStats"
-readonly SCRIPT_VERSION="v0.6.0"
+readonly SCRIPT_VERSION="v0.9.9"
 readonly SCRIPT_BRANCH="master"
 readonly SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/""$SCRIPT_NAME""/""$SCRIPT_BRANCH"
 readonly SCRIPT_CONF="/jffs/configs/$SCRIPT_NAME.config"
@@ -368,19 +368,47 @@ CacheStats(){
 	esac
 }
 
+WriteOptions_ToJS(){
+	{
+	echo "var clients;"
+	echo "clients = [];"; } >> "$2"
+	contents=""
+	contents="$contents""clients.unshift("
+	while IFS='' read -r line || [ -n "$line" ]; do
+		contents="$contents""'""$(echo "$line" | awk '{$1=$1};1' | awk 'BEGIN{FS="  *"}{ print $2" ("$1")"}')""'"","
+	done < "$1"
+	contents=$(echo "$contents" | sed 's/.$//')
+	contents="$contents"");"
+	echo "$contents" >> "$2"
+	
+	{
+	echo "function SetClients(){"
+	echo "selectField = document.getElementById(\"clientdomains\");"
+	echo "selectField.options.length = 0;"
+	echo "for (i=0; i<clients.length; i++)"
+	echo "{"
+	echo "selectField.options[selectField.length] = new Option(clients[i], i);"
+	echo "}"
+	echo "}" ; } >> "$2"
+}
+
 WriteStats_ToJS(){
-	html='document.getElementById("divstats").innerHTML="'
+	echo "function $3(){" >> "$2"
+	html='document.getElementById("'"$4"'").innerHTML="'
 	while IFS='' read -r line || [ -n "$line" ]; do
 		html="$html""$line""\\r\\n"
 	done < "$1"
 	html="$html"'"'
-	echo "$html" > "$2"
+	printf "%s\\r\\n}\\r\\n" "$html" >> "$2"
 }
 
 WriteData_ToJS(){
-	echo 'function '"$3"'() {' >> "$2"
+	{
+	echo "var $3 , $4;"
+	echo "$3 = [];"
+	echo "$4 = [];"; } >> "$2"
 	contents=""
-	contents="$contents""$4"'.unshift('
+	contents="$contents""$3"'.unshift('
 	while IFS='' read -r line || [ -n "$line" ]; do
 		contents="$contents""'""$(echo "$line" | awk '{$1=$1};1' | awk 'BEGIN{FS="  *"}{ print $1 }')""'"","
 	done < "$1"
@@ -388,13 +416,13 @@ WriteData_ToJS(){
 	contents="$contents"");"
 	echo "$contents" >> "$2"
 
-	contents="$5"'.unshift('
+	contents="$4"'.unshift('
 	while IFS='' read -r line || [ -n "$line" ]; do
 		contents="$contents""'""$(echo "$line" | awk '{$1=$1};1' | awk 'BEGIN{FS="  *"}{ print $2 }')""'"","
 	done < "$1"
 	contents=$(echo "$contents" | sed 's/.$//')
 	contents="$contents"");"
-	printf "%s\\r\\n}\\r\\n" "$contents" >> "$2"
+	printf "%s\\r\\n\\r\\n" "$contents" >> "$2"
 }
 
 # shellcheck disable=SC1090
@@ -444,6 +472,7 @@ Generate_Stats_Diversion(){
 		human_number(){	sed -re " :restart ; s/([0-9])([0-9]{3})($|[^0-9])/\1,\2\3/ ; t restart ";}
 		LINE=" --------------------------------------------------------\\n"
 		statsFile="/tmp/uidivstats.txt"
+		clientsFile="/tmp/uidivclients.txt"
 		
 		# start of the output for the stats
 		printf "\\n Router Stats $(date +"%c")\\n$LINE" >${statsFile}
@@ -524,7 +553,7 @@ Generate_Stats_Diversion(){
 		echo "$lanIPaddr" | awk -F. '{print "."$3"." $2"."$1}' >>/tmp/uidivstats/div-ipleases
 		
 		# create local client files if any were found
-		if [ "$foundClients" ]; then
+		if [ "$foundClients" -eq 1 ]; then
 			for i in $(awk '{print $1}' /tmp/uidivstats/div-allips); do
 				if [ -s /etc/hosts.dnsmasq ] && /opt/bin/grep -wq $i /etc/hosts.dnsmasq; then
 					echo "$(awk -v var="$i" -F' ' '$1 == var{print $2}' /etc/hosts.dnsmasq)" >>/tmp/uidivstats/div-hostleases
@@ -594,7 +623,7 @@ Generate_Stats_Diversion(){
 		awk 'NR==FNR{a[FNR]=$0 "";next} {print a[FNR],$0}' /tmp/uidivstats/div-tah /tmp/uidivstats/div-bw >>${statsFile}
 		
 		# compile client stats if any were found
-		if [ "$foundClients" ]; then
+		if [ "$foundClients" -eq 1 ]; then
 			AL=1 # prevent divide by zero
 			printf "\\n The top $wsTopClients noisiest name clients:\\n$LINE\\n" >>${statsFile}
 			printf " count for IP, client name: count for domain - percentage\\n$LINE" >>${statsFile}
@@ -652,6 +681,7 @@ Generate_Stats_Diversion(){
 			awk 'NR==FNR{a[FNR]=$0 "";next} {print a[FNR],$0}' /tmp/uidivstats/div6 /tmp/uidivstats/div7 >>${statsFile}
 			
 			printf "\\n\\n Top $wsTopHosts domains for top $wsTopClients clients:\\n$LINE" >>${statsFile}
+			COUNTER=1
 			for i in $(awk '{print $2}' /tmp/uidivstats/div1); do
 				if /opt/bin/grep -wq $i /tmp/uidivstats/div-iphostleases; then
 					printf "\\n $i, $(awk -v var="$i" -F' ' '$1 == var{print $2}' /tmp/uidivstats/div-iphostleases):\\n$LINE" >>${statsFile}
@@ -664,6 +694,10 @@ Generate_Stats_Diversion(){
 				else
 					printf "\\n $i, Name-N/A:\\n$LINE" >>${statsFile}
 				fi
+				
+				clientname="$(tail -n 2 "$statsFile" | head -n 1 | sed 's/,/    /g' | sed 's/://g')"
+				printf "%s\\n" "$clientname" >> "$clientsFile"
+				
 				# remove files for next client compiling run
 				rm -f /tmp/uidivstats/div-thtc /tmp/uidivstats/div-toptop
 				/opt/bin/grep -w $i /opt/var/log/dnsmasq.log* | awk '{print $(NF-2)}'|
@@ -684,7 +718,9 @@ Generate_Stats_Diversion(){
 						echo >>/tmp/uidivstats/div-toptop
 					fi
 				done
+				WriteData_ToJS /tmp/uidivstats/div-thtc "/tmp/uidivstats.js" "barDataDomains$COUNTER" "barLabelsDomains$COUNTER"
 				awk 'NR==FNR{a[FNR]=$0 "";next} {print a[FNR],$0}' /tmp/uidivstats/div-thtc /tmp/uidivstats/div-toptop  >>${statsFile}
+				COUNTER=$((COUNTER + 1))
 			done
 			
 			# preserve /tmp/uidivstats/div-iphostleases for next run for [Client Name*] list
@@ -696,19 +732,35 @@ Generate_Stats_Diversion(){
 			cat /tmp/uidivstats/div-iphostleases.tmp | sort -t . -k 4,4n -u > "${DIVERSION_DIR}/backup/diversion_stats-iphostleases"
 			printf "\\n" >>${statsFile}
 		else
+			printf "%s\\n" "*    All Clients" >> "$clientsFile"
 			printf "\\n No stats for connected clients were compiled.\\n This router provided no client list.\\n" >>${statsFile}
 		fi
 		
-		rm -f "$SCRIPT_WEB_DIR/uidivstats.js"
-		WriteData_ToJS /tmp/uidivstats/div-tah "$SCRIPT_WEB_DIR/uidivstats.js" "GenChartDataAds" "barDataBlockedAds" "barLabelsBlockedAds"
-		WriteData_ToJS /tmp/uidivstats/div-th "$SCRIPT_WEB_DIR/uidivstats.js" "GenChartDataDomains" "barDataDomains" "barLabelsDomains"
+		printf "$LINE End of stats report\\n" >>${statsFile}
 		
+		WriteData_ToJS /tmp/uidivstats/div-tah "/tmp/uidivstats.js" "barDataBlockedAds" "barLabelsBlockedAds"
+		WriteData_ToJS /tmp/uidivstats/div-th "/tmp/uidivstats.js" "barDataDomains0" "barLabelsDomains0"
+		WriteOptions_ToJS "$clientsFile" "/tmp/uidivstats.js"
+		mv "/tmp/uidivstats.js" "$SCRIPT_WEB_DIR/uidivstats.js"
+		
+		WriteStats_ToJS "$statsFile" "/tmp/uidivstatstext.js" "SetDivStatsText" "divstats"
+		mv "/tmp/uidivstatstext.js" "$SCRIPT_WEB_DIR/uidivstatstext.js"
+		
+		psstatsFile="$SCRIPT_WEB_DIR/psstats.htm"
+		
+		if [ "$EDITION" = "Standard" ]; then
+			/usr/sbin/curl -s --retry 3 "http://$psIP/servstats" -o "$psstatsFile"
+		else
+			echo "Pixelserv not installed" > "$psstatsFile"
+		fi
+		
+		CacheStats cache 2>/dev/null
+		rm -f $statsFile
+		rm -f $clientsFile
+		rm -f "/tmp/uidivstats.js"
+		rm -f "/tmp/uidivstatstext.js"
 		rm -rf /tmp/uidivstats
 		
-		printf "$LINE End of stats report\\n" >>${statsFile}
-		WriteStats_ToJS "$statsFile" "$SCRIPT_WEB_DIR/uidivstatstext.js"
-		rm -f $statsFile
-		CacheStats cache 2>/dev/null
 		Print_Output "true" "Diversion statistic generation completed successfully!" "$PASS"
 	else
 		Print_Output "true" "Diversion configuration not found or empty dnsmasq.log file, exiting!" "$ERR"
