@@ -671,8 +671,8 @@ Generate_Stats_Diversion(){
 					printf "\\n $i, Name-N/A:\\n$LINE" >>${statsFile}
 				fi
 				
-				clientname="$(tail -n 2 "$statsFile" | head -n 1)"
-				printf "%s" "$clientname" >> "$clientsFile"
+				clientname="$(tail -n 2 "$statsFile" | head -n 1 | sed 's/,/    /g' | sed 's/://g')"
+				printf "%s\\n" "$clientname" >> "$clientsFile"
 				
 				# remove files for next client compiling run
 				rm -f /tmp/uidivstats/div-thtc /tmp/uidivstats/div-toptop
