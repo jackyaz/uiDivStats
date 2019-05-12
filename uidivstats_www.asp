@@ -81,7 +81,7 @@ function Draw_Ad_Chart() {
 }
 
 function Draw_Domain_Chart() {
-	if (window["barLabelsDomains"+document.getElementById("clientdomains").value]length == 0) return;
+	if (window["barLabelsDomains"+document.getElementById("clientdomains").value].length == 0) return;
 	if (BarChartReqDomains != undefined) BarChartReqDomains.destroy();
 	var ctx = document.getElementById("ChartDomains").getContext("2d");
 	var barOptionsDomains = {
