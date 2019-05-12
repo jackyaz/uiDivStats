@@ -555,7 +555,7 @@ Generate_Stats_Diversion(){
 		foundClients=0
 		
 		# create local client files if any were found
-		if [ "$foundClients" ]; then
+		if [ "$foundClients" -eq 1 ]; then
 			for i in $(awk '{print $1}' /tmp/uidivstats/div-allips); do
 				if [ -s /etc/hosts.dnsmasq ] && /opt/bin/grep -wq $i /etc/hosts.dnsmasq; then
 					echo "$(awk -v var="$i" -F' ' '$1 == var{print $2}' /etc/hosts.dnsmasq)" >>/tmp/uidivstats/div-hostleases
@@ -625,7 +625,7 @@ Generate_Stats_Diversion(){
 		awk 'NR==FNR{a[FNR]=$0 "";next} {print a[FNR],$0}' /tmp/uidivstats/div-tah /tmp/uidivstats/div-bw >>${statsFile}
 		
 		# compile client stats if any were found
-		if [ "$foundClients" ]; then
+		if [ "$foundClients" -eq 1 ]; then
 			AL=1 # prevent divide by zero
 			printf "\\n The top $wsTopClients noisiest name clients:\\n$LINE\\n" >>${statsFile}
 			printf " count for IP, client name: count for domain - percentage\\n$LINE" >>${statsFile}
