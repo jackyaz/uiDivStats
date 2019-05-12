@@ -193,7 +193,7 @@ function getAverage(datasetname) {
 	
 	if (datasetname.length)
 	{
-		sum = datasetname.reduce(function(a, b) { return a + b; });
+		sum = datasetname.reduce(function(a, b) { return a*1 + b*1; });
 		avg = sum / datasetname.length;
 	}
 	
