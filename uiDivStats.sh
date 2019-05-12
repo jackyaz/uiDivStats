@@ -688,7 +688,7 @@ Generate_Stats_Diversion(){
 						echo >>/tmp/uidivstats/div-toptop
 					fi
 				done
-				WriteData_ToJS /tmp/uidivstats/div-thtc "$SCRIPT_WEB_DIR/uidivstats.js" "barDataDomains$COUNTER" "barLabelsDomains$COUNTER"
+				WriteData_ToJS /tmp/uidivstats/div-thtc "/tmp/uidivstats.js" "barDataDomains$COUNTER" "barLabelsDomains$COUNTER"
 				awk 'NR==FNR{a[FNR]=$0 "";next} {print a[FNR],$0}' /tmp/uidivstats/div-thtc /tmp/uidivstats/div-toptop  >>${statsFile}
 				COUNTER=$((COUNTER + 1))
 			done
@@ -705,16 +705,18 @@ Generate_Stats_Diversion(){
 			printf "\\n No stats for connected clients were compiled.\\n This router provided no client list.\\n" >>${statsFile}
 		fi
 		
-		rm -f "$SCRIPT_WEB_DIR/uidivstats.js"
-		WriteData_ToJS /tmp/uidivstats/div-tah "$SCRIPT_WEB_DIR/uidivstats.js" "barDataBlockedAds" "barLabelsBlockedAds"
-		WriteData_ToJS /tmp/uidivstats/div-th "$SCRIPT_WEB_DIR/uidivstats.js" "barDataDomains0" "barLabelsDomains0"
+		printf "$LINE End of stats report\\n" >>${statsFile}
 		
+		WriteData_ToJS /tmp/uidivstats/div-tah "/tmp/uidivstats.js" "barDataBlockedAds" "barLabelsBlockedAds"
+		WriteData_ToJS /tmp/uidivstats/div-th "/tmp/uidivstats.js" "barDataDomains0" "barLabelsDomains0"
+		mv "/tmp/uidivstats.js" "$SCRIPT_WEB_DIR/uidivstats.js"
+		WriteStats_ToJS "$statsFile" "$SCRIPT_WEB_DIR/uidivstatstext.js"
+		
+		CacheStats cache 2>/dev/null
+		rm -f $statsFile
+		rm -f "/tmp/uidivstats.js"
 		rm -rf /tmp/uidivstats
 		
-		printf "$LINE End of stats report\\n" >>${statsFile}
-		WriteStats_ToJS "$statsFile" "$SCRIPT_WEB_DIR/uidivstatstext.js"
-		rm -f $statsFile
-		CacheStats cache 2>/dev/null
 		Print_Output "true" "Diversion statistic generation completed successfully!" "$PASS"
 	else
 		Print_Output "true" "Diversion configuration not found or empty dnsmasq.log file, exiting!" "$ERR"
