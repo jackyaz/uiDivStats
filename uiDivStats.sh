@@ -681,6 +681,7 @@ Generate_Stats_Diversion(){
 			awk 'NR==FNR{a[FNR]=$0 "";next} {print a[FNR],$0}' /tmp/uidivstats/div6 /tmp/uidivstats/div7 >>${statsFile}
 			
 			printf "\\n\\n Top $wsTopHosts domains for top $wsTopClients clients:\\n$LINE" >>${statsFile}
+			printf "%s\\n" "*    All Clients" >> "$clientsFile"
 			COUNTER=1
 			for i in $(awk '{print $2}' /tmp/uidivstats/div1); do
 				if /opt/bin/grep -wq $i /tmp/uidivstats/div-iphostleases; then
