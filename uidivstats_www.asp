@@ -78,10 +78,12 @@ function Draw_Ad_Chart() {
 		},
 		scales: {
 			xAxes: [{
+				display: showXAxis(charttypead),
 				gridLines: { display: showXGrid(charttypead), color: "#282828" },
 				ticks: { display: showXAxis(charttypead), beginAtZero: false }
 			}],
 			yAxes: [{
+				display: showYAxis(charttypead),
 				gridLines: { display: false, color: "#282828" },
 				scaleLabel: { display: false, labelString: "Blocks" },
 				ticks: { display: showYAxis(charttypead), beginAtZero: false }
@@ -128,10 +130,12 @@ function Draw_Domain_Chart() {
 		},
 		scales: {
 			xAxes: [{
+				display: showXAxis(charttypedomain),
 				gridLines: { display: showXGrid(charttypedomain), color: "#282828" },
 				ticks: { display: showXAxis(charttypedomain), beginAtZero: false } //, max: getAvg(window["barDataDomains"+document.getElementById("clientdomains").value]) + getSDev(window["barDataDomains"+document.getElementById("clientdomains").value]) }
 			}],
 			yAxes: [{
+				display: showYAxis(charttypedomain),
 				gridLines: { display: false, color: "#282828" },
 				scaleLabel: { display: false, labelString: "Domains" },
 				ticks: { display: showYAxis(charttypedomain), beginAtZero: false } //, max: getAvg(window["barDataDomains"+document.getElementById("clientdomains").value]) + getSDev(window["barDataDomains"+document.getElementById("clientdomains").value]) }
@@ -285,10 +289,6 @@ function showYAxis(e) {
 	{
 		return true;
 	}
-	else if (e == "bar")
-	{
-		return true;
-	}
 	else if (e == "pie")
 	{
 		return false;
@@ -397,12 +397,43 @@ function changeLayout(e,chartname,cookiename) {
 <tr bgcolor="#4D595D">
 <td valign="top">
 <div style="line-height:10px;">&nbsp;</div>
-<!--<div class="formfonttitle" style="margin-bottom:0px;">Diversion Statistics</div>-->
+<div class="formfonttitle" style="margin-bottom:0px;" id="statstitle">Diversion Statistics</div>
 <!--<tr class="apply_gen" valign="top" height="35px">
 <td>
 <input type="button" onClick="applyRule();" value="Update Diversion Statistics" class="button_gen" name="button">
 </td>
 </tr>-->
+<div style="line-height:10px;">&nbsp;</div>
+<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#4D595D" class="FormTable">
+<thead class="collapsible" >
+<tr>
+<td colspan="2">Diversion Statistics Report (click to expand/collapse)</td>
+</tr>
+</thead>
+<tr>
+<td style="padding: 0px;">
+<div class="collapsiblecontent">
+<textarea cols="75" rows="35" wrap="off" readonly="readonly" id="divstats" class="textarea_log_table" style="font-family:'Courier New', Courier, mono; font-size:11px;border: none;padding: 0px;">"Stats will show here"</textarea>
+</div>
+</td>
+</tr>
+</table>
+<div style="line-height:10px;">&nbsp;</div>
+<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#4D595D" class="FormTable">
+<thead class="collapsible" >
+<tr>
+<td colspan="2">Pixelserv Statistics Report (click to expand/collapse)</td>
+</tr>
+</thead>
+<tr>
+<td style="padding: 0px;">
+<div class="collapsiblecontent">
+<iframe src="/ext/uiDivStats/psstats.htm" style="width:99%;height:420px;"></iframe>
+</div>
+</td>
+</tr>
+</table>
+<div style="line-height:10px;">&nbsp;</div>
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 <thead>
 <tr>
@@ -429,8 +460,8 @@ function changeLayout(e,chartname,cookiename) {
 </td>
 </tr>
 <tr>
-<td colspan="2">
-<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="ChartAds" height="360"></div>
+<td colspan="2" style="padding: 2px;">
+<div style="background-color:#2f3e44;border-radius:10px;width:735px;padding-left:5px;"><canvas id="ChartAds" height="360"></div>
 </td>
 </tr>
 </table>
@@ -470,41 +501,12 @@ function changeLayout(e,chartname,cookiename) {
 </td>
 </tr>
 <tr>
-<td colspan="2">
-<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="ChartDomains" height="360"></div>
+<td colspan="2" style="padding: 2px;">
+<div style="background-color:#2f3e44;border-radius:10px;width:735px;padding-left:5px;"><canvas id="ChartDomains" height="360"></div>
 </td>
 </tr>
 </table>
 <div style="line-height:10px;">&nbsp;</div>
-<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#4D595D" class="FormTable">
-<thead class="collapsible" >
-<tr>
-<td colspan="2">Diversion Statistics Report (click to expand/collapse)</td>
-</tr>
-</thead>
-<tr>
-<td style="padding: 0px;">
-<div class="collapsiblecontent">
-<textarea cols="75" rows="35" wrap="off" readonly="readonly" id="divstats" class="textarea_log_table" style="font-family:'Courier New', Courier, mono; font-size:11px;border: none;padding: 0px;">"Stats will show here"</textarea>
-</div>
-</td>
-</tr>
-</table>
-<div style="line-height:10px;">&nbsp;</div>
-<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#4D595D" class="FormTable">
-<thead class="collapsible" >
-<tr>
-<td colspan="2">Pixelserv Statistics Report (click to expand/collapse)</td>
-</tr>
-</thead>
-<tr>
-<td style="padding: 0px;">
-<div class="collapsiblecontent">
-<iframe src="/ext/uiDivStats/psstats.htm" style="width:100%;height:420px;"></iframe>
-</div>
-</td>
-</tr>
-</table>
 </td>
 </tr>
 </tbody>
@@ -519,6 +521,7 @@ function changeLayout(e,chartname,cookiename) {
 </table>
 <script>
 SetDivStatsText();
+SetDivStatsTitle();
 SetClients();
 
 if ((s = cookie.get('clientdomains')) != null) {
