@@ -745,7 +745,9 @@ Generate_Stats_Diversion(){
 		mv "/tmp/uidivstats.js" "$SCRIPT_WEB_DIR/uidivstats.js"
 		
 		WriteStats_ToJS "$statsFile" "/tmp/uidivstatstext.js" "SetDivStatsText" "divstats"
-		WriteStats_ToJS "$(head -n 1 "$statsFile")" "/tmp/uidivstatstext.js" "SetDivStatsTitle" "statstitle"
+		
+		printf "$(head -n 1 "$statsFile")" > /tmp/uidivtitle.txt
+		WriteStats_ToJS "/tmp/uidivtitle.txt" "/tmp/uidivstatstext.js" "SetDivStatsTitle" "statstitle"
 		
 		mv "/tmp/uidivstatstext.js" "$SCRIPT_WEB_DIR/uidivstatstext.js"
 		
@@ -762,6 +764,7 @@ Generate_Stats_Diversion(){
 		rm -f $clientsFile
 		rm -f "/tmp/uidivstats.js"
 		rm -f "/tmp/uidivstatstext.js"
+		rm -f "/tmp/uidivtitle.txt"
 		rm -rf /tmp/uidivstats
 		
 		Print_Output "true" "Diversion statistic generation completed successfully!" "$PASS"
