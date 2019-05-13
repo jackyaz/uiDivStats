@@ -521,6 +521,7 @@ function changeLayout(e,chartname,cookiename) {
 </table>
 <script>
 SetDivStatsText();
+SetDivStatsTitle();
 SetClients();
 
 if ((s = cookie.get('clientdomains')) != null) {
