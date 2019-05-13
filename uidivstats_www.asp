@@ -289,10 +289,6 @@ function showYAxis(e) {
 	{
 		return true;
 	}
-	else if (e == "bar")
-	{
-		return true;
-	}
 	else if (e == "pie")
 	{
 		return false;
@@ -431,11 +427,12 @@ function changeLayout(e,chartname,cookiename) {
 <tr>
 <td style="padding: 0px;">
 <div class="collapsiblecontent">
-<iframe src="/ext/uiDivStats/psstats.htm" style="width:100%;height:420px;"></iframe>
+<iframe src="/ext/uiDivStats/psstats.htm" style="width:99%;height:420px;"></iframe>
 </div>
 </td>
 </tr>
 </table>
+<div style="line-height:10px;">&nbsp;</div>
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 <thead>
 <tr>
@@ -462,8 +459,8 @@ function changeLayout(e,chartname,cookiename) {
 </td>
 </tr>
 <tr>
-<td colspan="2" style="padding: 0px;">
-<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="ChartAds" height="360"></div>
+<td colspan="2" style="padding: 2px;">
+<div style="background-color:#2f3e44;border-radius:10px;width:735px;padding-left:5px;"><canvas id="ChartAds" height="360"></div>
 </td>
 </tr>
 </table>
@@ -503,8 +500,8 @@ function changeLayout(e,chartname,cookiename) {
 </td>
 </tr>
 <tr>
-<td colspan="2" style="padding: 0px;">
-<div style="background-color:#2f3e44;border-radius:10px;width:730px;padding-left:5px;"><canvas id="ChartDomains" height="360"></div>
+<td colspan="2" style="padding: 2px;">
+<div style="background-color:#2f3e44;border-radius:10px;width:735px;padding-left:5px;"><canvas id="ChartDomains" height="360"></div>
 </td>
 </tr>
 </table>
