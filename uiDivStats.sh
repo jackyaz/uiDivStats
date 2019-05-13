@@ -745,6 +745,8 @@ Generate_Stats_Diversion(){
 		mv "/tmp/uidivstats.js" "$SCRIPT_WEB_DIR/uidivstats.js"
 		
 		WriteStats_ToJS "$statsFile" "/tmp/uidivstatstext.js" "SetDivStatsText" "divstats"
+		WriteStats_ToJS "$(head -n 1 "$statsFile")" "/tmp/uidivstatstext.js" "SetDivStatsTitle" "statstitle"
+		
 		mv "/tmp/uidivstatstext.js" "$SCRIPT_WEB_DIR/uidivstatstext.js"
 		
 		psstatsFile="$SCRIPT_WEB_DIR/psstats.htm"
