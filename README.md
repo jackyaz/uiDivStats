@@ -2,8 +2,8 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/240224b6b96543a782f176f2435ffa03)](https://www.codacy.com/app/jackyaz/uiDivStats?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=jackyaz/uiDivStats&amp;utm_campaign=Badge_Grade)
 [![Build Status](https://travis-ci.com/jackyaz/uiDivStats.svg?branch=master)](https://travis-ci.com/jackyaz/uiDivStats)
 
-## v0.9.9
-### Updated on 2019-05-12
+## v1.0.0
+### Updated on 2019-05-14
 ## About
 See statistics and graphs for Diversion Ad-blocking on your router.
 
@@ -41,7 +41,7 @@ If this does not work, you will need to use the full path:
 Launch uiDivStats and select option u
 
 ## Help
-Please post about any issues and problems here: [uiDivStats on SNBForums](https://www.snbforums.com/threads/spdmerlin-automated-speedtests-with-graphs.55904/)
+Please post about any issues and problems here: [uiDivStats on SNBForums](https://www.snbforums.com/threads/uidivstats-webui-for-diversion-statistics.56393/)
 
 ## FAQs
 ### I haven't used scripts before on AsusWRT-Merlin
