@@ -15,7 +15,7 @@
 
 ### Start of script variables ###
 readonly SCRIPT_NAME="uiDivStats"
-readonly SCRIPT_VERSION="v1.0.0"
+readonly SCRIPT_VERSION="v1.0.1"
 readonly SCRIPT_BRANCH="master"
 readonly SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/""$SCRIPT_NAME""/""$SCRIPT_BRANCH"
 readonly SCRIPT_CONF="/jffs/configs/$SCRIPT_NAME.config"
@@ -348,20 +348,21 @@ Modify_WebUI_File(){
 	### ###
 }
 
+# shellcheck disable=SC2012
 CacheStats(){
 	case "$1" in
 		cache)
-			if [ "$(/usr/bin/find "$SCRIPT_WEB_DIR" -name "*.js" 2>/dev/null | wc -l)" -ge "1" ]; then
+			if [ "$(ls "$SCRIPT_WEB_DIR" 2>/dev/null | wc -l)" -ge "1" ]; then
 				CACHEPATH="/tmp/""$SCRIPT_NAME""Cache"
 				mkdir -p "$CACHEPATH"
-				cp "$SCRIPT_WEB_DIR"/*.js "$CACHEPATH"
+				cp "$SCRIPT_WEB_DIR"/* "$CACHEPATH"
 				rm -f "$SCRIPT_DIR/$SCRIPT_NAME""_cache.tar.gz" 2>/dev/null
 				tar -czf "$SCRIPT_DIR/$SCRIPT_NAME""_cache.tar.gz" -C "$CACHEPATH" .
 				rm -rf "$CACHEPATH" 2>/dev/null
 			fi
 		;;
 		extract)
-			if [ -f "$SCRIPT_DIR/$SCRIPT_NAME""_cache.tar.gz" ] && [ "$(/usr/bin/find "$SCRIPT_WEB_DIR" -name "*.js" 2>/dev/null | wc -l)" -eq "0" ]; then
+			if [ -f "$SCRIPT_DIR/$SCRIPT_NAME""_cache.tar.gz" ] && [ "$(ls "$SCRIPT_WEB_DIR" 2>/dev/null | wc -l)" -lt "3" ]; then
 				tar -C "$SCRIPT_WEB_DIR" -xzf "$SCRIPT_DIR/$SCRIPT_NAME""_cache.tar.gz"
 			fi
 		;;
