@@ -348,10 +348,11 @@ Modify_WebUI_File(){
 	### ###
 }
 
+# shellcheck disable=SC2012
 CacheStats(){
 	case "$1" in
 		cache)
-			if [ "$(ls $SCRIPT_WEB_DIR 2>/dev/null | wc -l)" -ge "1" ]; then
+			if [ "$(ls "$SCRIPT_WEB_DIR" 2>/dev/null | wc -l)" -ge "1" ]; then
 				CACHEPATH="/tmp/""$SCRIPT_NAME""Cache"
 				mkdir -p "$CACHEPATH"
 				cp "$SCRIPT_WEB_DIR"/* "$CACHEPATH"
@@ -361,7 +362,7 @@ CacheStats(){
 			fi
 		;;
 		extract)
-			if [ -f "$SCRIPT_DIR/$SCRIPT_NAME""_cache.tar.gz" ] && [ "$(ls $SCRIPT_WEB_DIR 2>/dev/null | wc -l)" -eq "0" ]; then
+			if [ -f "$SCRIPT_DIR/$SCRIPT_NAME""_cache.tar.gz" ] && [ "$(ls "$SCRIPT_WEB_DIR" 2>/dev/null | wc -l)" -eq "0" ]; then
 				tar -C "$SCRIPT_WEB_DIR" -xzf "$SCRIPT_DIR/$SCRIPT_NAME""_cache.tar.gz"
 			fi
 		;;
