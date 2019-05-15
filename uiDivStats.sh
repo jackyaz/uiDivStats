@@ -362,7 +362,7 @@ CacheStats(){
 			fi
 		;;
 		extract)
-			if [ -f "$SCRIPT_DIR/$SCRIPT_NAME""_cache.tar.gz" ] && [ "$(ls "$SCRIPT_WEB_DIR" 2>/dev/null | wc -l)" -eq "0" ]; then
+			if [ -f "$SCRIPT_DIR/$SCRIPT_NAME""_cache.tar.gz" ] && [ "$(ls "$SCRIPT_WEB_DIR" 2>/dev/null | wc -l)" -lt "3" ]; then
 				tar -C "$SCRIPT_WEB_DIR" -xzf "$SCRIPT_DIR/$SCRIPT_NAME""_cache.tar.gz"
 			fi
 		;;
