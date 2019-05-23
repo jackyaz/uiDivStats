@@ -106,8 +106,8 @@ function Draw_Ad_Chart() {
 					},
 					rangeMax: {
 						// Format of max pan range depends on scale type
-						x: null,
-						y: null
+						x: ZoomPanMax(charttypead,x,barDataBlockedAds),
+						y: ZoomPanMax(charttypead,y,barDataBlockedAds)
 					},
 				},
 				zoom: {
@@ -123,8 +123,8 @@ function Draw_Ad_Chart() {
 					},
 					rangeMax: {
 						// Format of max zoom range depends on scale type
-						x: null,
-						y: null
+						x: ZoomPanMax(charttypead,x,barDataBlockedAds),
+						y: ZoomPanMax(charttypead,y,barDataBlockedAds)
 					},
 					// Speed of zoom via mouse wheel
 					// (percentage of zoom on a wheel event)
@@ -259,6 +259,11 @@ function getSDev(datasetname){
 	return stdDev;
 }
 
+function getMax(datasetname) {
+	max = Math.max(...datasetname)
+	return max + (max*0.1);
+}
+
 function getAvg(datasetname) {
 	var sum, avg = 0;
 	
@@ -308,27 +313,27 @@ function ZoomPanEnabled(charttype) {
 	}
 }
 
-function ZoomPanMax(charttype, axis) {
+function ZoomPanMax(charttype, axis, datasetname) {
 	if (axis == "x")
 	{
 		if (charttype == "bar")
 		{
-				
+			return null;
 		}
 		else if (charttype == "horizontalBar")
 		{
-				
+			return getMax(datasetname);
 		}
 	}
 	else if (axis == "y")
 	{
 		if (charttype == "bar")
 		{
-				
+			return getMax(datasetname);
 		}
 		else if (charttype == "horizontalBar")
 		{
-				
+			return null;
 		}
 	}
 }
