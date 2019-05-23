@@ -98,7 +98,7 @@ function Draw_Ad_Chart() {
 					enabled: true,
 					// Panning directions. Remove the appropriate direction to disable
 					// Eg. 'y' would only allow panning in the y direction
-					mode: 'xy',
+					mode: ZoomPanEnabled(charttypead),
 					rangeMin: {
 						// Format of min pan range depends on scale type
 						x: 0,
@@ -115,7 +115,7 @@ function Draw_Ad_Chart() {
 					enabled: true,
 					// Zooming directions. Remove the appropriate direction to disable
 					// Eg. 'y' would only allow zooming in the y direction
-					mode: 'xy',
+					mode: ZoomPanEnabled(charttypead),
 					rangeMin: {
 						// Format of min zoom range depends on scale type
 						x: 0,
@@ -294,6 +294,42 @@ function getChartType(e) {
 	else
 	{
 		return e;
+	}
+}
+
+function ZoomPanEnabled(charttype) {
+	if (charttype == "bar")
+	{
+		return 'y';
+	}
+	else if (charttype == "horizontalBar")
+	{
+		return 'x';
+	}
+}
+
+function ZoomPanMax(charttype, axis) {
+	if (axis == "x")
+	{
+		if (charttype == "bar")
+		{
+				
+		}
+		else if (charttype == "horizontalBar")
+		{
+				
+		}
+	}
+	else if (axis == "y")
+	{
+		if (charttype == "bar")
+		{
+				
+		}
+		else if (charttype == "horizontalBar")
+		{
+				
+		}
 	}
 }
 
