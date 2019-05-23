@@ -294,11 +294,11 @@ Mount_WebUI(){
 	mount -o bind "$SCRIPT_DIR/uidivstats_www.asp" "/www/Advanced_MultiSubnet_Content.asp"
 	
 	if [ ! -f "$SHARED_DIR/hammerjs.js" ]; then
-		Download_File "$SCRIPT_REPO/hammerjs.js" "$SHARED_DIR/hammerjs.js"
+		Download_File "$SHARED_REPO/hammerjs.js" "$SHARED_DIR/hammerjs.js"
 	fi
 	
 	if [ ! -f "$SHARED_DIR/chartjs-plugin-zoom.js" ]; then
-		Download_File "$SCRIPT_REPO/chartjs-plugin-zoom.js" "$SHARED_DIR/chartjs-plugin-zoom.js"
+		Download_File "$SHARED_REPO/chartjs-plugin-zoom.js" "$SHARED_DIR/chartjs-plugin-zoom.js"
 	fi
 	
 	cp "$SHARED_DIR/chartjs-plugin-zoom.js" "$SCRIPT_WEB_DIR/chartjs-plugin-zoom.js"
