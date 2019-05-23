@@ -128,7 +128,7 @@ function Draw_Ad_Chart() {
 					},
 					// Speed of zoom via mouse wheel
 					// (percentage of zoom on a wheel event)
-					speed: 1.0,
+					speed: 0.1,
 				}
 			}
 		}
