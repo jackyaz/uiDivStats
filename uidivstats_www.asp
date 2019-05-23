@@ -106,8 +106,8 @@ function Draw_Ad_Chart() {
 					},
 					rangeMax: {
 						// Format of max pan range depends on scale type
-						x: ZoomPanMax(charttypead,x,barDataBlockedAds),
-						y: ZoomPanMax(charttypead,y,barDataBlockedAds)
+						x: ZoomPanMax(charttypead,"x",barDataBlockedAds),
+						y: ZoomPanMax(charttypead,"y",barDataBlockedAds)
 					},
 				},
 				zoom: {
@@ -123,8 +123,8 @@ function Draw_Ad_Chart() {
 					},
 					rangeMax: {
 						// Format of max zoom range depends on scale type
-						x: ZoomPanMax(charttypead,x,barDataBlockedAds),
-						y: ZoomPanMax(charttypead,y,barDataBlockedAds)
+						x: ZoomPanMax(charttypead,"x",barDataBlockedAds),
+						y: ZoomPanMax(charttypead,"y",barDataBlockedAds)
 					},
 					// Speed of zoom via mouse wheel
 					// (percentage of zoom on a wheel event)
