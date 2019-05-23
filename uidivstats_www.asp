@@ -101,8 +101,8 @@ function Draw_Ad_Chart() {
 					mode: 'xy',
 					rangeMin: {
 						// Format of min pan range depends on scale type
-						x: null,
-						y: null
+						x: 0,
+						y: 0
 					},
 					rangeMax: {
 						// Format of max pan range depends on scale type
@@ -118,8 +118,8 @@ function Draw_Ad_Chart() {
 					mode: 'xy',
 					rangeMin: {
 						// Format of min zoom range depends on scale type
-						x: null,
-						y: null
+						x: 0,
+						y: 0
 					},
 					rangeMax: {
 						// Format of max zoom range depends on scale type
@@ -128,7 +128,7 @@ function Draw_Ad_Chart() {
 					},
 					// Speed of zoom via mouse wheel
 					// (percentage of zoom on a wheel event)
-					speed: 0.1,
+					speed: 1.0,
 				}
 			}
 		}
