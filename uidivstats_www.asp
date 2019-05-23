@@ -35,6 +35,8 @@ font-weight: bolder;
 </style>
 <script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
 <script language="JavaScript" type="text/javascript" src="/js/chart.min.js"></script>
+<script language="JavaScript" type="text/javascript" src="/ext/uiDivStats/hammerjs.js"></script>
+<script language="JavaScript" type="text/javascript" src="/ext/uiDivStats/chartjs-plugin-zoom.js"></script>
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
@@ -88,6 +90,47 @@ function Draw_Ad_Chart() {
 				scaleLabel: { display: false, labelString: "Blocks" },
 				ticks: { display: showYAxis(charttypead), beginAtZero: false }
 			}]
+		},
+		plugins: {
+			zoom: {
+				pan: {
+					// Boolean to enable panning
+					enabled: true,
+					// Panning directions. Remove the appropriate direction to disable
+					// Eg. 'y' would only allow panning in the y direction
+					mode: ZoomPanEnabled(charttypead),
+					rangeMin: {
+						// Format of min pan range depends on scale type
+						x: 0,
+						y: 0
+					},
+					rangeMax: {
+						// Format of max pan range depends on scale type
+						x: ZoomPanMax(charttypead,"x",barDataBlockedAds),
+						y: ZoomPanMax(charttypead,"y",barDataBlockedAds)
+					},
+				},
+				zoom: {
+					// Boolean to enable zooming
+					enabled: true,
+					// Zooming directions. Remove the appropriate direction to disable
+					// Eg. 'y' would only allow zooming in the y direction
+					mode: ZoomPanEnabled(charttypead),
+					rangeMin: {
+						// Format of min zoom range depends on scale type
+						x: 0,
+						y: 0
+					},
+					rangeMax: {
+						// Format of max zoom range depends on scale type
+						x: ZoomPanMax(charttypead,"x",barDataBlockedAds),
+						y: ZoomPanMax(charttypead,"y",barDataBlockedAds)
+					},
+					// Speed of zoom via mouse wheel
+					// (percentage of zoom on a wheel event)
+					speed: 0.1,
+				}
+			}
 		}
 	};
 	var barDatasetAds = {
@@ -140,6 +183,47 @@ function Draw_Domain_Chart() {
 				scaleLabel: { display: false, labelString: "Domains" },
 				ticks: { display: showYAxis(charttypedomain), beginAtZero: false } //, max: getAvg(window["barDataDomains"+document.getElementById("clientdomains").value]) + getSDev(window["barDataDomains"+document.getElementById("clientdomains").value]) }
 			}]
+		},
+		plugins: {
+			zoom: {
+				pan: {
+					// Boolean to enable panning
+					enabled: true,
+					// Panning directions. Remove the appropriate direction to disable
+					// Eg. 'y' would only allow panning in the y direction
+					mode: ZoomPanEnabled(charttypedomain),
+					rangeMin: {
+						// Format of min pan range depends on scale type
+						x: 0,
+						y: 0
+					},
+					rangeMax: {
+						// Format of max pan range depends on scale type
+						x: ZoomPanMax(charttypedomain,"x",window["barDataDomains"+document.getElementById("clientdomains").value]),
+						y: ZoomPanMax(charttypedomain,"y",window["barDataDomains"+document.getElementById("clientdomains").value])
+					},
+				},
+				zoom: {
+					// Boolean to enable zooming
+					enabled: true,
+					// Zooming directions. Remove the appropriate direction to disable
+					// Eg. 'y' would only allow zooming in the y direction
+					mode: ZoomPanEnabled(charttypedomain),
+					rangeMin: {
+						// Format of min zoom range depends on scale type
+						x: 0,
+						y: 0
+					},
+					rangeMax: {
+						// Format of max zoom range depends on scale type
+						x: ZoomPanMax(charttypedomain,"x",window["barDataDomains"+document.getElementById("clientdomains").value]),
+						y: ZoomPanMax(charttypedomain,"y",window["barDataDomains"+document.getElementById("clientdomains").value])
+					},
+					// Speed of zoom via mouse wheel
+					// (percentage of zoom on a wheel event)
+					speed: 0.1,
+				}
+			}
 		}
 	};
 	var barDatasetDomains = {
@@ -216,6 +300,11 @@ function getSDev(datasetname){
 	return stdDev;
 }
 
+function getMax(datasetname) {
+	max = Math.max(...datasetname)
+	return max + (max*0.1);
+}
+
 function getAvg(datasetname) {
 	var sum, avg = 0;
 	
@@ -251,6 +340,42 @@ function getChartType(e) {
 	else
 	{
 		return e;
+	}
+}
+
+function ZoomPanEnabled(charttype) {
+	if (charttype == "bar")
+	{
+		return 'y';
+	}
+	else if (charttype == "horizontalBar")
+	{
+		return 'x';
+	}
+}
+
+function ZoomPanMax(charttype, axis, datasetname) {
+	if (axis == "x")
+	{
+		if (charttype == "bar")
+		{
+			return null;
+		}
+		else if (charttype == "horizontalBar")
+		{
+			return getMax(datasetname);
+		}
+	}
+	else if (axis == "y")
+	{
+		if (charttype == "bar")
+		{
+			return getMax(datasetname);
+		}
+		else if (charttype == "horizontalBar")
+		{
+			return null;
+		}
 	}
 }
 

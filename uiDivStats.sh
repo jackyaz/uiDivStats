@@ -15,13 +15,14 @@
 
 ### Start of script variables ###
 readonly SCRIPT_NAME="uiDivStats"
-readonly SCRIPT_VERSION="v1.0.1"
+readonly SCRIPT_VERSION="v1.1.0"
 readonly SCRIPT_BRANCH="master"
 readonly SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/""$SCRIPT_NAME""/""$SCRIPT_BRANCH"
 readonly SCRIPT_CONF="/jffs/configs/$SCRIPT_NAME.config"
 readonly SCRIPT_DIR="/jffs/scripts/$SCRIPT_NAME.d"
 readonly SCRIPT_WEB_DIR="$(readlink /www/ext)/$SCRIPT_NAME"
 readonly SHARED_DIR="/jffs/scripts/shared-jy"
+readonly SHARED_REPO="https://raw.githubusercontent.com/jackyaz/shared-jy/master"
 [ -z "$(nvram get odmpid)" ] && ROUTER_MODEL=$(nvram get productid) || ROUTER_MODEL=$(nvram get odmpid)
 ### End of script variables ###
 
@@ -100,6 +101,8 @@ Update_Version(){
 		fi
 		
 		Update_File "uidivstats_www.asp"
+		Update_File "chartjs-plugin-zoom.js"
+		Update_File "hammerjs.js"
 		Modify_WebUI_File
 		
 		if [ "$doupdate" != "false" ]; then
@@ -118,6 +121,8 @@ Update_Version(){
 			serverver=$(/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME.sh" | grep "SCRIPT_VERSION=" | grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})')
 			Print_Output "true" "Downloading latest version ($serverver) of $SCRIPT_NAME" "$PASS"
 			Update_File "uidivstats_www.asp"
+			Update_File "chartjs-plugin-zoom.js"
+			Update_File "hammerjs.js"
 			Modify_WebUI_File
 			/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME.sh" -o "/jffs/scripts/$SCRIPT_NAME" && Print_Output "true" "$SCRIPT_NAME successfully updated"
 			chmod 0755 /jffs/scripts/"$SCRIPT_NAME"
@@ -135,6 +140,24 @@ Update_File(){
 		if ! diff -q "$tmpfile" "$SCRIPT_DIR/$1" >/dev/null 2>&1; then
 			Print_Output "true" "New version of $1 downloaded" "$PASS"
 			rm -f "$SCRIPT_DIR/$1"
+			Mount_WebUI
+		fi
+		rm -f "$tmpfile"
+	elif [ "$1" = "chartjs-plugin-zoom.js" ]; then
+		tmpfile="/tmp/$1"
+		Download_File "$SHARED_REPO/$1" "$tmpfile"
+		if ! diff -q "$tmpfile" "$SHARED_DIR/$1" >/dev/null 2>&1; then
+			Print_Output "true" "New version of $1 downloaded" "$PASS"
+			rm -f "$SHARED_DIR/$1"
+			Mount_WebUI
+		fi
+		rm -f "$tmpfile"
+	elif [ "$1" = "hammerjs.js" ]; then
+		tmpfile="/tmp/$1"
+		Download_File "$SHARED_REPO/$1" "$tmpfile"
+		if ! diff -q "$tmpfile" "$SHARED_DIR/$1" >/dev/null 2>&1; then
+			Print_Output "true" "New version of $1 downloaded" "$PASS"
+			rm -f "$SHARED_DIR/$1"
 			Mount_WebUI
 		fi
 		rm -f "$tmpfile"
@@ -261,11 +284,22 @@ Mount_WebUI(){
 		mv "/jffs/scripts/uidivstats_www.asp" "$SCRIPT_DIR/uidivstats_www.asp"
 	fi
 	
-	if [ ! -f /jffs/scripts/uidivstats_www.asp ]; then
+	if [ ! -f "$SCRIPT_DIR/uidivstats_www.asp" ]; then
 		Download_File "$SCRIPT_REPO/uidivstats_www.asp" "$SCRIPT_DIR/uidivstats_www.asp"
 	fi
 	
 	mount -o bind "$SCRIPT_DIR/uidivstats_www.asp" "/www/Advanced_MultiSubnet_Content.asp"
+	
+	if [ ! -f "$SHARED_DIR/hammerjs.js" ]; then
+		Download_File "$SHARED_REPO/hammerjs.js" "$SHARED_DIR/hammerjs.js"
+	fi
+	
+	if [ ! -f "$SHARED_DIR/chartjs-plugin-zoom.js" ]; then
+		Download_File "$SHARED_REPO/chartjs-plugin-zoom.js" "$SHARED_DIR/chartjs-plugin-zoom.js"
+	fi
+	
+	cp "$SHARED_DIR/chartjs-plugin-zoom.js" "$SCRIPT_WEB_DIR/chartjs-plugin-zoom.js"
+	cp "$SHARED_DIR/hammerjs.js" "$SCRIPT_WEB_DIR/hammerjs.js"
 }
 
 Modify_WebUI_File(){
