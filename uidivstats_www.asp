@@ -183,6 +183,47 @@ function Draw_Domain_Chart() {
 				scaleLabel: { display: false, labelString: "Domains" },
 				ticks: { display: showYAxis(charttypedomain), beginAtZero: false } //, max: getAvg(window["barDataDomains"+document.getElementById("clientdomains").value]) + getSDev(window["barDataDomains"+document.getElementById("clientdomains").value]) }
 			}]
+		},
+		plugins: {
+			zoom: {
+				pan: {
+					// Boolean to enable panning
+					enabled: true,
+					// Panning directions. Remove the appropriate direction to disable
+					// Eg. 'y' would only allow panning in the y direction
+					mode: ZoomPanEnabled(charttypedomain),
+					rangeMin: {
+						// Format of min pan range depends on scale type
+						x: 0,
+						y: 0
+					},
+					rangeMax: {
+						// Format of max pan range depends on scale type
+						x: ZoomPanMax(charttypedomain,"x",window["barDataDomains"+document.getElementById("clientdomains").value]),
+						y: ZoomPanMax(charttypedomain,"y",window["barDataDomains"+document.getElementById("clientdomains").value])
+					},
+				},
+				zoom: {
+					// Boolean to enable zooming
+					enabled: true,
+					// Zooming directions. Remove the appropriate direction to disable
+					// Eg. 'y' would only allow zooming in the y direction
+					mode: ZoomPanEnabled(charttypedomain),
+					rangeMin: {
+						// Format of min zoom range depends on scale type
+						x: 0,
+						y: 0
+					},
+					rangeMax: {
+						// Format of max zoom range depends on scale type
+						x: ZoomPanMax(charttypedomain,"x",window["barDataDomains"+document.getElementById("clientdomains").value]),
+						y: ZoomPanMax(charttypedomain,"y",window["barDataDomains"+document.getElementById("clientdomains").value])
+					},
+					// Speed of zoom via mouse wheel
+					// (percentage of zoom on a wheel event)
+					speed: 0.1,
+				}
+			}
 		}
 	};
 	var barDatasetDomains = {
