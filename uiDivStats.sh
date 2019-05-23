@@ -166,9 +166,6 @@ Update_File(){
 	fi
 }
 
-
-
-
 Create_Dirs(){
 	if [ ! -d "$SCRIPT_DIR" ]; then
 		mkdir -p "$SCRIPT_DIR"
