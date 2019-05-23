@@ -35,6 +35,8 @@ font-weight: bolder;
 </style>
 <script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
 <script language="JavaScript" type="text/javascript" src="/js/chart.min.js"></script>
+<script language="JavaScript" type="text/javascript" src="/ext/uiDivStats/hammerjs.js"></script>
+<script language="JavaScript" type="text/javascript" src="/ext/uiDivStats/chartjs-plugin-zoom.js"></script>
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
@@ -88,6 +90,47 @@ function Draw_Ad_Chart() {
 				scaleLabel: { display: false, labelString: "Blocks" },
 				ticks: { display: showYAxis(charttypead), beginAtZero: false }
 			}]
+		},
+		plugins: {
+			zoom: {
+				pan: {
+					// Boolean to enable panning
+					enabled: true,
+					// Panning directions. Remove the appropriate direction to disable
+					// Eg. 'y' would only allow panning in the y direction
+					mode: 'xy',
+					rangeMin: {
+						// Format of min pan range depends on scale type
+						x: null,
+						y: null
+					},
+					rangeMax: {
+						// Format of max pan range depends on scale type
+						x: null,
+						y: null
+					},
+				},
+				zoom: {
+					// Boolean to enable zooming
+					enabled: true,
+					// Zooming directions. Remove the appropriate direction to disable
+					// Eg. 'y' would only allow zooming in the y direction
+					mode: 'xy',
+					rangeMin: {
+						// Format of min zoom range depends on scale type
+						x: null,
+						y: null
+					},
+					rangeMax: {
+						// Format of max zoom range depends on scale type
+						x: null,
+						y: null
+					},
+					// Speed of zoom via mouse wheel
+					// (percentage of zoom on a wheel event)
+					speed: 0.1,
+				}
+			}
 		}
 	};
 	var barDatasetAds = {
