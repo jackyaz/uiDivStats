@@ -658,7 +658,7 @@ function loadDivStats() {
 </tr>
 </table>
 <script>
-SetDivStatsText();
+//SetDivStatsText();
 SetDivStatsTitle();
 SetClients();
 
