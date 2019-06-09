@@ -779,12 +779,13 @@ Generate_Stats_Diversion(){
 		WriteOptions_ToJS "$clientsFile" "/tmp/uidivstats.js"
 		mv "/tmp/uidivstats.js" "$SCRIPT_WEB_DIR/uidivstats.js"
 		
-		WriteStats_ToJS "$statsFile" "/tmp/uidivstatstext.js" "SetDivStatsText" "divstats"
+		#WriteStats_ToJS "$statsFile" "/tmp/uidivstatstext.js" "SetDivStatsText" "divstats"
 		
 		printf "$(head -n 2 "$statsFile" | tail -n 1 | sed 's/^ //' | sed 's/Stats/Stats Generated on/')" > /tmp/uidivtitle.txt
 		WriteStats_ToJS "/tmp/uidivtitle.txt" "/tmp/uidivstatstext.js" "SetDivStatsTitle" "statstitle"
 		
 		mv "/tmp/uidivstatstext.js" "$SCRIPT_WEB_DIR/uidivstatstext.js"
+		cp "$statsFile" "$SCRIPT_WEB_DIR/uidivstatstext.htm"
 		
 		psstatsFile="$SCRIPT_WEB_DIR/psstats.htm"
 		
@@ -795,8 +796,8 @@ Generate_Stats_Diversion(){
 		fi
 		
 		CacheStats cache 2>/dev/null
-		rm -f $statsFile
-		rm -f $clientsFile
+		rm -f "$statsFile"
+		rm -f "$clientsFile"
 		rm -f "/tmp/uidivstats.js"
 		rm -f "/tmp/uidivstatstext.js"
 		rm -f "/tmp/uidivtitle.txt"

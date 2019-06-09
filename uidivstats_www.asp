@@ -269,6 +269,7 @@ function initial(){
 	}
 	
 	show_menu();
+	loadDivStats();
 	Draw_Ad_Chart();
 	changeLayout(E('charttypeads'),"BarChartBlockedAds","charttypeads");
 	Draw_Domain_Chart();
@@ -488,6 +489,18 @@ function changeLayout(e,chartname,cookiename) {
 	{
 		Draw_Domain_Chart();
 	}
+}
+function loadDivStats() {
+	$.ajax({
+		url: '/ext/uidivstatstext.htm',
+		dataType: 'text',
+		error: function(xhr){
+			setTimeout("loadDivStats();", 1000);
+		},
+		success: function(data){
+			document.getElementById("divstats").innerHTML=data;
+		}
+	});
 }
 </script>
 </head>
