@@ -785,7 +785,9 @@ Generate_Stats_Diversion(){
 		WriteStats_ToJS "/tmp/uidivtitle.txt" "/tmp/uidivstatstext.js" "SetDivStatsTitle" "statstitle"
 		
 		mv "/tmp/uidivstatstext.js" "$SCRIPT_WEB_DIR/uidivstatstext.js"
-		cp "$statsFile" "$SCRIPT_WEB_DIR/uidivstatstext.htm"
+		cp "$statsFile" "$SCRIPT_DIR/$statsFile"
+		
+		ln -s "$SCRIPT_WEB_DIR/uidivstatstext.htm" "$SCRIPT_DIR/$statsFile" 2>/dev/null
 		
 		psstatsFile="$SCRIPT_WEB_DIR/psstats.htm"
 		
