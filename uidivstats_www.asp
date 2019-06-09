@@ -492,10 +492,10 @@ function changeLayout(e,chartname,cookiename) {
 }
 function loadDivStats() {
 	$.ajax({
-		url: '/ext/uidivstatstext.htm',
+		url: '/ext/uiDivStats/uidivstatstext.htm',
 		dataType: 'text',
 		error: function(xhr){
-			setTimeout("loadDivStats();", 1000);
+			setTimeout("loadDivStats();", 5000);
 		},
 		success: function(data){
 			document.getElementById("divstats").innerHTML=data;
