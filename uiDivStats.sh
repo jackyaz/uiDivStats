@@ -15,7 +15,7 @@
 
 ### Start of script variables ###
 readonly SCRIPT_NAME="uiDivStats"
-readonly SCRIPT_VERSION="v1.1.0"
+readonly SCRIPT_VERSION="v1.1.1"
 readonly SCRIPT_BRANCH="master"
 readonly SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/""$SCRIPT_NAME""/""$SCRIPT_BRANCH"
 readonly SCRIPT_CONF="/jffs/configs/$SCRIPT_NAME.config"
@@ -166,6 +166,8 @@ Update_File(){
 	fi
 }
 
+
+
 Create_Dirs(){
 	if [ ! -d "$SCRIPT_DIR" ]; then
 		mkdir -p "$SCRIPT_DIR"
@@ -178,6 +180,19 @@ Create_Dirs(){
 	if [ ! -d "$SCRIPT_WEB_DIR" ]; then
 		mkdir -p "$SCRIPT_WEB_DIR"
 	fi
+}
+
+Create_Symlinks(){
+	rm -f "$SCRIPT_WEB_DIR/"* 2>/dev/null
+	
+	ln -s "$SCRIPT_DIR/uidivstats.js" "$SCRIPT_WEB_DIR/uidivstats.js" 2>/dev/null
+	ln -s "$SCRIPT_DIR/uidivstatstext.js" "$SCRIPT_WEB_DIR/uidivstatstext.js" 2>/dev/null
+	ln -s "$SCRIPT_DIR/uidivstats.txt" "$SCRIPT_WEB_DIR/uidivstatstext.htm" 2>/dev/null
+	
+	ln -s "$SHARED_DIR/chartjs-plugin-zoom.js" "$SCRIPT_WEB_DIR/chartjs-plugin-zoom.js" 2>/dev/null
+	ln -s "$SHARED_DIR/hammerjs.js" "$SCRIPT_WEB_DIR/hammerjs.js" 2>/dev/null
+	ln -s "$SCRIPT_DIR/psstats.htm" "$SCRIPT_WEB_DIR/psstats.htm" 2>/dev/null
+	
 }
 
 Auto_ServiceEvent(){
@@ -297,9 +312,6 @@ Mount_WebUI(){
 	if [ ! -f "$SHARED_DIR/chartjs-plugin-zoom.js" ]; then
 		Download_File "$SHARED_REPO/chartjs-plugin-zoom.js" "$SHARED_DIR/chartjs-plugin-zoom.js"
 	fi
-	
-	cp "$SHARED_DIR/chartjs-plugin-zoom.js" "$SCRIPT_WEB_DIR/chartjs-plugin-zoom.js"
-	cp "$SHARED_DIR/hammerjs.js" "$SCRIPT_WEB_DIR/hammerjs.js"
 }
 
 Modify_WebUI_File(){
@@ -380,27 +392,6 @@ Modify_WebUI_File(){
 	
 	mount -o bind "$SHARED_DIR/custom_start_apply.htm" /www/start_apply.htm
 	### ###
-}
-
-# shellcheck disable=SC2012
-CacheStats(){
-	case "$1" in
-		cache)
-			if [ "$(ls "$SCRIPT_WEB_DIR" 2>/dev/null | wc -l)" -ge "1" ]; then
-				CACHEPATH="/tmp/""$SCRIPT_NAME""Cache"
-				mkdir -p "$CACHEPATH"
-				cp "$SCRIPT_WEB_DIR"/* "$CACHEPATH"
-				rm -f "$SCRIPT_DIR/$SCRIPT_NAME""_cache.tar.gz" 2>/dev/null
-				tar -czf "$SCRIPT_DIR/$SCRIPT_NAME""_cache.tar.gz" -C "$CACHEPATH" .
-				rm -rf "$CACHEPATH" 2>/dev/null
-			fi
-		;;
-		extract)
-			if [ -f "$SCRIPT_DIR/$SCRIPT_NAME""_cache.tar.gz" ] && [ "$(ls "$SCRIPT_WEB_DIR" 2>/dev/null | wc -l)" -lt "3" ]; then
-				tar -C "$SCRIPT_WEB_DIR" -xzf "$SCRIPT_DIR/$SCRIPT_NAME""_cache.tar.gz"
-			fi
-		;;
-	esac
 }
 
 WriteOptions_ToJS(){
@@ -486,6 +477,7 @@ Generate_Stats_Diversion(){
 	Auto_ServiceEvent create 2>/dev/null
 	Shortcut_script create
 	Create_Dirs
+	Create_Symlinks
 	
 	Print_Output "true" "Starting Diversion statistic generation..." "$PASS"
 	
@@ -777,16 +769,15 @@ Generate_Stats_Diversion(){
 		WriteData_ToJS /tmp/uidivstats/div-tah "/tmp/uidivstats.js" "barDataBlockedAds" "barLabelsBlockedAds"
 		WriteData_ToJS /tmp/uidivstats/div-th "/tmp/uidivstats.js" "barDataDomains0" "barLabelsDomains0"
 		WriteOptions_ToJS "$clientsFile" "/tmp/uidivstats.js"
-		mv "/tmp/uidivstats.js" "$SCRIPT_WEB_DIR/uidivstats.js"
-		
-		WriteStats_ToJS "$statsFile" "/tmp/uidivstatstext.js" "SetDivStatsText" "divstats"
+		mv "/tmp/uidivstats.js" "$SCRIPT_DIR/uidivstats.js"
 		
 		printf "$(head -n 2 "$statsFile" | tail -n 1 | sed 's/^ //' | sed 's/Stats/Stats Generated on/')" > /tmp/uidivtitle.txt
 		WriteStats_ToJS "/tmp/uidivtitle.txt" "/tmp/uidivstatstext.js" "SetDivStatsTitle" "statstitle"
 		
-		mv "/tmp/uidivstatstext.js" "$SCRIPT_WEB_DIR/uidivstatstext.js"
+		mv "/tmp/uidivstatstext.js" "$SCRIPT_DIR/uidivstatstext.js"
+		cp "$statsFile" "$SCRIPT_DIR/uidivstats.txt"
 		
-		psstatsFile="$SCRIPT_WEB_DIR/psstats.htm"
+		psstatsFile="$SCRIPT_DIR/psstats.htm"
 		
 		if [ "$EDITION" = "Standard" ]; then
 			/usr/sbin/curl -s --retry 3 "http://$psIP/servstats" -o "$psstatsFile"
@@ -794,9 +785,8 @@ Generate_Stats_Diversion(){
 			echo "Pixelserv not installed" > "$psstatsFile"
 		fi
 		
-		CacheStats cache 2>/dev/null
-		rm -f $statsFile
-		rm -f $clientsFile
+		rm -f "$statsFile"
+		rm -f "$clientsFile"
 		rm -f "/tmp/uidivstats.js"
 		rm -f "/tmp/uidivstatstext.js"
 		rm -f "/tmp/uidivtitle.txt"
@@ -991,6 +981,7 @@ Menu_Install(){
 	opkg install grep
 	
 	Create_Dirs
+	Create_Symlinks
 	
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
@@ -1009,9 +1000,9 @@ Menu_Startup(){
 	Auto_ServiceEvent create 2>/dev/null
 	Shortcut_script create
 	Create_Dirs
+	Create_Symlinks
 	Mount_WebUI
 	Modify_WebUI_File
-	CacheStats extract 2>/dev/null
 	Clear_Lock
 }
 
@@ -1040,19 +1031,7 @@ Menu_Uninstall(){
 	Auto_Startup delete 2>/dev/null
 	Auto_Cron delete 2>/dev/null
 	Auto_ServiceEvent delete 2>/dev/null
-	#while true; do
-	#	printf "\\n\\e[1mDo you want to delete %s stats? (y/n)\\e[0m\\n" "$SCRIPT_NAME"
-	#	read -r "confirm"
-	#	case "$confirm" in
-	#		y|Y)
-	#			rm -f "/jffs/scripts/uidivstats_rrd.rrd" 2>/dev/null
-	#			break
-	#		;;
-	#		*)
-	#			break
-	#		;;
-	#	esac
-	#done
+	
 	Shortcut_script delete
 	umount /www/Advanced_MultiSubnet_Content.asp 2>/dev/null
 	sed -i '/{url: "Advanced_MultiSubnet_Content.asp", tabName: "Diversion Statistics"}/d' "/jffs/scripts/custom_menuTree.js"
@@ -1071,6 +1050,7 @@ Menu_Uninstall(){
 
 if [ -z "$1" ]; then
 	Create_Dirs
+	Create_Symlinks
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
