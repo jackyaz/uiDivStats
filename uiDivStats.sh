@@ -183,7 +183,7 @@ Create_Dirs(){
 }
 
 Create_Symlinks(){
-	rm -f "$SCRIPT_WEB_DIR/*" 2>/dev/null
+	rm -f "$SCRIPT_WEB_DIR/"* 2>/dev/null
 	
 	ln -s "$SCRIPT_DIR/uidivstats.js" "$SCRIPT_WEB_DIR/uidivstats.js" 2>/dev/null
 	ln -s "$SCRIPT_DIR/uidivstatstext.js" "$SCRIPT_WEB_DIR/uidivstatstext.js" 2>/dev/null
