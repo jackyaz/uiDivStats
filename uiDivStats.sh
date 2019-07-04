@@ -192,7 +192,6 @@ Create_Symlinks(){
 	ln -s "$SHARED_DIR/chartjs-plugin-zoom.js" "$SCRIPT_WEB_DIR/chartjs-plugin-zoom.js" 2>/dev/null
 	ln -s "$SHARED_DIR/hammerjs.js" "$SCRIPT_WEB_DIR/hammerjs.js" 2>/dev/null
 	ln -s "$SCRIPT_DIR/psstats.htm" "$SCRIPT_WEB_DIR/psstats.htm" 2>/dev/null
-	
 }
 
 Auto_ServiceEvent(){
@@ -284,7 +283,7 @@ Download_File(){
 	/usr/sbin/curl -fsL --retry 3 "$1" -o "$2"
 }
 
-Get_CONNMON_UI(){
+Get_spdMerlin_UI(){
 	if [ -f /www/AdaptiveQoS_ROG.asp ]; then
 		echo "AdaptiveQoS_ROG.asp"
 	else
@@ -325,15 +324,15 @@ Modify_WebUI_File(){
 	sed -i '/retArray.push("Advanced_MultiSubnet_Content.asp");/d' "$tmpfile"
 	
 	if [ -f "/jffs/scripts/connmon" ]; then
-		sed -i '/{url: "'"$(Get_CONNMON_UI)"'", tabName: /d' "$tmpfile"
-		sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "'"$(Get_CONNMON_UI)"'", tabName: "Uptime Monitoring"},' "$tmpfile"
-		sed -i '/retArray.push("'"$(Get_CONNMON_UI)"'");/d' "$tmpfile"
+		sed -i '/{url: "Advanced_Feedback.asp", tabName: /d' "$tmpfile"
+		sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "Advanced_Feedback.asp", tabName: "Uptime Monitoring"},' "$tmpfile"
+		sed -i '/retArray.push("Advanced_Feedback.asp");/d' "$tmpfile"
 	fi
 	
 	if [ -f "/jffs/scripts/spdmerlin" ]; then
-		sed -i '/{url: "Advanced_Feedback.asp", tabName: /d' "$tmpfile"
-		sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "Advanced_Feedback.asp", tabName: "SpeedTest"},' "$tmpfile"
-		sed -i '/retArray.push("Advanced_Feedback.asp");/d' "$tmpfile"
+		sed -i '/{url: "'"$(Get_spdMerlin_UI)"'", tabName: /d' "$tmpfile"
+		sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "'"$(Get_spdMerlin_UI)"'", tabName: "SpeedTest"},' "$tmpfile"
+		sed -i '/retArray.push("'"$(Get_spdMerlin_UI)"'");/d' "$tmpfile"
 	fi
 	
 	if [ -f "/jffs/scripts/ntpmerlin" ]; then
@@ -371,7 +370,7 @@ Modify_WebUI_File(){
 	fi
 	
 	if [ -f /jffs/scripts/connmon ]; then
-		sed -i -e '/else if(current_page.indexOf("Feedback") != -1){/i else if(current_page.indexOf("'"$(Get_CONNMON_UI)"'") != -1){'"\\r\\n"'parent.showLoading(restart_time, "waiting");'"\\r\\n"'setTimeout(function(){ getXMLAndRedirect(); alert("Please force-reload this page (e.g. Ctrl+F5)");}, restart_time*1000);'"\\r\\n"'}' "$tmpfile"
+		sed -i -e '/else if(current_page.indexOf("Feedback") != -1){/i else if(current_page.indexOf("'"$(Get_spdMerlin_UI)"'") != -1){'"\\r\\n"'parent.showLoading(restart_time, "waiting");'"\\r\\n"'setTimeout(function(){ getXMLAndRedirect(); alert("Please force-reload this page (e.g. Ctrl+F5)");}, restart_time*1000);'"\\r\\n"'}' "$tmpfile"
 	fi
 	
 	sed -i -e '/else if(current_page.indexOf("Feedback") != -1){/i else if(current_page.indexOf("Advanced_MultiSubnet_Content.asp") != -1){'"\\r\\n"'parent.showLoading(restart_time, "waiting");'"\\r\\n"'setTimeout(function(){ getXMLAndRedirect(); alert("Please force-reload this page (e.g. Ctrl+F5)");}, restart_time*1000);'"\\r\\n"'}' "$tmpfile"
