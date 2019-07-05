@@ -15,7 +15,7 @@
 
 ### Start of script variables ###
 readonly SCRIPT_NAME="uiDivStats"
-readonly SCRIPT_VERSION="v1.1.1"
+readonly SCRIPT_VERSION="v1.1.2"
 readonly SCRIPT_BRANCH="master"
 readonly SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/""$SCRIPT_NAME""/""$SCRIPT_BRANCH"
 readonly SCRIPT_CONF="/jffs/configs/$SCRIPT_NAME.config"
@@ -485,8 +485,12 @@ Generate_Stats_Diversion(){
 	if [ -f "${DIVERSION_DIR}/.conf/diversion.conf" ] && [ -s /opt/var/log/dnsmasq.log ]; then
 		diversion count_ads
 		. "${DIVERSION_DIR}/.conf/diversion.conf"
-		wsTopHosts=15
-		wsTopClients=10
+		
+		[ -z "$wsTopHosts" ] && wsTopHosts=15
+		[ "$wsTopHosts" -gt 30 ] && wsTopHosts=30
+		[ -z "$wsTopClients" ] && wsTopClients=10
+		[ "$wsTopClients" -gt 30 ] && wsTopClients=30
+		
 		wsFilterLN=on
 		
 		case "$EDITION" in
