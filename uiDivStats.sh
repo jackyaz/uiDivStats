@@ -266,7 +266,6 @@ Auto_Startup(){
 Auto_Cron(){
 	case $1 in
 		create)
-			Auto_Cron delete 2>/dev/null
 			cru a "$SCRIPT_NAME" "0 * * * * /jffs/scripts/$SCRIPT_NAME generate"
 		;;
 		delete)
