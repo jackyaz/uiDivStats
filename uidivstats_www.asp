@@ -225,31 +225,20 @@ function Draw_Domain_Chart() {
 	changeColour(E('colourdomains'),BarChartReqDomains,window["barDataDomains"+document.getElementById("clientdomains").value],"colourdomains")
 }
 
-function initial(){
+function GetCookie(cookiename) {
 	var s;
-	if ((s = cookie.get('colourads')) != null) {
+	if ((s = cookie.get(cookiename)) != null) {
 			if (s.match(/^([0-2])$/)) {
-				E('colourads').value = cookie.get('colourads') * 1;
+				E(cookiename).value = cookie.get(cookiename) * 1;
 			}
 	}
-	
-	if ((s = cookie.get('charttypeads')) != null) {
-			if (s.match(/^([0-2])$/)) {
-				E('charttypeads').value = cookie.get('charttypeads') * 1;
-			}
-	}
-	
-	if ((s = cookie.get('colourdomains')) != null) {
-			if (s.match(/^([0-2])$/)) {
-				E('colourdomains').value = cookie.get('colourdomains') * 1;
-			}
-	}
-	
-	if ((s = cookie.get('charttypedomains')) != null) {
-			if (s.match(/^([0-2])$/)) {
-				E('charttypedomains').value = cookie.get('charttypedomains') * 1;
-			}
-	}
+}
+
+function initial(){
+	GetCookie("colourads");
+	GetCookie("charttypeads");
+	GetCookie("colourdomains");
+	GetCookie("colourdomains");
 	
 	show_menu();
 	loadDivStats();
