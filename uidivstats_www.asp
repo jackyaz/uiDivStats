@@ -536,11 +536,6 @@ function loadDivStats() {
 <td valign="top">
 <div style="line-height:10px;">&nbsp;</div>
 <div class="formfonttitle" style="margin-bottom:0px;" id="statstitle">Diversion Statistics</div>
-<!--<tr class="apply_gen" valign="top" height="35px">
-<td>
-<input type="button" onClick="applyRule();" value="Update Diversion Statistics" class="button_gen" name="button">
-</td>
-</tr>-->
 <div style="line-height:10px;">&nbsp;</div>
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#4D595D" class="FormTable">
 <thead class="collapsible" >
@@ -575,7 +570,7 @@ function loadDivStats() {
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 <thead>
 <tr>
-<td colspan="2">Top 15 blocked ad domains</td>
+<td colspan="2" id="topblocked">Top X blocked domains</td>
 </tr>
 </thead>
 <tr class='even'>
@@ -607,7 +602,7 @@ function loadDivStats() {
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 <thead>
 <tr>
-<td colspan="2">Top 15 requested domains</td>
+<td colspan="2" id="toprequested">Top X requested domains</td>
 </tr>
 </thead>
 <tr class='even'>
@@ -659,6 +654,8 @@ function loadDivStats() {
 </table>
 <script>
 SetDivStatsTitle();
+SetTopBlockedTitle();
+SetTopRequestedTitle();
 SetClients();
 
 if ((s = cookie.get('clientdomains')) != null) {

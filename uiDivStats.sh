@@ -15,8 +15,8 @@
 
 ### Start of script variables ###
 readonly SCRIPT_NAME="uiDivStats"
-readonly SCRIPT_VERSION="v1.1.2"
-readonly SCRIPT_BRANCH="master"
+readonly SCRIPT_VERSION="v1.1.3"
+readonly SCRIPT_BRANCH="develop"
 readonly SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/""$SCRIPT_NAME""/""$SCRIPT_BRANCH"
 readonly SCRIPT_CONF="/jffs/configs/$SCRIPT_NAME.config"
 readonly SCRIPT_DIR="/jffs/scripts/$SCRIPT_NAME.d"
@@ -780,6 +780,12 @@ Generate_Stats_Diversion(){
 		printf "$(head -n 2 "$statsFile" | tail -n 1 | sed 's/^ //' | sed 's/Stats/Stats generated on/')" > /tmp/uidivtitle.txt
 		WriteStats_ToJS "/tmp/uidivtitle.txt" "/tmp/uidivstatstext.js" "SetDivStatsTitle" "statstitle"
 		
+		echo "Top $wsTopHosts blocked domains" > /tmp/uidivtitle2.txt
+		echo "Top $wsTopHosts requested domains" > /tmp/uidivtitle3.txt
+		
+		WriteStats_ToJS "/tmp/uidivtitle2.txt" "/tmp/uidivstatstext.js" "SetTopBlockedTitle" "topblocked"
+		WriteStats_ToJS "/tmp/uidivtitle3.txt" "/tmp/uidivstatstext.js" "SetTopRequestedTitle" "toprequested"
+		
 		mv "/tmp/uidivstatstext.js" "$SCRIPT_DIR/uidivstatstext.js"
 		cp "$statsFile" "$SCRIPT_DIR/uidivstats.txt"
 		
@@ -795,7 +801,7 @@ Generate_Stats_Diversion(){
 		rm -f "$clientsFile"
 		rm -f "/tmp/uidivstats.js"
 		rm -f "/tmp/uidivstatstext.js"
-		rm -f "/tmp/uidivtitle.txt"
+		rm -f /tmp/uidivtitle*.txt
 		rm -rf /tmp/uidivstats
 		
 		Print_Output "true" "Diversion statistic generation completed successfully!" "$PASS"
