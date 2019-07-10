@@ -435,6 +435,11 @@ WriteData_ToJS(){
 	echo "var $3 , $4;"
 	echo "$3 = [];"
 	echo "$4 = [];"; } >> "$2"
+	if [ ! -z "$5" ]; then
+		{
+		echo "var $5;"
+		echo "$5 = [];"; } >> "$2"
+	fi
 	contents=""
 	contents="$contents""$3"'.unshift('
 	while IFS='' read -r line || [ -n "$line" ]; do
@@ -451,6 +456,17 @@ WriteData_ToJS(){
 	contents=$(echo "$contents" | sed 's/.$//')
 	contents="$contents"");"
 	printf "%s\\r\\n\\r\\n" "$contents" >> "$2"
+	
+	if [ ! -z "$5" ]; then
+		contents="$5"'.unshift('
+		while IFS='' read -r line || [ -n "$line" ]; do
+			contents="$contents""'""$(echo "$line" | awk '{$1=$1};1' | awk 'BEGIN{FS="  *"}{ print $3 }')""'"","
+		done < "$1"
+		contents=$(echo "$contents" | sed 's/.$//')
+		contents="$contents"");"
+		printf "%s\\r\\n\\r\\n" "$contents" >> "$2"
+	fi
+	
 }
 
 # shellcheck disable=SC1090
@@ -635,6 +651,7 @@ Generate_Stats_Diversion(){
 				echo >>/tmp/uidivstats/div-bwl
 			fi
 		done
+		
 		awk 'NR==FNR{a[FNR]=$0 "";next} {print a[FNR],$0}' /tmp/uidivstats/div-th /tmp/uidivstats/div-bwl >>${statsFile}
 		
 		printf "\\n The top $wsTopHosts blocked ad domains were:\\n$LINE" >>${statsFile}
@@ -733,7 +750,7 @@ Generate_Stats_Diversion(){
 				printf "%s\\n" "$clientname" >> "$clientsFile"
 				
 				# remove files for next client compiling run
-				rm -f /tmp/uidivstats/div-thtc /tmp/uidivstats/div-toptop
+				rm -f /tmp/uidivstats/div-thtc /tmp/uidivstats/div-toptop /tmp/uidivstats/div-thtc-toptop
 				/opt/bin/grep -w $i /opt/var/log/dnsmasq.log* | awk '{print $(NF-2)}'|
 				awk '{for(i=1;i<=NF;i++)a[$i]++}END{for(o in a) printf "\n %-6s %-40s""%s %s",a[o],o}' | sort -nr |
 				/opt/bin/grep -viF -f /tmp/uidivstats/div-hostleases | /opt/bin/grep -viF -f /tmp/uidivstats/div-ipleases | head -$wsTopHosts >>/tmp/uidivstats/div-thtc
@@ -752,8 +769,10 @@ Generate_Stats_Diversion(){
 						echo >>/tmp/uidivstats/div-toptop
 					fi
 				done
-				WriteData_ToJS /tmp/uidivstats/div-thtc "/tmp/uidivstats.js" "barDataDomains$COUNTER" "barLabelsDomains$COUNTER"
+				
 				awk 'NR==FNR{a[FNR]=$0 "";next} {print a[FNR],$0}' /tmp/uidivstats/div-thtc /tmp/uidivstats/div-toptop  >>${statsFile}
+				awk 'NR==FNR{a[FNR]=$0 "";next} {print a[FNR],$0}' /tmp/uidivstats/div-thtc /tmp/uidivstats/div-toptop  >>/tmp/uidivstats/div-thtc-toptop
+				WriteData_ToJS /tmp/uidivstats/div-thtc-toptop "/tmp/uidivstats.js" "barDataDomains$COUNTER" "barLabelsDomains$COUNTER" "barLabelsDomainsType$COUNTER"
 				COUNTER=$((COUNTER + 1))
 			done
 			
@@ -773,7 +792,8 @@ Generate_Stats_Diversion(){
 		printf "$LINE End of stats report\\n" >>${statsFile}
 		
 		WriteData_ToJS /tmp/uidivstats/div-tah "/tmp/uidivstats.js" "barDataBlockedAds" "barLabelsBlockedAds"
-		WriteData_ToJS /tmp/uidivstats/div-th "/tmp/uidivstats.js" "barDataDomains0" "barLabelsDomains0"
+		awk 'NR==FNR{a[FNR]=$0 "";next} {print a[FNR],$0}' /tmp/uidivstats/div-th /tmp/uidivstats/div-bwl >>/tmp/uidivstats/div-th-bwl
+		WriteData_ToJS /tmp/uidivstats/div-th-bwl "/tmp/uidivstats.js" "barDataDomains0" "barLabelsDomains0" "barLabelsDomainsType0"
 		WriteOptions_ToJS "$clientsFile" "/tmp/uidivstats.js"
 		mv "/tmp/uidivstats.js" "$SCRIPT_DIR/uidivstats.js"
 		
