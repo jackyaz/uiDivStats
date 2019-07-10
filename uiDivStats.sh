@@ -435,7 +435,7 @@ WriteData_ToJS(){
 	echo "var $3 , $4;"
 	echo "$3 = [];"
 	echo "$4 = [];"; } >> "$2"
-	if [ ! -z "$5" ]; then
+	if [ -n "$5" ]; then
 		{
 		echo "var $5;"
 		echo "$5 = [];"; } >> "$2"
@@ -457,7 +457,7 @@ WriteData_ToJS(){
 	contents="$contents"");"
 	printf "%s\\r\\n\\r\\n" "$contents" >> "$2"
 	
-	if [ ! -z "$5" ]; then
+	if [ -n "$5" ]; then
 		contents="$5"'.unshift('
 		while IFS='' read -r line || [ -n "$line" ]; do
 			contents="$contents""'""$(echo "$line" | awk '{$1=$1};1' | awk 'BEGIN{FS="  *"}{ print $3 }')""'"","
