@@ -152,7 +152,14 @@ function Draw_Domain_Chart() {
 		title: { display: false },
 		tooltips: {
 			callbacks: {
-				title: function (tooltipItem, data) { return data.labels[tooltipItem[0].index] + " - " + window["barLabelsDomainsType"+document.getElementById("clientdomains").value][tooltipItem[0].index]; },
+				title: function (tooltipItem, data) {
+				if (window["barLabelsDomainsType"+document.getElementById("clientdomains").value][tooltipItem[0].index].length > 1){
+				return data.labels[tooltipItem[0].index] + " - " + window["barLabelsDomainsType"+document.getElementById("clientdomains").value][tooltipItem[0].index];
+				}
+				else {
+				return data.labels[tooltipItem[0].index];
+				}
+				},
 				label: function (tooltipItem, data) { return comma(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index]); },
 			},
 			mode: 'point',
