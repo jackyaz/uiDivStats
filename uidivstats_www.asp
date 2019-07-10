@@ -80,15 +80,15 @@ function Draw_Ad_Chart() {
 		},
 		scales: {
 			xAxes: [{
-				display: showXAxis(charttypead),
+				display: showAxis(charttypead,"x"),
 				gridLines: { display: showGrid(charttypead,"x"), color: "#282828" },
-				ticks: { display: showXAxis(charttypead), beginAtZero: false }
+				ticks: { display: showAxis(charttypead,"x"), beginAtZero: false }
 			}],
 			yAxes: [{
-				display: showYAxis(charttypead),
+				display: showAxis(charttypead,"y"),
 				gridLines: { display: false, color: "#282828" },
 				scaleLabel: { display: false, labelString: "Blocks" },
-				ticks: { display: showYAxis(charttypead), beginAtZero: false }
+				ticks: { display: showAxis(charttypead,"y"), beginAtZero: false }
 			}]
 		},
 		plugins: {
@@ -168,15 +168,15 @@ function Draw_Domain_Chart() {
 		},
 		scales: {
 			xAxes: [{
-				display: showXAxis(charttypedomain),
+				display: showAxis(charttypedomain,"x"),
 				gridLines: { display: showGrid(charttypedomain,"x"), color: "#282828" },
-				ticks: { display: showXAxis(charttypedomain), beginAtZero: false }
+				ticks: { display: showAxis(charttypedomain,"x"), beginAtZero: false }
 			}],
 			yAxes: [{
-				display: showYAxis(charttypedomain),
+				display: showAxis(charttypedomain,"y"),
 				gridLines: { display: false, color: "#282828" },
 				scaleLabel: { display: false, labelString: "Domains" },
-				ticks: { display: showYAxis(charttypedomain), beginAtZero: false }
+				ticks: { display: showAxis(charttypedomain,"y"), beginAtZero: false }
 			}]
 		},
 		plugins: {
@@ -363,27 +363,20 @@ function showGrid(e,axis) {
 	}
 }
 
-function showXAxis(e) {
-	if (e == null) {
-		return true;
-	}
-	else if (e == "bar" || e == "pie") {
+function showAxis(e,axis) {
+	if (e == "bar" && axis == "x") {
 		return false;
 	}
 	else {
-		return true;
-	}
-}
-
-function showYAxis(e) {
-	if (e == null) {
-		return true;
-	}
-	else if (e == "pie") {
-		return false;
-	}
-	else {
-		return true;
+		if (e == null) {
+			return true;
+		}
+		else if (e == "pie") {
+			return false;
+		}
+		else {
+			return true;
+		}
 	}
 }
 
