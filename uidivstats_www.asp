@@ -81,7 +81,7 @@ function Draw_Ad_Chart() {
 		scales: {
 			xAxes: [{
 				display: showXAxis(charttypead),
-				gridLines: { display: showXGrid(charttypead), color: "#282828" },
+				gridLines: { display: showGrid(charttypead,"x"), color: "#282828" },
 				ticks: { display: showXAxis(charttypead), beginAtZero: false }
 			}],
 			yAxes: [{
@@ -94,40 +94,28 @@ function Draw_Ad_Chart() {
 		plugins: {
 			zoom: {
 				pan: {
-					// Boolean to enable panning
 					enabled: true,
-					// Panning directions. Remove the appropriate direction to disable
-					// Eg. 'y' would only allow panning in the y direction
 					mode: ZoomPanEnabled(charttypead),
 					rangeMin: {
-						// Format of min pan range depends on scale type
 						x: 0,
 						y: 0
 					},
 					rangeMax: {
-						// Format of max pan range depends on scale type
 						x: ZoomPanMax(charttypead,"x",barDataBlockedAds),
 						y: ZoomPanMax(charttypead,"y",barDataBlockedAds)
 					},
 				},
 				zoom: {
-					// Boolean to enable zooming
 					enabled: true,
-					// Zooming directions. Remove the appropriate direction to disable
-					// Eg. 'y' would only allow zooming in the y direction
 					mode: ZoomPanEnabled(charttypead),
 					rangeMin: {
-						// Format of min zoom range depends on scale type
 						x: 0,
 						y: 0
 					},
 					rangeMax: {
-						// Format of max zoom range depends on scale type
 						x: ZoomPanMax(charttypead,"x",barDataBlockedAds),
 						y: ZoomPanMax(charttypead,"y",barDataBlockedAds)
 					},
-					// Speed of zoom via mouse wheel
-					// (percentage of zoom on a wheel event)
 					speed: 0.1,
 				}
 			}
@@ -164,7 +152,7 @@ function Draw_Domain_Chart() {
 		title: { display: false },
 		tooltips: {
 			callbacks: {
-				title: function (tooltipItem, data) { return data.labels[tooltipItem[0].index]; },
+				title: function (tooltipItem, data) { return data.labels[tooltipItem[0].index] + " - " + window["barLabelsDomainsType"+document.getElementById("clientdomains").value][tooltipItem[0].index]; },
 				label: function (tooltipItem, data) { return comma(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index]); },
 			},
 			mode: 'point',
@@ -174,53 +162,41 @@ function Draw_Domain_Chart() {
 		scales: {
 			xAxes: [{
 				display: showXAxis(charttypedomain),
-				gridLines: { display: showXGrid(charttypedomain), color: "#282828" },
-				ticks: { display: showXAxis(charttypedomain), beginAtZero: false } //, max: getAvg(window["barDataDomains"+document.getElementById("clientdomains").value]) + getSDev(window["barDataDomains"+document.getElementById("clientdomains").value]) }
+				gridLines: { display: showGrid(charttypedomain,"x"), color: "#282828" },
+				ticks: { display: showXAxis(charttypedomain), beginAtZero: false }
 			}],
 			yAxes: [{
 				display: showYAxis(charttypedomain),
 				gridLines: { display: false, color: "#282828" },
 				scaleLabel: { display: false, labelString: "Domains" },
-				ticks: { display: showYAxis(charttypedomain), beginAtZero: false } //, max: getAvg(window["barDataDomains"+document.getElementById("clientdomains").value]) + getSDev(window["barDataDomains"+document.getElementById("clientdomains").value]) }
+				ticks: { display: showYAxis(charttypedomain), beginAtZero: false }
 			}]
 		},
 		plugins: {
 			zoom: {
 				pan: {
-					// Boolean to enable panning
 					enabled: true,
-					// Panning directions. Remove the appropriate direction to disable
-					// Eg. 'y' would only allow panning in the y direction
 					mode: ZoomPanEnabled(charttypedomain),
 					rangeMin: {
-						// Format of min pan range depends on scale type
 						x: 0,
 						y: 0
 					},
 					rangeMax: {
-						// Format of max pan range depends on scale type
 						x: ZoomPanMax(charttypedomain,"x",window["barDataDomains"+document.getElementById("clientdomains").value]),
 						y: ZoomPanMax(charttypedomain,"y",window["barDataDomains"+document.getElementById("clientdomains").value])
 					},
 				},
 				zoom: {
-					// Boolean to enable zooming
 					enabled: true,
-					// Zooming directions. Remove the appropriate direction to disable
-					// Eg. 'y' would only allow zooming in the y direction
 					mode: ZoomPanEnabled(charttypedomain),
 					rangeMin: {
-						// Format of min zoom range depends on scale type
 						x: 0,
 						y: 0
 					},
 					rangeMax: {
-						// Format of max zoom range depends on scale type
 						x: ZoomPanMax(charttypedomain,"x",window["barDataDomains"+document.getElementById("clientdomains").value]),
 						y: ZoomPanMax(charttypedomain,"y",window["barDataDomains"+document.getElementById("clientdomains").value])
 					},
-					// Speed of zoom via mouse wheel
-					// (percentage of zoom on a wheel event)
 					speed: 0.1,
 				}
 			}
@@ -296,7 +272,6 @@ function getSDev(datasetname){
 	});
 	
 	var avgSquareDiff = getAvg(squareDiffs);
-	
 	var stdDev = Math.sqrt(avgSquareDiff);
 	return stdDev;
 }
@@ -309,8 +284,7 @@ function getMax(datasetname) {
 function getAvg(datasetname) {
 	var sum, avg = 0;
 	
-	if (datasetname.length)
-	{
+	if (datasetname.length) {
 		sum = datasetname.reduce(function(a, b) { return a*1 + b*1; });
 		avg = sum / datasetname.length;
 	}
@@ -334,93 +308,74 @@ function poolColors(a) {
 }
 
 function getChartType(e) {
-	if (e == null)
-	{
+	if (e == null) {
 		return 'horizontalBar';
 	}
-	else
-	{
+	else {
 		return e;
 	}
 }
 
 function ZoomPanEnabled(charttype) {
-	if (charttype == "bar")
-	{
+	if (charttype == "bar") {
 		return 'y';
 	}
-	else if (charttype == "horizontalBar")
-	{
+	else if (charttype == "horizontalBar") {
 		return 'x';
 	}
 }
 
 function ZoomPanMax(charttype, axis, datasetname) {
-	if (axis == "x")
-	{
-		if (charttype == "bar")
-		{
+	if (axis == "x") {
+		if (charttype == "bar") {
 			return null;
 		}
-		else if (charttype == "horizontalBar")
-		{
+		else if (charttype == "horizontalBar") {
 			return getMax(datasetname);
 		}
 	}
-	else if (axis == "y")
-	{
-		if (charttype == "bar")
-		{
+	else if (axis == "y") {
+		if (charttype == "bar") {
 			return getMax(datasetname);
 		}
-		else if (charttype == "horizontalBar")
-		{
+		else if (charttype == "horizontalBar") {
 			return null;
 		}
 	}
 }
 
-function showXGrid(e) {
-	if (e == null)
-	{
+function showGrid(e,axis) {
+	if (e == null) {
 		return true;
 	}
-	else if (e == "pie")
-	{
+	else if (e == "pie") {
 		return false;
 	}
-	else
-	{
+	else {
 		return true;
 	}
 }
 
 function showXAxis(e) {
-	if (e == null)
-	{
+	if (e == null) {
 		return true;
 	}
-	else if (e == "bar" || e == "pie")
-	{
+	else if (e == "bar" || e == "pie") {
 		return false;
 	}
-	else
-	{
+	else {
 		return true;
 	}
 }
 
 function showYAxis(e) {
-	if (e == null)
-	{
+	if (e == null) {
 		return true;
 	}
-	else if (e == "pie")
-	{
+	else if (e == "pie") {
 		return false;
 	}
-	else
-	{
+	else {
 		return true;
 	}
 }
@@ -433,12 +388,10 @@ function changeClient(e,chartname,cookiename) {
 
 function changeColour(e,chartname,datasetname,cookiename) {
 	colour = e.value * 1;
-	if ( colour == 0 )
-	{
+	if ( colour == 0 ) {
 		chartname.config.data.datasets[0].backgroundColor = poolColors(datasetname.length);
 	}
-	else
-	{
+	else {
 		chartname.config.data.datasets[0].backgroundColor = "rgba(2, 53, 135, 1)";
 	}
 	cookie.set(cookiename, colour, 31);
@@ -447,49 +400,39 @@ function changeColour(e,chartname,datasetname,cookiename) {
 
 function changeLayout(e,chartname,cookiename) {
 	layout = e.value * 1;
-	if ( layout == 0 )
-	{
-		if ( chartname == "BarChartBlockedAds" )
-		{
+	if ( layout == 0 ) {
+		if ( chartname == "BarChartBlockedAds" ) {
 			charttypead = "horizontalBar"
 		}
-		else
-		{
+		else {
 			charttypedomain = "horizontalBar"
 		}
 	}
-	else if ( layout == 1 )
-	{
-		if ( chartname == "BarChartBlockedAds" )
-		{
+	else if ( layout == 1 ) {
+		if ( chartname == "BarChartBlockedAds" ) {
 			charttypead = "bar"
 		}
-		else
-		{
+		else {
 			charttypedomain = "bar"
 		}
 	}
-	else if ( layout == 2 )
-	{
-		if ( chartname == "BarChartBlockedAds" )
-		{
+	else if ( layout == 2 ) {
+		if ( chartname == "BarChartBlockedAds" ) {
 			charttypead = "pie"
 		}
-		else
-		{
+		else {
 			charttypedomain = "pie"
 		}
 	}
 	cookie.set(cookiename, layout, 31);
-	if ( chartname == "BarChartBlockedAds" )
-	{
+	if ( chartname == "BarChartBlockedAds" ) {
 		Draw_Ad_Chart();
 	}
-	else if ( chartname == "BarChartReqDomains" )
-	{
+	else if ( chartname == "BarChartReqDomains" ) {
 		Draw_Domain_Chart();
 	}
 }
+
 function loadDivStats() {
 	$.ajax({
 		url: '/ext/uiDivStats/uidivstatstext.htm',
@@ -536,11 +479,6 @@ function loadDivStats() {
 <td valign="top">
 <div style="line-height:10px;">&nbsp;</div>
 <div class="formfonttitle" style="margin-bottom:0px;" id="statstitle">Diversion Statistics</div>
-<!--<tr class="apply_gen" valign="top" height="35px">
-<td>
-<input type="button" onClick="applyRule();" value="Update Diversion Statistics" class="button_gen" name="button">
-</td>
-</tr>-->
 <div style="line-height:10px;">&nbsp;</div>
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#4D595D" class="FormTable">
 <thead class="collapsible" >
@@ -575,7 +513,7 @@ function loadDivStats() {
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 <thead>
 <tr>
-<td colspan="2">Top 15 blocked ad domains</td>
+<td colspan="2" id="topblocked">Top X blocked domains</td>
 </tr>
 </thead>
 <tr class='even'>
@@ -607,7 +545,7 @@ function loadDivStats() {
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 <thead>
 <tr>
-<td colspan="2">Top 15 requested domains</td>
+<td colspan="2" id="toprequested">Top X requested domains</td>
 </tr>
 </thead>
 <tr class='even'>
@@ -659,6 +597,8 @@ function loadDivStats() {
 </table>
 <script>
 SetDivStatsTitle();
+SetTopBlockedTitle();
+SetTopRequestedTitle();
 SetClients();
 
 if ((s = cookie.get('clientdomains')) != null) {
