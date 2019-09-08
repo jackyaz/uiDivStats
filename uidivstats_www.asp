@@ -24,6 +24,16 @@ font-weight: bolder;
   outline: none;
   cursor: pointer;
 }
+.keystatscell {
+  background-color:#1F2D35 !important;
+  background:#2F3A3E !important;
+  border-bottom:none !important;
+  border-top:none !important;
+}
+.keystatsnumber {
+  font-size: 20px !important;
+  font-weight: bolder !important;
+}
 </style>
 <script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
 <script language="JavaScript" type="text/javascript" src="/js/chart.min.js"></script>
@@ -483,6 +493,41 @@ function loadDivStats() {
 <tr>
 <td style="padding: 0px;">
 <iframe src="/ext/uiDivStats/psstats.htm" style="width:99%;height:420px;"></iframe>
+</td>
+</tr>
+</table><div style="line-height:10px;">&nbsp;</div>
+<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
+<thead class="collapsible">
+<tr>
+<td colspan="4" id="keystats">Key Stats (click to expand/collapse)</td>
+</tr>
+</thead>
+<tr class='even' style="text-align:center;">
+<td width="25%" class="keystatscell">
+Total Queries
+</td>
+<td width="25%" class="keystatscell">
+Queries Blocked
+</td>
+<td width="25%" class="keystatscell">
+Percent Blocked
+</td>
+<td width="25%" class="keystatscell">
+Domains on Blocklist
+</td>
+</tr>
+<tr class='even' style="text-align:center;">
+<td width="25%" class="keystatscell keystatsnumber" id="keystatstotal">
+Total
+</td>
+<td width="25%" class="keystatscell keystatsnumber" id="keystatsblocked">
+Blocked
+</td>
+<td width="25%" class="keystatscell keystatsnumber" id="keystatspercent">
+Percent
+</td>
+<td width="25%" class="keystatscell keystatsnumber" id="keystatsdomains">
+Domains
 </td>
 </tr>
 </table>
