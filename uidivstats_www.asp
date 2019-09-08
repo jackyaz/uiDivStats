@@ -24,14 +24,6 @@ font-weight: bolder;
   outline: none;
   cursor: pointer;
 }
-
-.collapsiblecontent {
-  padding: 0px;
-  max-height: 0;
-  overflow: hidden;
-  border: none;
-  transition: max-height 0.2s ease-out;
-}
 </style>
 <script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
 <script language="JavaScript" type="text/javascript" src="/js/chart.min.js"></script>
@@ -470,39 +462,35 @@ function loadDivStats() {
 <div class="formfonttitle" style="margin-bottom:0px;" id="statstitle">Diversion Statistics</div>
 <div style="line-height:10px;">&nbsp;</div>
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#4D595D" class="FormTable">
-<thead class="collapsible" >
+<thead class="collapsible default-collapsed" >
 <tr>
 <td colspan="2">Diversion Statistics Report (click to expand/collapse)</td>
 </tr>
 </thead>
 <tr>
 <td style="padding: 0px;">
-<div class="collapsiblecontent">
 <textarea cols="75" rows="35" wrap="off" readonly="readonly" id="divstats" class="textarea_log_table" style="font-family:'Courier New', Courier, mono; font-size:11px;border: none;padding: 0px;">"Stats will show here"</textarea>
-</div>
 </td>
 </tr>
 </table>
 <div style="line-height:10px;">&nbsp;</div>
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#4D595D" class="FormTable">
-<thead class="collapsible" >
+<thead class="collapsible default-collapsed" >
 <tr>
 <td colspan="2">Pixelserv Statistics Report (click to expand/collapse)</td>
 </tr>
 </thead>
 <tr>
 <td style="padding: 0px;">
-<div class="collapsiblecontent">
 <iframe src="/ext/uiDivStats/psstats.htm" style="width:99%;height:420px;"></iframe>
-</div>
 </td>
 </tr>
 </table>
 <div style="line-height:10px;">&nbsp;</div>
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
-<thead>
+<thead class="collapsible">
 <tr>
-<td colspan="2" id="topblocked">Top X blocked domains</td>
+<td colspan="2" id="topblocked">Top X blocked domains (click to expand/collapse)</td>
 </tr>
 </thead>
 <tr class='even'>
@@ -532,9 +520,9 @@ function loadDivStats() {
 </table>
 <div style="line-height:10px;">&nbsp;</div>
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
-<thead>
+<thead class="collapsible">
 <tr>
-<td colspan="2" id="toprequested">Top X requested domains</td>
+<td colspan="2" id="toprequested">Top X requested domains (click to expand/collapse)</td>
 </tr>
 </thead>
 <tr class='even'>
@@ -599,20 +587,11 @@ if ((s = cookie.get('clientdomains')) != null) {
 <div id="footer">
 </div>
 <script>
-var coll = document.getElementsByClassName("collapsible");
-var i;
+$("thead").click(function(){
+	$(this).siblings().toggle("fast");
+})
 
-for (i = 0; i < coll.length; i++) {
-  coll[i].addEventListener("click", function() {
-    this.classList.toggle("active");
-    var content = this.nextElementSibling.firstElementChild.firstElementChild.firstElementChild;
-    if (content.style.maxHeight){
-      content.style.maxHeight = null;
-    } else {
-      content.style.maxHeight = content.scrollHeight + "px";
-    }
-  });
-}
+$(".default-collapsed").trigger("click");
 </script>
 </body>
 </html>

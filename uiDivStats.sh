@@ -800,8 +800,8 @@ Generate_Stats_Diversion(){
 		printf "$(head -n 2 "$statsFile" | tail -n 1 | sed 's/^ //' | sed 's/Stats/Stats generated on/')" > /tmp/uidivtitle.txt
 		WriteStats_ToJS "/tmp/uidivtitle.txt" "/tmp/uidivstatstext.js" "SetDivStatsTitle" "statstitle"
 		
-		echo "Top $wsTopHosts blocked domains" > /tmp/uidivtitle2.txt
-		echo "Top $wsTopHosts requested domains" > /tmp/uidivtitle3.txt
+		echo "Top $wsTopHosts blocked domains (click to expand/collapse)" > /tmp/uidivtitle2.txt
+		echo "Top $wsTopHosts requested domains (click to expand/collapse)" > /tmp/uidivtitle3.txt
 		
 		WriteStats_ToJS "/tmp/uidivtitle2.txt" "/tmp/uidivstatstext.js" "SetTopBlockedTitle" "topblocked"
 		WriteStats_ToJS "/tmp/uidivtitle3.txt" "/tmp/uidivstatstext.js" "SetTopRequestedTitle" "toprequested"
