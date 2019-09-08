@@ -559,6 +559,7 @@ Generate_Stats_Diversion(){
 		printf "%-13s%s\\n" " $(/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/blacklist" | wc -l)" "blocked by blacklist" >>${statsFile}
 		printf "%-13s%s\\n" " $(/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/wc_blacklist" | wc -l)" "blocked by wildcard blacklist" >>${statsFile}
 		printf "\\n" >>${statsFile}
+		keystatsblocked=0;
 		if [ "$bfFs" = "on" ] && [ "$alternateBF" = "on" ]; then
 			printf " Primary ad-blocking:\\n" >>${statsFile}
 			printf "%-13s%s\\n" " $(echo $adsBlocked | human_number)" "ads in total blocked" >>${statsFile}
@@ -573,11 +574,13 @@ Generate_Stats_Diversion(){
 			printf "%-13s%s\\n" " $(echo $(($adsWeek+$adsWeekAlt)) | human_number)" "ads this week, since last $bfUpdateDay" >>${statsFile}
 			printf "%-13s%s\\n" " $(echo $(($adsNew+$adsNewAlt)) | human_number)" "new ads, since $adsPrevCount" >>${statsFile}
 			echo "$(echo $(($adsWeek+$adsWeekAlt)) | human_number)" > /tmp/uidivstatskeystatsblocked.txt
+			keystatsblocked=$(($adsWeek+$adsWeekAlt))
 		else
 			printf "%-13s%s\\n" " $(echo $adsBlocked | human_number)" "ads in total blocked" >>${statsFile}
 			printf "%-13s%s\\n" " $(echo $adsWeek | human_number)" "ads this week, since last $bfUpdateDay" >>${statsFile}
 			printf "%-13s%s\\n" " $(echo $adsNew | human_number)" "new ads, since $adsPrevCount" >>${statsFile}
 			echo "$(echo $adsWeek | human_number)" > /tmp/uidivstatskeystatsblocked.txt
+			keystatsblocked=$adsWeek
 		fi
 		
 		WriteStats_ToJS "/tmp/uidivstatskeystatsblocked.txt" "/tmp/uidivstatstext.js" "SetKeyStatsBlocked" "keystatsblocked"
@@ -641,6 +644,7 @@ Generate_Stats_Diversion(){
 		printf "\\n The top $wsTopHosts requested domains were:\\n$LINE" >>${statsFile}
 		awk '/query\[AAAA]|query\[A]/ {print $(NF-2)}' /opt/var/log/dnsmasq.log* |
 		awk '{for(i=1;i<=NF;i++)a[$i]++}END{for(o in a) printf "\n %-6s %-40s""%s %s",a[o],o}' | sort -nr |
+		
 		/opt/bin/grep -viF -f /tmp/uidivstats/div-hostleases | /opt/bin/grep -viF -f /tmp/uidivstats/div-ipleases >>/tmp/uidivstats/div-th-all
 		awk '{$1=$1};1' /jffs/configs/div-th-all  | cut -d ' ' -f1 >>/tmp/uidivstats/div-th-all-count
 		reqdomains=0
@@ -649,6 +653,10 @@ Generate_Stats_Diversion(){
 		done < /tmp/uidivstats/div-th-all-count
 		echo "$(echo $reqdomains | human_number)" > /tmp/uidivstatskeystatsreq.txt
 		WriteStats_ToJS "/tmp/uidivstatskeystatsreq.txt" "/tmp/uidivstatstext.js" "SetKeyStatsReq" "keystatstotal"
+		
+		echo "$keystatsblocked" "$reqdomains" | awk '{printf "%4.3f\n",$1/$2*100}' > /tmp/uidivstatskeystatsprecent.txt
+		WriteStats_ToJS "/tmp/uidivstatskeystatsprecent.txt" "/tmp/uidivstatstext.js" "SetKeyStatsPercent" "keystatspercent"
+		
 		head -$wsTopHosts /tmp/uidivstats/div-th-all >>/tmp/uidivstats/div-th
 		# show if found in any of these lists
 		for i in $(awk '{print $2}' /tmp/uidivstats/div-th); do
