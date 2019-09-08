@@ -654,7 +654,7 @@ Generate_Stats_Diversion(){
 		echo "$(echo $reqdomains | human_number)" > /tmp/uidivstatskeystatsreq.txt
 		WriteStats_ToJS "/tmp/uidivstatskeystatsreq.txt" "/tmp/uidivstatstext.js" "SetKeyStatsReq" "keystatstotal"
 		
-		echo "$keystatsblocked" "$reqdomains" | awk '{printf "%4.3f\n",$1/$2*100}' > /tmp/uidivstatskeystatsprecent.txt
+		echo "$keystatsblocked" "$reqdomains" | awk '{printf "%3.2f\n",$1/$2*100}' > /tmp/uidivstatskeystatsprecent.txt
 		WriteStats_ToJS "/tmp/uidivstatskeystatsprecent.txt" "/tmp/uidivstatstext.js" "SetKeyStatsPercent" "keystatspercent"
 		
 		head -$wsTopHosts /tmp/uidivstats/div-th-all >>/tmp/uidivstats/div-th
