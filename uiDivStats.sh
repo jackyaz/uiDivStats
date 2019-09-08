@@ -642,7 +642,13 @@ Generate_Stats_Diversion(){
 		awk '/query\[AAAA]|query\[A]/ {print $(NF-2)}' /opt/var/log/dnsmasq.log* |
 		awk '{for(i=1;i<=NF;i++)a[$i]++}END{for(o in a) printf "\n %-6s %-40s""%s %s",a[o],o}' | sort -nr |
 		/opt/bin/grep -viF -f /tmp/uidivstats/div-hostleases | /opt/bin/grep -viF -f /tmp/uidivstats/div-ipleases >>/tmp/uidivstats/div-th-all
-		cp /tmp/uidivstats/div-th-all /jffs/configs/.
+		awk '{$1=$1};1' /jffs/configs/div-th-all  | cut -d ' ' -f1 >>/tmp/uidivstats/div-th-all-count
+		reqdomains=0
+		while IFS='' read -r line || [ -n "$line" ]; do
+			reqdomains=$((reqdomains+line))
+		done < /tmp/uidivstats/div-th-all-count
+		echo "$(echo $reqdomains | human_number)" > /tmp/uidivstatskeystatsreq.txt
+		WriteStats_ToJS "/tmp/uidivstatskeystatsreq.txt" "/tmp/uidivstatstext.js" "SetKeyStatsReq" "keystatstotal"
 		head -$wsTopHosts /tmp/uidivstats/div-th-all >>/tmp/uidivstats/div-th
 		# show if found in any of these lists
 		for i in $(awk '{print $2}' /tmp/uidivstats/div-th); do

@@ -619,6 +619,7 @@ Domains
 </table>
 <script>
 SetDivStatsTitle();
+SetKeyStatsReq();
 SetKeyStatsBlocked();
 SetKeyStatsDomains();
 SetTopBlockedTitle();
