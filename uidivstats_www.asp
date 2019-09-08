@@ -621,6 +621,7 @@ Domains
 SetDivStatsTitle();
 SetKeyStatsReq();
 SetKeyStatsBlocked();
+SetKeyStatsPercent();
 SetKeyStatsDomains();
 SetTopBlockedTitle();
 SetTopRequestedTitle();
