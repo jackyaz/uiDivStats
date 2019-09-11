@@ -646,7 +646,7 @@ Generate_Stats_Diversion(){
 		awk '{for(i=1;i<=NF;i++)a[$i]++}END{for(o in a) printf "\n %-6s %-40s""%s %s",a[o],o}' | sort -nr |
 		
 		/opt/bin/grep -viF -f /tmp/uidivstats/div-hostleases | /opt/bin/grep -viF -f /tmp/uidivstats/div-ipleases >>/tmp/uidivstats/div-th-all
-		awk '{$1=$1};1' /jffs/configs/div-th-all  | cut -d ' ' -f1 >>/tmp/uidivstats/div-th-all-count
+		awk '{$1=$1};1' /tmp/uidivstats/div-th-all  | cut -d ' ' -f1 >>/tmp/uidivstats/div-th-all-count
 		reqdomains=0
 		while IFS='' read -r line || [ -n "$line" ]; do
 			reqdomains=$((reqdomains+line))
