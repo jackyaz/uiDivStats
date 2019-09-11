@@ -24,13 +24,15 @@ font-weight: bolder;
   outline: none;
   cursor: pointer;
 }
-
-.collapsiblecontent {
-  padding: 0px;
-  max-height: 0;
-  overflow: hidden;
-  border: none;
-  transition: max-height 0.2s ease-out;
+.keystatscell {
+  background-color:#1F2D35 !important;
+  background:#2F3A3E !important;
+  border-bottom:none !important;
+  border-top:none !important;
+}
+.keystatsnumber {
+  font-size: 20px !important;
+  font-weight: bolder !important;
 }
 </style>
 <script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
@@ -80,15 +82,15 @@ function Draw_Ad_Chart() {
 		},
 		scales: {
 			xAxes: [{
-				display: showXAxis(charttypead),
+				display: showAxis(charttypead,"x"),
 				gridLines: { display: showGrid(charttypead,"x"), color: "#282828" },
-				ticks: { display: showXAxis(charttypead), beginAtZero: false }
+				ticks: { display: showAxis(charttypead,"x"), beginAtZero: false }
 			}],
 			yAxes: [{
-				display: showYAxis(charttypead),
+				display: showAxis(charttypead,"y"),
 				gridLines: { display: false, color: "#282828" },
 				scaleLabel: { display: false, labelString: "Blocks" },
-				ticks: { display: showYAxis(charttypead), beginAtZero: false }
+				ticks: { display: showAxis(charttypead,"y"), beginAtZero: false }
 			}]
 		},
 		plugins: {
@@ -168,15 +170,15 @@ function Draw_Domain_Chart() {
 		},
 		scales: {
 			xAxes: [{
-				display: showXAxis(charttypedomain),
+				display: showAxis(charttypedomain,"x"),
 				gridLines: { display: showGrid(charttypedomain,"x"), color: "#282828" },
-				ticks: { display: showXAxis(charttypedomain), beginAtZero: false }
+				ticks: { display: showAxis(charttypedomain,"x"), beginAtZero: false }
 			}],
 			yAxes: [{
-				display: showYAxis(charttypedomain),
+				display: showAxis(charttypedomain,"y"),
 				gridLines: { display: false, color: "#282828" },
 				scaleLabel: { display: false, labelString: "Domains" },
-				ticks: { display: showYAxis(charttypedomain), beginAtZero: false }
+				ticks: { display: showAxis(charttypedomain,"y"), beginAtZero: false }
 			}]
 		},
 		plugins: {
@@ -225,31 +227,20 @@ function Draw_Domain_Chart() {
 	changeColour(E('colourdomains'),BarChartReqDomains,window["barDataDomains"+document.getElementById("clientdomains").value],"colourdomains")
 }
 
-function initial(){
+function GetCookie(cookiename) {
 	var s;
-	if ((s = cookie.get('colourads')) != null) {
+	if ((s = cookie.get(cookiename)) != null) {
 			if (s.match(/^([0-2])$/)) {
-				E('colourads').value = cookie.get('colourads') * 1;
+				E(cookiename).value = cookie.get(cookiename) * 1;
 			}
 	}
-	
-	if ((s = cookie.get('charttypeads')) != null) {
-			if (s.match(/^([0-2])$/)) {
-				E('charttypeads').value = cookie.get('charttypeads') * 1;
-			}
-	}
-	
-	if ((s = cookie.get('colourdomains')) != null) {
-			if (s.match(/^([0-2])$/)) {
-				E('colourdomains').value = cookie.get('colourdomains') * 1;
-			}
-	}
-	
-	if ((s = cookie.get('charttypedomains')) != null) {
-			if (s.match(/^([0-2])$/)) {
-				E('charttypedomains').value = cookie.get('charttypedomains') * 1;
-			}
-	}
+}
+
+function initial(){
+	GetCookie("colourads");
+	GetCookie("charttypeads");
+	GetCookie("colourdomains");
+	GetCookie("colourdomains");
 	
 	show_menu();
 	loadDivStats();
@@ -363,27 +354,20 @@ function showGrid(e,axis) {
 	}
 }
 
-function showXAxis(e) {
-	if (e == null) {
-		return true;
-	}
-	else if (e == "bar" || e == "pie") {
+function showAxis(e,axis) {
+	if (e == "bar" && axis == "x") {
 		return false;
 	}
 	else {
-		return true;
-	}
-}
-
-function showYAxis(e) {
-	if (e == null) {
-		return true;
-	}
-	else if (e == "pie") {
-		return false;
-	}
-	else {
-		return true;
+		if (e == null) {
+			return true;
+		}
+		else if (e == "pie") {
+			return false;
+		}
+		else {
+			return true;
+		}
 	}
 }
 
@@ -488,39 +472,70 @@ function loadDivStats() {
 <div class="formfonttitle" style="margin-bottom:0px;" id="statstitle">Diversion Statistics</div>
 <div style="line-height:10px;">&nbsp;</div>
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#4D595D" class="FormTable">
-<thead class="collapsible" >
+<thead class="collapsible default-collapsed" >
 <tr>
 <td colspan="2">Diversion Statistics Report (click to expand/collapse)</td>
 </tr>
 </thead>
 <tr>
 <td style="padding: 0px;">
-<div class="collapsiblecontent">
 <textarea cols="75" rows="35" wrap="off" readonly="readonly" id="divstats" class="textarea_log_table" style="font-family:'Courier New', Courier, mono; font-size:11px;border: none;padding: 0px;">"Stats will show here"</textarea>
-</div>
 </td>
 </tr>
 </table>
 <div style="line-height:10px;">&nbsp;</div>
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#4D595D" class="FormTable">
-<thead class="collapsible" >
+<thead class="collapsible default-collapsed" >
 <tr>
 <td colspan="2">Pixelserv Statistics Report (click to expand/collapse)</td>
 </tr>
 </thead>
 <tr>
 <td style="padding: 0px;">
-<div class="collapsiblecontent">
 <iframe src="/ext/uiDivStats/psstats.htm" style="width:99%;height:420px;"></iframe>
-</div>
+</td>
+</tr>
+</table><div style="line-height:10px;">&nbsp;</div>
+<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
+<thead class="collapsible">
+<tr>
+<td colspan="4" id="keystats">Key Stats (click to expand/collapse)</td>
+</tr>
+</thead>
+<tr class='even' style="text-align:center;">
+<td width="25%" class="keystatscell">
+Total Queries
+</td>
+<td width="25%" class="keystatscell">
+Queries Blocked
+</td>
+<td width="25%" class="keystatscell">
+Percent Blocked
+</td>
+<td width="25%" class="keystatscell">
+Domains on Blocklist
+</td>
+</tr>
+<tr class='even' style="text-align:center;">
+<td width="25%" class="keystatscell keystatsnumber" id="keystatstotal">
+Total
+</td>
+<td width="25%" class="keystatscell keystatsnumber" id="keystatsblocked">
+Blocked
+</td>
+<td width="25%" class="keystatscell keystatsnumber" id="keystatspercent">
+Percent
+</td>
+<td width="25%" class="keystatscell keystatsnumber" id="keystatsdomains">
+Domains
 </td>
 </tr>
 </table>
 <div style="line-height:10px;">&nbsp;</div>
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
-<thead>
+<thead class="collapsible">
 <tr>
-<td colspan="2" id="topblocked">Top X blocked domains</td>
+<td colspan="2" id="topblocked">Top X blocked domains (click to expand/collapse)</td>
 </tr>
 </thead>
 <tr class='even'>
@@ -550,9 +565,9 @@ function loadDivStats() {
 </table>
 <div style="line-height:10px;">&nbsp;</div>
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
-<thead>
+<thead class="collapsible">
 <tr>
-<td colspan="2" id="toprequested">Top X requested domains</td>
+<td colspan="2" id="toprequested">Top X requested domains (click to expand/collapse)</td>
 </tr>
 </thead>
 <tr class='even'>
@@ -604,6 +619,10 @@ function loadDivStats() {
 </table>
 <script>
 SetDivStatsTitle();
+SetKeyStatsReq();
+SetKeyStatsBlocked();
+SetKeyStatsPercent();
+SetKeyStatsDomains();
 SetTopBlockedTitle();
 SetTopRequestedTitle();
 SetClients();
@@ -617,20 +636,11 @@ if ((s = cookie.get('clientdomains')) != null) {
 <div id="footer">
 </div>
 <script>
-var coll = document.getElementsByClassName("collapsible");
-var i;
+$("thead").click(function(){
+	$(this).siblings().toggle("fast");
+})
 
-for (i = 0; i < coll.length; i++) {
-  coll[i].addEventListener("click", function() {
-    this.classList.toggle("active");
-    var content = this.nextElementSibling.firstElementChild.firstElementChild.firstElementChild;
-    if (content.style.maxHeight){
-      content.style.maxHeight = null;
-    } else {
-      content.style.maxHeight = content.scrollHeight + "px";
-    }
-  });
-}
+$(".default-collapsed").trigger("click");
 </script>
 </body>
 </html>

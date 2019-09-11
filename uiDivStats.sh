@@ -15,7 +15,7 @@
 
 ### Start of script variables ###
 readonly SCRIPT_NAME="uiDivStats"
-readonly SCRIPT_VERSION="v1.1.3"
+readonly SCRIPT_VERSION="v1.2.0"
 readonly SCRIPT_BRANCH="master"
 readonly SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/""$SCRIPT_NAME""/""$SCRIPT_BRANCH"
 readonly SCRIPT_CONF="/jffs/configs/$SCRIPT_NAME.config"
@@ -524,7 +524,7 @@ Generate_Stats_Diversion(){
 		clientsFile="/tmp/uidivclients.txt"
 		
 		# start of the output for the stats
-		printf "\\n Router Stats $(date +"%c")\\n$LINE" >${statsFile}
+		printf "\\n Router Weekly Stats $(date +"%c")\\n$LINE" >${statsFile}
 		[ "$thisM_VERSION" ] && THIS_VERSION="${thisVERSION}.$thisM_VERSION" || THIS_VERSION=$thisVERSION
 		printf " Compiled by $NAME $THIS_VERSION\\n" >>${statsFile}
 		printf "\\n Ad-Blocking stats:" >>${statsFile}
@@ -542,6 +542,8 @@ Generate_Stats_Diversion(){
 		fi
 		
 		printf "%-13s%s\\n" " $(echo $BD | human_number)" "domains in total are blocked" >>${statsFile}
+		echo "$(echo $BD | human_number)" > /tmp/uidivstatskeystatsdomains.txt
+		WriteStats_ToJS "/tmp/uidivstatskeystatsdomains.txt" "/tmp/uidivstatstext.js" "SetKeyStatsDomains" "keystatsdomains"
 		if [ "$bfFs" = "on" ]; then
 			if [ "$bfTypeinUse" = "primary" ]; then
 				printf "%-13s%s\\n" " $(echo $BL | human_number)" "blocked by primary blocking list in use" >>${statsFile}
@@ -557,6 +559,7 @@ Generate_Stats_Diversion(){
 		printf "%-13s%s\\n" " $(/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/blacklist" | wc -l)" "blocked by blacklist" >>${statsFile}
 		printf "%-13s%s\\n" " $(/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/wc_blacklist" | wc -l)" "blocked by wildcard blacklist" >>${statsFile}
 		printf "\\n" >>${statsFile}
+		keystatsblocked=0;
 		if [ "$bfFs" = "on" ] && [ "$alternateBF" = "on" ]; then
 			printf " Primary ad-blocking:\\n" >>${statsFile}
 			printf "%-13s%s\\n" " $(echo $adsBlocked | human_number)" "ads in total blocked" >>${statsFile}
@@ -570,11 +573,17 @@ Generate_Stats_Diversion(){
 			printf "%-13s%s\\n" " $(echo $(($adsBlocked+$adsBlockedAlt)) | human_number)" "ads in total blocked" >>${statsFile}
 			printf "%-13s%s\\n" " $(echo $(($adsWeek+$adsWeekAlt)) | human_number)" "ads this week, since last $bfUpdateDay" >>${statsFile}
 			printf "%-13s%s\\n" " $(echo $(($adsNew+$adsNewAlt)) | human_number)" "new ads, since $adsPrevCount" >>${statsFile}
+			echo "$(echo $(($adsWeek+$adsWeekAlt)) | human_number)" > /tmp/uidivstatskeystatsblocked.txt
+			keystatsblocked=$(($adsWeek+$adsWeekAlt))
 		else
 			printf "%-13s%s\\n" " $(echo $adsBlocked | human_number)" "ads in total blocked" >>${statsFile}
 			printf "%-13s%s\\n" " $(echo $adsWeek | human_number)" "ads this week, since last $bfUpdateDay" >>${statsFile}
 			printf "%-13s%s\\n" " $(echo $adsNew | human_number)" "new ads, since $adsPrevCount" >>${statsFile}
+			echo "$(echo $adsWeek | human_number)" > /tmp/uidivstatskeystatsblocked.txt
+			keystatsblocked=$adsWeek
 		fi
+		
+		WriteStats_ToJS "/tmp/uidivstatskeystatsblocked.txt" "/tmp/uidivstatstext.js" "SetKeyStatsBlocked" "keystatsblocked"
 		
 		[ -d /tmp/uidivstats ] && rm -rf /tmp/uidivstats
 		mkdir /tmp/uidivstats
@@ -635,7 +644,20 @@ Generate_Stats_Diversion(){
 		printf "\\n The top $wsTopHosts requested domains were:\\n$LINE" >>${statsFile}
 		awk '/query\[AAAA]|query\[A]/ {print $(NF-2)}' /opt/var/log/dnsmasq.log* |
 		awk '{for(i=1;i<=NF;i++)a[$i]++}END{for(o in a) printf "\n %-6s %-40s""%s %s",a[o],o}' | sort -nr |
-		/opt/bin/grep -viF -f /tmp/uidivstats/div-hostleases | /opt/bin/grep -viF -f /tmp/uidivstats/div-ipleases | head -$wsTopHosts >>/tmp/uidivstats/div-th
+		
+		/opt/bin/grep -viF -f /tmp/uidivstats/div-hostleases | /opt/bin/grep -viF -f /tmp/uidivstats/div-ipleases >>/tmp/uidivstats/div-th-all
+		awk '{$1=$1};1' /jffs/configs/div-th-all  | cut -d ' ' -f1 >>/tmp/uidivstats/div-th-all-count
+		reqdomains=0
+		while IFS='' read -r line || [ -n "$line" ]; do
+			reqdomains=$((reqdomains+line))
+		done < /tmp/uidivstats/div-th-all-count
+		echo "$(echo $reqdomains | human_number)" > /tmp/uidivstatskeystatsreq.txt
+		WriteStats_ToJS "/tmp/uidivstatskeystatsreq.txt" "/tmp/uidivstatstext.js" "SetKeyStatsReq" "keystatstotal"
+		
+		echo "$(echo "$keystatsblocked" "$reqdomains" | awk '{printf "%3.2f\n",$1/$2*100}')%"  > /tmp/uidivstatskeystatsprecent.txt
+		WriteStats_ToJS "/tmp/uidivstatskeystatsprecent.txt" "/tmp/uidivstatstext.js" "SetKeyStatsPercent" "keystatspercent"
+		
+		head -$wsTopHosts /tmp/uidivstats/div-th-all >>/tmp/uidivstats/div-th
 		# show if found in any of these lists
 		for i in $(awk '{print $2}' /tmp/uidivstats/div-th); do
 			i=$(echo $i | sed -e 's/\./\\./g')
@@ -800,8 +822,8 @@ Generate_Stats_Diversion(){
 		printf "$(head -n 2 "$statsFile" | tail -n 1 | sed 's/^ //' | sed 's/Stats/Stats generated on/')" > /tmp/uidivtitle.txt
 		WriteStats_ToJS "/tmp/uidivtitle.txt" "/tmp/uidivstatstext.js" "SetDivStatsTitle" "statstitle"
 		
-		echo "Top $wsTopHosts blocked domains" > /tmp/uidivtitle2.txt
-		echo "Top $wsTopHosts requested domains" > /tmp/uidivtitle3.txt
+		echo "Top $wsTopHosts blocked domains (click to expand/collapse)" > /tmp/uidivtitle2.txt
+		echo "Top $wsTopHosts requested domains (click to expand/collapse)" > /tmp/uidivtitle3.txt
 		
 		WriteStats_ToJS "/tmp/uidivtitle2.txt" "/tmp/uidivstatstext.js" "SetTopBlockedTitle" "topblocked"
 		WriteStats_ToJS "/tmp/uidivtitle3.txt" "/tmp/uidivstatstext.js" "SetTopRequestedTitle" "toprequested"
