@@ -843,7 +843,7 @@ Generate_Stats_Diversion(){
 		rm -f "$clientsFile"
 		rm -f "/tmp/uidivstats.js"
 		rm -f "/tmp/uidivstatstext.js"
-		rm -f /tmp/uidivtitle*.txt
+		rm -f /tmp/uidiv*.txt
 		rm -rf /tmp/uidivstats
 		
 		Print_Output "true" "Diversion statistic generation completed successfully!" "$PASS"
