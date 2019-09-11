@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.com/jackyaz/uiDivStats.svg?branch=master)](https://travis-ci.com/jackyaz/uiDivStats)
 
 ## v1.2.0
-### Updated on 2019-09-08
+### Updated on 2019-09-11
 ## About
 See statistics and graphs for Diversion Ad-blocking on your router.
 
