@@ -15,7 +15,7 @@
 
 ### Start of script variables ###
 readonly SCRIPT_NAME="uiDivStats"
-readonly SCRIPT_VERSION="v1.2.0"
+readonly SCRIPT_VERSION="v1.2.1"
 readonly SCRIPT_BRANCH="master"
 readonly SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/""$SCRIPT_NAME""/""$SCRIPT_BRANCH"
 readonly SCRIPT_CONF="/jffs/configs/$SCRIPT_NAME.config"
@@ -512,11 +512,6 @@ Generate_Stats_Diversion(){
 		
 		wsFilterLN=on
 		
-		case "$EDITION" in
-			Lite)		this_blockingIP=0.0.0.0;;
-			Standard)	this_blockingIP=$psIP;;
-		esac
-		
 		lanIPaddr=$(nvram get lan_ipaddr | sed 's/\.[0-9]*$/./')
 		human_number(){	sed -re " :restart ; s/([0-9])([0-9]{3})($|[^0-9])/\1,\2\3/ ; t restart ";}
 		LINE=" --------------------------------------------------------\\n"
@@ -524,7 +519,7 @@ Generate_Stats_Diversion(){
 		clientsFile="/tmp/uidivclients.txt"
 		
 		# start of the output for the stats
-		printf "\\n Router Weekly Stats $(date +"%c")\\n$LINE" >${statsFile}
+		printf "\\n Diversion Statistics $(date +"%c")\\n$LINE" >${statsFile}
 		[ "$thisM_VERSION" ] && THIS_VERSION="${thisVERSION}.$thisM_VERSION" || THIS_VERSION=$thisVERSION
 		printf " Compiled by $NAME $THIS_VERSION\\n" >>${statsFile}
 		printf "\\n Ad-Blocking stats:" >>${statsFile}
@@ -677,9 +672,24 @@ Generate_Stats_Diversion(){
 		awk 'NR==FNR{a[FNR]=$0 "";next} {print a[FNR],$0}' /tmp/uidivstats/div-th /tmp/uidivstats/div-bwl >>${statsFile}
 		
 		printf "\\n The top $wsTopHosts blocked ad domains were:\\n$LINE" >>${statsFile}
-		awk '/is '$this_blockingIP'|is 0.0.0.0/ {print $(NF-2)}' /opt/var/log/dnsmasq.log* |
-		awk '{for(i=1;i<=NF;i++)a[$i]++}END{for(o in a) printf "\n %-6s %-40s""%s %s",a[o],o}' | sort -nr |
-		head -$wsTopHosts >>/tmp/uidivstats/div-tah
+		
+		case "$EDITION" in
+			Lite)		awk '/is '$blockingIP'|is 0.0.0.0/ {print $(NF-2)}' /opt/var/log/dnsmasq.log* |
+						awk '{for(i=1;i<=NF;i++)a[$i]++}END{for(o in a) printf "\n %-6s %-40s""%s %s",a[o],o}' | sort -nr |
+						head -$wsTopHosts >>/tmp/uidivstats/div-tah
+						;;
+			Standard)	if [ "$LANblockingIP" ];then
+							awk '/is '$lanBIP'|is '$psIP'|is 0.0.0.0/ {print $(NF-2)}' /opt/var/log/dnsmasq.log* |
+							awk '{for(i=1;i<=NF;i++)a[$i]++}END{for(o in a) printf "\n %-6s %-40s""%s %s",a[o],o}' | sort -nr |
+							head -$wsTopHosts >>/tmp/uidivstats/div-tah
+						else
+							awk '/is '$psIP'|is 0.0.0.0/ {print $(NF-2)}' /opt/var/log/dnsmasq.log* |
+							awk '{for(i=1;i<=NF;i++)a[$i]++}END{for(o in a) printf "\n %-6s %-40s""%s %s",a[o],o}' | sort -nr |
+							head -$wsTopHosts >>/tmp/uidivstats/div-tah
+						fi
+						;;
+		esac
+		
 		# show if found in any of these lists
 		for i in $(awk '{print $2}' /tmp/uidivstats/div-tah); do
 			i=$(echo $i | sed -e 's/\./\\./g')
@@ -988,15 +998,6 @@ Check_Requirements(){
 		Print_Output "true" "Diversion not installed!" "$ERR"
 		CHECKSFAILED="true"
 	else
-		# shellcheck disable=SC1091
-		. /opt/share/diversion/.conf/diversion.conf
-		#shellcheck disable=SC2154
-		if [ "$weeklyStats" != "on" ]; then
-			Print_Output "true" "Diversion weekly stats not enabled!" "$ERR"
-			Print_Output "true" "Open Diversion, use option c and then enable using 2,1,1" ""
-			CHECKSFAILED="true"
-		fi
-		
 		if ! /opt/bin/grep -qm1 'div_lock_ac' /opt/bin/diversion; then
 			Print_Output "true" "Diversion update required!" "$ERR"
 			Print_Output "true" "Open Diversion and use option u to update" ""
