@@ -15,7 +15,7 @@
 
 ### Start of script variables ###
 readonly SCRIPT_NAME="uiDivStats"
-readonly SCRIPT_VERSION="v1.2.1"
+readonly SCRIPT_VERSION="v1.2.2"
 readonly SCRIPT_BRANCH="master"
 readonly SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/""$SCRIPT_NAME""/""$SCRIPT_BRANCH"
 readonly SCRIPT_CONF="/jffs/configs/$SCRIPT_NAME.config"
@@ -556,6 +556,11 @@ Generate_Stats_Diversion(){
 		printf "\\n" >>${statsFile}
 		keystatsblocked=0;
 		if [ "$bfFs" = "on" ] && [ "$alternateBF" = "on" ]; then
+			if [ "$excludeIP" = "on" ]; then
+				sed -ri "/$(echo $excludeIPlist | sed 's/ /|/g')/d" /opt/var/log/dnsmasq.log*
+				kill -USR2 "$(pidof dnsmasq)"
+			fi
+			dnsmasqLog="/opt/var/log/dnsmasq.log*"
 			printf " Primary ad-blocking:\\n" >>${statsFile}
 			printf "%-13s%s\\n" " $(echo $adsBlocked | human_number)" "ads in total blocked" >>${statsFile}
 			printf "%-13s%s\\n" " $(echo $adsWeek | human_number)" "ads this week, since last $bfUpdateDay" >>${statsFile}
@@ -571,6 +576,11 @@ Generate_Stats_Diversion(){
 			echo "$(echo $(($adsWeek+$adsWeekAlt)) | human_number)" > /tmp/uidivstatskeystatsblocked.txt
 			keystatsblocked=$(($adsWeek+$adsWeekAlt))
 		else
+			if [ "$excludeIP" = "on" ]; then
+				sed -ri "/$(echo $excludeIPlist | sed 's/ /|/g')/d" /opt/var/log/dnsmasq.log /opt/var/log/dnsmasq.log1 /opt/var/log/dnsmasq.log2
+				kill -USR2 "$(pidof dnsmasq)"
+			fi
+			dnsmasqLog="/opt/var/log/dnsmasq.log /opt/var/log/dnsmasq.log1 /opt/var/log/dnsmasq.log2"
 			printf "%-13s%s\\n" " $(echo $adsBlocked | human_number)" "ads in total blocked" >>${statsFile}
 			printf "%-13s%s\\n" " $(echo $adsWeek | human_number)" "ads this week, since last $bfUpdateDay" >>${statsFile}
 			printf "%-13s%s\\n" " $(echo $adsNew | human_number)" "new ads, since $adsPrevCount" >>${statsFile}
@@ -637,7 +647,7 @@ Generate_Stats_Diversion(){
 		
 		# begin of stats computing
 		printf "\\n The top $wsTopHosts requested domains were:\\n$LINE" >>${statsFile}
-		awk '/query\[AAAA]|query\[A]/ {print $(NF-2)}' /opt/var/log/dnsmasq.log* |
+		awk '/query\[AAAA]|query\[A]/ {print $(NF-2)}' $dnsmasqLog |
 		awk '{for(i=1;i<=NF;i++)a[$i]++}END{for(o in a) printf "\n %-6s %-40s""%s %s",a[o],o}' | sort -nr |
 		
 		/opt/bin/grep -viF -f /tmp/uidivstats/div-hostleases | /opt/bin/grep -viF -f /tmp/uidivstats/div-ipleases >>/tmp/uidivstats/div-th-all
@@ -674,16 +684,16 @@ Generate_Stats_Diversion(){
 		printf "\\n The top $wsTopHosts blocked ad domains were:\\n$LINE" >>${statsFile}
 		
 		case "$EDITION" in
-			Lite)		awk '/is '$blockingIP'|is 0.0.0.0/ {print $(NF-2)}' /opt/var/log/dnsmasq.log* |
+			Lite)		awk '/is '$blockingIP'|is 0.0.0.0/ {print $(NF-2)}' $dnsmasqLog |
 						awk '{for(i=1;i<=NF;i++)a[$i]++}END{for(o in a) printf "\n %-6s %-40s""%s %s",a[o],o}' | sort -nr |
 						head -$wsTopHosts >>/tmp/uidivstats/div-tah
 						;;
 			Standard)	if [ "$LANblockingIP" ];then
-							awk '/is '$lanBIP'|is '$psIP'|is 0.0.0.0/ {print $(NF-2)}' /opt/var/log/dnsmasq.log* |
+							awk '/is '$lanBIP'|is '$psIP'|is 0.0.0.0/ {print $(NF-2)}' $dnsmasqLog |
 							awk '{for(i=1;i<=NF;i++)a[$i]++}END{for(o in a) printf "\n %-6s %-40s""%s %s",a[o],o}' | sort -nr |
 							head -$wsTopHosts >>/tmp/uidivstats/div-tah
 						else
-							awk '/is '$psIP'|is 0.0.0.0/ {print $(NF-2)}' /opt/var/log/dnsmasq.log* |
+							awk '/is '$psIP'|is 0.0.0.0/ {print $(NF-2)}' $dnsmasqLog |
 							awk '{for(i=1;i<=NF;i++)a[$i]++}END{for(o in a) printf "\n %-6s %-40s""%s %s",a[o],o}' | sort -nr |
 							head -$wsTopHosts >>/tmp/uidivstats/div-tah
 						fi
@@ -709,15 +719,13 @@ Generate_Stats_Diversion(){
 			AL=1 # prevent divide by zero
 			printf "\\n The top $wsTopClients noisiest name clients:\\n$LINE\\n" >>${statsFile}
 			printf " count for IP, client name: count for domain - percentage\\n$LINE" >>${statsFile}
-			awk -F " " '/from '$lanIPaddr'/ {print $NF}' /opt/var/log/dnsmasq.log* |
-			awk '{for(i=1;i<=NF;i++)a[$i]++}END{for(o in a) printf "\n %-6s %-15s""%s %s",a[o],o}' | sort -nr |
-			head -$wsTopClients >/tmp/uidivstats/div1
+			awk -F " " '/from '$lanIPaddr'/ {print $NF}' $dnsmasqLog |
+			awk '{for(i=1;i<=NF;i++)a[$i]++}END{for(o in a) printf "\n %-6s %-15s""%s %s",a[o],o}' | sort -nr | head -$wsTopClients >/tmp/uidivstats/div1
 			for i in $(awk '{print $2}' /tmp/uidivstats/div1); do
 				i=$(echo $i | sed -e 's/\./\\./g')
-				/opt/bin/grep -w $i /opt/var/log/dnsmasq.log* | awk '{print $(NF-2)}' |
+				/opt/bin/grep -w $i $dnsmasqLog | awk '{print $(NF-2)}' |
 				awk '{for(i=1;i<=NF;i++)a[$i]++}END{for(o in a) printf "\n %-6s %-40s""%s %s",a[o],o}' | sort -nr |
-				/opt/bin/grep -viF -f /tmp/uidivstats/div-hostleases | /opt/bin/grep -viF -f /tmp/uidivstats/div-ipleases |
-				head -1 >>/tmp/uidivstats/div2
+				/opt/bin/grep -viF -f /tmp/uidivstats/div-hostleases | /opt/bin/grep -viF -f /tmp/uidivstats/div-ipleases | head -1 >>/tmp/uidivstats/div2
 				CH="$(awk 'END{print $1}' /tmp/uidivstats/div2)"
 				TH="$(awk -v AL="$AL" 'FNR==AL{print $1}' /tmp/uidivstats/div1)"
 				AL=$(( AL + 1))
@@ -783,7 +791,7 @@ Generate_Stats_Diversion(){
 				
 				# remove files for next client compiling run
 				rm -f /tmp/uidivstats/div-thtc /tmp/uidivstats/div-toptop /tmp/uidivstats/div-thtc-toptop
-				/opt/bin/grep -w $i /opt/var/log/dnsmasq.log* | awk '{print $(NF-2)}'|
+				/opt/bin/grep -w $i $dnsmasqLog | awk '{print $(NF-2)}' |
 				awk '{for(i=1;i<=NF;i++)a[$i]++}END{for(o in a) printf "\n %-6s %-40s""%s %s",a[o],o}' | sort -nr |
 				/opt/bin/grep -viF -f /tmp/uidivstats/div-hostleases | /opt/bin/grep -viF -f /tmp/uidivstats/div-ipleases | head -$wsTopHosts >>/tmp/uidivstats/div-thtc
 				# show if found in any of these lists
