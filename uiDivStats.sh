@@ -558,7 +558,7 @@ Generate_Stats_Diversion(){
 		if [ "$bfFs" = "on" ] && [ "$alternateBF" = "on" ]; then
 			if [ "$excludeIP" = "on" ]; then
 				sed -ri "/$(echo $excludeIPlist | sed 's/ /|/g')/d" /opt/var/log/dnsmasq.log*
-				kill -USR2 $(pidof dnsmasq)
+				kill -USR2 "$(pidof dnsmasq)"
 			fi
 			dnsmasqLog="/opt/var/log/dnsmasq.log*"
 			printf " Primary ad-blocking:\\n" >>${statsFile}
@@ -578,7 +578,7 @@ Generate_Stats_Diversion(){
 		else
 			if [ "$excludeIP" = "on" ]; then
 				sed -ri "/$(echo $excludeIPlist | sed 's/ /|/g')/d" /opt/var/log/dnsmasq.log /opt/var/log/dnsmasq.log1 /opt/var/log/dnsmasq.log2
-				kill -USR2 $(pidof dnsmasq)
+				kill -USR2 "$(pidof dnsmasq)"
 			fi
 			dnsmasqLog="/opt/var/log/dnsmasq.log /opt/var/log/dnsmasq.log1 /opt/var/log/dnsmasq.log2"
 			printf "%-13s%s\\n" " $(echo $adsBlocked | human_number)" "ads in total blocked" >>${statsFile}
