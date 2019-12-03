@@ -15,7 +15,7 @@
 
 ### Start of script variables ###
 readonly SCRIPT_NAME="uiDivStats"
-readonly SCRIPT_VERSION="v1.2.2"
+readonly SCRIPT_VERSION="v1.2.3"
 readonly SCRIPT_BRANCH="master"
 readonly SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/""$SCRIPT_NAME""/""$SCRIPT_BRANCH"
 readonly SCRIPT_CONF="/jffs/configs/$SCRIPT_NAME.config"
@@ -165,8 +165,6 @@ Update_File(){
 		return 1
 	fi
 }
-
-
 
 Create_Dirs(){
 	if [ ! -d "$SCRIPT_DIR" ]; then
@@ -852,7 +850,11 @@ Generate_Stats_Diversion(){
 		psstatsFile="$SCRIPT_DIR/psstats.htm"
 		
 		if [ "$EDITION" = "Standard" ]; then
-			/usr/sbin/curl -s --retry 3 "http://$psIP/servstats" -o "$psstatsFile"
+			if [ "$LANblockingIP" ]; then
+				/usr/sbin/curl -s --retry 3 "http://$LANblockingIP/servstats" -o "$psstatsFile"
+			else
+				/usr/sbin/curl -s --retry 3 "http://$psIP/servstats" -o "$psstatsFile"
+			fi
 		else
 			echo "Pixelserv not installed" > "$psstatsFile"
 		fi
