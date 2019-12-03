@@ -851,7 +851,7 @@ Generate_Stats_Diversion(){
 		
 		if [ "$EDITION" = "Standard" ]; then
 			if [ "$LANblockingIP" ]; then
-				/usr/sbin/curl -s --retry 3 "http://$LANblockingIP/servstats" -o "$psstatsFile"
+				/usr/sbin/curl -s --retry 3 "http://$lanBIP/servstats" -o "$psstatsFile"
 			else
 				/usr/sbin/curl -s --retry 3 "http://$psIP/servstats" -o "$psstatsFile"
 			fi
