@@ -686,7 +686,7 @@ Generate_Stats_Diversion(){
 						awk '{for(i=1;i<=NF;i++)a[$i]++}END{for(o in a) printf "\n %-6s %-40s""%s %s",a[o],o}' | sort -nr |
 						head -$wsTopHosts >>/tmp/uidivstats/div-tah
 						;;
-			Standard)	if [ "$LANblockingIP" ];then
+			Standard)	if [ "$LANblockingIP" ]; then
 							awk '/is '$lanBIP'|is '$psIP'|is 0.0.0.0/ {print $(NF-2)}' $dnsmasqLog |
 							awk '{for(i=1;i<=NF;i++)a[$i]++}END{for(o in a) printf "\n %-6s %-40s""%s %s",a[o],o}' | sort -nr |
 							head -$wsTopHosts >>/tmp/uidivstats/div-tah
@@ -721,7 +721,7 @@ Generate_Stats_Diversion(){
 			awk '{for(i=1;i<=NF;i++)a[$i]++}END{for(o in a) printf "\n %-6s %-15s""%s %s",a[o],o}' | sort -nr | head -$wsTopClients >/tmp/uidivstats/div1
 			for i in $(awk '{print $2}' /tmp/uidivstats/div1); do
 				i=$(echo $i | sed -e 's/\./\\./g')
-				/opt/bin/grep -aw $i $dnsmasqLog | awk '{print $(NF-2)}' |
+				/opt/bin/grep -a " query.* from $i$" $dnsmasqLog | awk '{print $(NF-2)}' |
 				awk '{for(i=1;i<=NF;i++)a[$i]++}END{for(o in a) printf "\n %-6s %-40s""%s %s",a[o],o}' | sort -nr |
 				/opt/bin/grep -viF -f /tmp/uidivstats/div-hostleases | /opt/bin/grep -viF -f /tmp/uidivstats/div-ipleases | head -1 >>/tmp/uidivstats/div2
 				CH="$(awk 'END{print $1}' /tmp/uidivstats/div2)"
@@ -789,7 +789,7 @@ Generate_Stats_Diversion(){
 				
 				# remove files for next client compiling run
 				rm -f /tmp/uidivstats/div-thtc /tmp/uidivstats/div-toptop /tmp/uidivstats/div-thtc-toptop
-				/opt/bin/grep -aw $i $dnsmasqLog | awk '{print $(NF-2)}' |
+				/opt/bin/grep -a " query.* from $i$" $dnsmasqLog | awk '{print $(NF-2)}' |
 				awk '{for(i=1;i<=NF;i++)a[$i]++}END{for(o in a) printf "\n %-6s %-40s""%s %s",a[o],o}' | sort -nr |
 				/opt/bin/grep -viF -f /tmp/uidivstats/div-hostleases | /opt/bin/grep -viF -f /tmp/uidivstats/div-ipleases | head -$wsTopHosts >>/tmp/uidivstats/div-thtc
 				# show if found in any of these lists
@@ -850,7 +850,7 @@ Generate_Stats_Diversion(){
 		psstatsFile="$SCRIPT_DIR/psstats.htm"
 		
 		if [ "$EDITION" = "Standard" ]; then
-			if [ "$LANblockingIP" ]; then
+			if [ "$LANblockingIP" ] && [ "$LANblockingIP" = on ]; then
 				/usr/sbin/curl -s --retry 3 "http://$lanBIP/servstats" -o "$psstatsFile"
 			else
 				/usr/sbin/curl -s --retry 3 "http://$psIP/servstats" -o "$psstatsFile"
