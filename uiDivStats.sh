@@ -429,42 +429,17 @@ WriteStats_ToJS(){
 }
 
 WriteData_ToJS(){
-	{
-	echo "var $3 , $4;"
-	echo "$3 = [];"
-	echo "$4 = [];"; } >> "$2"
-	if [ -n "$5" ]; then
-		{
-		echo "var $5;"
-		echo "$5 = [];"; } >> "$2"
-	fi
-	contents=""
-	contents="$contents""$3"'.unshift('
-	while IFS='' read -r line || [ -n "$line" ]; do
-		contents="$contents""'""$(echo "$line" | awk '{$1=$1};1' | awk 'BEGIN{FS="  *"}{ print $1 }')""'"","
-	done < "$1"
-	contents=$(echo "$contents" | sed 's/.$//')
-	contents="$contents"");"
-	echo "$contents" >> "$2"
-
-	contents="$4"'.unshift('
-	while IFS='' read -r line || [ -n "$line" ]; do
-		contents="$contents""'""$(echo "$line" | awk '{$1=$1};1' | awk 'BEGIN{FS="  *"}{ print $2 }')""'"","
-	done < "$1"
-	contents=$(echo "$contents" | sed 's/.$//')
-	contents="$contents"");"
-	printf "%s\\r\\n\\r\\n" "$contents" >> "$2"
-	
-	if [ -n "$5" ]; then
-		contents="$5"'.unshift('
-		while IFS='' read -r line || [ -n "$line" ]; do
-			contents="$contents""'""$(echo "$line" | awk '{$1=$1};1' | awk 'BEGIN{FS="  *"}{ print $3 }')""'"","
-		done < "$1"
-		contents=$(echo "$contents" | sed 's/.$//')
-		contents="$contents"");"
-		printf "%s\\r\\n\\r\\n" "$contents" >> "$2"
-	fi
-	
+	inputfile="$1"
+	outputfile="$2"
+	shift;shift
+	i="0"
+	for var in "$@"; do
+		i=$((i+1))
+		{ echo "var $var;"
+			echo "$var = [];"
+			echo "${var}.unshift('$(awk -v i=$i '{printf t $i} {t=","}' "$inputfile" | sed "s~,~\\',\\'~g")');"
+			echo; } >> "$outputfile"
+		done
 }
 
 # shellcheck disable=SC1090
