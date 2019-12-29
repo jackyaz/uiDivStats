@@ -22,6 +22,7 @@ readonly SCRIPT_CONF="/jffs/configs/$SCRIPT_NAME.config"
 readonly SCRIPT_DIR="/jffs/scripts/$SCRIPT_NAME.d"
 readonly SCRIPT_WEB_DIR="$(readlink /www/ext)/$SCRIPT_NAME"
 readonly SHARED_DIR="/jffs/scripts/shared-jy"
+readonly SHARED_WEB_DIR="$(readlink /www/ext)/shared-jy"
 readonly SHARED_REPO="https://raw.githubusercontent.com/jackyaz/shared-jy/master"
 [ -z "$(nvram get odmpid)" ] && ROUTER_MODEL=$(nvram get productid) || ROUTER_MODEL=$(nvram get odmpid)
 ### End of script variables ###
@@ -178,6 +179,10 @@ Create_Dirs(){
 	if [ ! -d "$SCRIPT_WEB_DIR" ]; then
 		mkdir -p "$SCRIPT_WEB_DIR"
 	fi
+	
+	if [ ! -d "$SHARED_WEB_DIR" ]; then
+		mkdir -p "$SHARED_WEB_DIR"
+	fi
 }
 
 Create_Symlinks(){
@@ -186,10 +191,10 @@ Create_Symlinks(){
 	ln -s "$SCRIPT_DIR/uidivstats.js" "$SCRIPT_WEB_DIR/uidivstats.js" 2>/dev/null
 	ln -s "$SCRIPT_DIR/uidivstatstext.js" "$SCRIPT_WEB_DIR/uidivstatstext.js" 2>/dev/null
 	ln -s "$SCRIPT_DIR/uidivstats.txt" "$SCRIPT_WEB_DIR/uidivstatstext.htm" 2>/dev/null
-	
-	ln -s "$SHARED_DIR/chartjs-plugin-zoom.js" "$SCRIPT_WEB_DIR/chartjs-plugin-zoom.js" 2>/dev/null
-	ln -s "$SHARED_DIR/hammerjs.js" "$SCRIPT_WEB_DIR/hammerjs.js" 2>/dev/null
 	ln -s "$SCRIPT_DIR/psstats.htm" "$SCRIPT_WEB_DIR/psstats.htm" 2>/dev/null
+	
+	ln -s "$SHARED_DIR/chartjs-plugin-zoom.js" "$SHARED_WEB_DIR/chartjs-plugin-zoom.js" 2>/dev/null
+	ln -s "$SHARED_DIR/hammerjs.js" "$SHARED_WEB_DIR/hammerjs.js" 2>/dev/null
 }
 
 Auto_ServiceEvent(){

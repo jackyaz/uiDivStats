@@ -37,8 +37,8 @@ font-weight: bolder;
 </style>
 <script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
 <script language="JavaScript" type="text/javascript" src="/js/chart.min.js"></script>
-<script language="JavaScript" type="text/javascript" src="/ext/uiDivStats/hammerjs.js"></script>
-<script language="JavaScript" type="text/javascript" src="/ext/uiDivStats/chartjs-plugin-zoom.js"></script>
+<script language="JavaScript" type="text/javascript" src="/ext/shared-jy/hammerjs.js"></script>
+<script language="JavaScript" type="text/javascript" src="/ext/shared-jy/chartjs-plugin-zoom.js"></script>
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
