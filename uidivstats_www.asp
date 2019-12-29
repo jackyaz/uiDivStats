@@ -59,7 +59,7 @@ Chart.Tooltip.positioners.cursor = function(chartElements, coordinates) {
 };
 
 function Draw_Ad_Chart() {
-	if (barLabelsBlockedAds == null || BarChartBlockedAds == null) return;
+	if (barLabelsBlockedAds == null || barDataBlockedAds == null) return;
 	if (barLabelsBlockedAds.length == 0) return;
 	if (BarChartBlockedAds != undefined) BarChartBlockedAds.destroy();
 	var ctx = document.getElementById("ChartAds").getContext("2d");
@@ -141,7 +141,7 @@ function Draw_Ad_Chart() {
 }
 
 function Draw_Domain_Chart() {
-	if (window["barLabelsDomains"+document.getElementById("clientdomains").value] == null || BarChartReqDomains == null) return;
+	if (window["barLabelsDomains"+document.getElementById("clientdomains").value] == null || window["barDataDomains"+document.getElementById("clientdomains").value] == null) return;
 	if (window["barLabelsDomains"+document.getElementById("clientdomains").value].length == 0) return;
 	if (BarChartReqDomains != undefined) BarChartReqDomains.destroy();
 	var ctx = document.getElementById("ChartDomains").getContext("2d");
