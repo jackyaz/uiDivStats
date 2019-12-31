@@ -58,10 +58,24 @@ Chart.Tooltip.positioners.cursor = function(chartElements, coordinates) {
   return coordinates;
 };
 
+function Draw_Chart_NoData(txtchartname){
+	document.getElementById(txtchartname).width="735";
+	document.getElementById(txtchartname).height="360";
+	document.getElementById(txtchartname).style.width="735px";
+	document.getElementById(txtchartname).style.height="360px";
+	var ctx = document.getElementById(txtchartname).getContext("2d");
+	ctx.save();
+	ctx.textAlign = 'center';
+	ctx.textBaseline = 'middle';
+	ctx.font = "36px normal Arial";
+	ctx.fillText('No data to display', 375, 180);
+	ctx.restore();
+}
+
 function Draw_Ad_Chart() {
-	if(typeof barLabelsBlockedAds === 'undefined' || barLabelsBlockedAds === null) return;
-	if(typeof barDataBlockedAds === 'undefined' || barDataBlockedAds === null) return;
-	if (barLabelsBlockedAds.length == 0) return;
+	if(typeof barLabelsBlockedAds === 'undefined' || barLabelsBlockedAds === null) { Draw_Chart_NoData("ChartAds"); return; }
+	if(typeof barDataBlockedAds === 'undefined' || barDataBlockedAds === null) { Draw_Chart_NoData("ChartAds"); return; }
+	if (barLabelsBlockedAds.length == 0) { Draw_Chart_NoData("ChartAds"); return; }
 	if (BarChartBlockedAds != undefined) BarChartBlockedAds.destroy();
 	var ctx = document.getElementById("ChartAds").getContext("2d");
 	var barOptionsAds = {
@@ -142,9 +156,9 @@ function Draw_Ad_Chart() {
 }
 
 function Draw_Domain_Chart() {
-	if(typeof window["barLabelsDomains"+document.getElementById("clientdomains").value] === 'undefined' || window["barLabelsDomains"+document.getElementById("clientdomains").value] === null) return;
-	if(typeof window["barDataDomains"+document.getElementById("clientdomains").value] === 'undefined' || window["barDataDomains"+document.getElementById("clientdomains").value] === null) return;
-	if (window["barLabelsDomains"+document.getElementById("clientdomains").value].length == 0) return;
+	if(typeof window["barLabelsDomains"+document.getElementById("clientdomains").value] === 'undefined' || window["barLabelsDomains"+document.getElementById("clientdomains").value] === null) { Draw_Chart_NoData("ChartDomains"); return; }
+	if(typeof window["barDataDomains"+document.getElementById("clientdomains").value] === 'undefined' || window["barDataDomains"+document.getElementById("clientdomains").value] === null) { Draw_Chart_NoData("ChartDomains"); return; }
+	if (window["barLabelsDomains"+document.getElementById("clientdomains").value].length == 0) { Draw_Chart_NoData("ChartDomains"); return; }
 	if (BarChartReqDomains != undefined) BarChartReqDomains.destroy();
 	var ctx = document.getElementById("ChartDomains").getContext("2d");
 	var barOptionsDomains = {
@@ -579,7 +593,6 @@ Domains
 <td>
 <select style="width:300px" class="input_option" onchange='changeClient(this,BarChartReqDomains,"clientdomains")' id='clientdomains'>
 <option value=0>All Clients</option>
-<option value=1>Plain</option>
 </select>
 </td>
 </tr>
