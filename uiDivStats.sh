@@ -18,17 +18,10 @@ readonly SCRIPT_NAME="uiDivStats"
 readonly SCRIPT_VERSION="v1.3.0"
 readonly SCRIPT_BRANCH="develop"
 readonly SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/""$SCRIPT_NAME""/""$SCRIPT_BRANCH"
-<<<<<<< HEAD
 readonly OLD_SCRIPT_DIR="/jffs/scripts/$SCRIPT_NAME.d"
 readonly SCRIPT_DIR="/jffs/addons/$SCRIPT_NAME.d"
 readonly SCRIPT_PAGE_DIR="$(readlink /www/user)"
 readonly SCRIPT_WEB_DIR="$SCRIPT_PAGE_DIR/$SCRIPT_NAME"
-=======
-readonly OLD_SCRIPT_DIR="/jffs/scripts/$SCRIPT_NAME_LOWER.d"
-readonly SCRIPT_DIR="/jffs/addons/$SCRIPT_NAME_LOWER.d"
-readonly SCRIPT_PAGE_DIR="$(readlink /www/user)"
-readonly SCRIPT_WEB_DIR="$SCRIPT_PAGE_DIR/$SCRIPT_NAME_LOWER"
->>>>>>> 75d065c876ff36788c08485770316d7e7ea25603
 readonly OLD_SHARED_DIR="/jffs/scripts/shared-jy"
 readonly SHARED_DIR="/jffs/addons/shared-jy"
 readonly SHARED_REPO="https://raw.githubusercontent.com/jackyaz/shared-jy/master"
