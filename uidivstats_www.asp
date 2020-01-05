@@ -1,11 +1,10 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
-<html xmlns:v>
 <head>
 <meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
-<meta HTTP-EQUIV="Expires" CONTENT="-1">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="-1">
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
 <title>Diversion Statistics</title>
@@ -548,13 +547,13 @@ function loadDivStats() {
 <td colspan="4" id="keystats">Key Stats (click to expand/collapse)</td>
 </tr>
 </thead>
-<tr class='even' style="text-align:center;">
+<tr class="even" style="text-align:center;">
 <td width="25%" class="keystatscell">Total Queries</td>
 <td width="25%" class="keystatscell">Queries Blocked</td>
 <td width="25%" class="keystatscell">Percent Blocked</td>
 <td width="25%" class="keystatscell">Domains on Blocklist</td>
 </tr>
-<tr class='even' style="text-align:center;">
+<tr class="even" style="text-align:center;">
 <td width="25%" class="keystatscell keystatsnumber" id="keystatstotal">Total</td>
 <td width="25%" class="keystatscell keystatsnumber" id="keystatsblocked">Blocked</td>
 <td width="25%" class="keystatscell keystatsnumber" id="keystatspercent">Percent</td>
@@ -568,28 +567,28 @@ function loadDivStats() {
 <td colspan="2" id="topblocked">Top X blocked domains (click to expand/collapse)</td>
 </tr>
 </thead>
-<tr class='even'>
+<tr class="even">
 <th width="40%">Style for charts</th>
 <td>
-<select style="width:100px" class="input_option" onchange='changeColour(this,BarChartBlockedAds,barDataBlockedAds,"colourads")' id='colourads'>
-<option value=0>Colour</option>
-<option value=1>Plain</option>
+<select style="width:100px" class="input_option" onchange="changeColour(this,BarChartBlockedAds,barDataBlockedAds,'colourads')" id="colourads">
+<option value="0">Colour</option>
+<option value="1">Plain</option>
 </select>
 </td>
 </tr>
-<tr class='even'>
+<tr class="even">
 <th width="40%">Layout for charts</th>
 <td>
-<select style="width:100px" class="input_option" onchange='changeLayout(this,"BarChartBlockedAds","charttypeads")' id='charttypeads'>
-<option value=0>Horizontal</option>
-<option value=1>Vertical</option>
-<option value=2>Pie</option>
+<select style="width:100px" class="input_option" onchange="changeLayout(this,'BarChartBlockedAds','charttypeads')" id="charttypeads">
+<option value="0">Horizontal</option>
+<option value="1">Vertical</option>
+<option value="2">Pie</option>
 </select>
 </td>
 </tr>
 <tr>
 <td colspan="2" style="padding: 2px;">
-<div style="background-color:#2f3e44;border-radius:10px;width:735px;padding-left:5px;"><canvas id="ChartAds" height="360"></div>
+<div style="background-color:#2f3e44;border-radius:10px;width:735px;padding-left:5px;"><canvas id="ChartAds" height="360" /></div>
 </td>
 </tr>
 </table>
@@ -600,36 +599,36 @@ function loadDivStats() {
 <td colspan="2" id="toprequested">Top X requested domains (click to expand/collapse)</td>
 </tr>
 </thead>
-<tr class='even'>
+<tr class="even">
 <th width="40%">Client to display</th>
 <td>
-<select style="width:300px" class="input_option" onchange='changeClient(this,BarChartReqDomains,"clientdomains")' id='clientdomains'>
-<option value=0>All Clients</option>
+<select style="width:300px" class="input_option" onchange="changeClient(this,BarChartReqDomains,'clientdomains')" id="clientdomains">
+<option value="0">All Clients</option>
 </select>
 </td>
 </tr>
-<tr class='even'>
+<tr class="even">
 <th width="40%">Style for charts</th>
 <td>
-<select style="width:100px" class="input_option" onchange='changeColour(this,BarChartReqDomains,window["barDataDomains"+document.getElementById("clientdomains").value],"colourdomains")' id='colourdomains'>
-<option value=0>Colour</option>
-<option value=1>Plain</option>
+<select style="width:100px" class="input_option" onchange="changeColour(this,BarChartReqDomains,window['barDataDomains'+document.getElementById('clientdomains').value],'colourdomains')" id="colourdomains">
+<option value="0">Colour</option>
+<option value="1">Plain</option>
 </select>
 </td>
 </tr>
-<tr class='even'>
+<tr class="even">
 <th width="40%">Layout for charts</th>
 <td>
-<select style="width:100px" class="input_option" onchange='changeLayout(this,"BarChartReqDomains","charttypedomains")' id='charttypedomains'>
-<option value=0>Horizontal</option>
-<option value=1>Vertical</option>
-<option value=2>Pie</option>
+<select style="width:100px" class="input_option" onchange="changeLayout(this,'BarChartReqDomains','charttypedomains')" id="charttypedomains">
+<option value="0">Horizontal</option>
+<option value="1">Vertical</option>
+<option value="2">Pie</option>
 </select>
 </td>
 </tr>
 <tr>
 <td colspan="2" style="padding: 2px;">
-<div style="background-color:#2f3e44;border-radius:10px;width:735px;padding-left:5px;"><canvas id="ChartDomains" height="360"></div>
+<div style="background-color:#2f3e44;border-radius:10px;width:735px;padding-left:5px;"><canvas id="ChartDomains" height="360" /></div>
 </td>
 </tr>
 </table>
@@ -637,15 +636,13 @@ function loadDivStats() {
 </td>
 </tr>
 </tbody>
+</table></td>
+</tr>
+</table>
+</td>
+</tr>
 </table>
 </form>
-</td>
-</tr>
-</table>
-</td>
-<td width="10" align="center" valign="top">&nbsp;</td>
-</tr>
-</table>
 <div id="footer">
 </div>
 </body>
