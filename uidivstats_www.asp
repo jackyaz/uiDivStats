@@ -15,6 +15,7 @@
 p{
 font-weight: bolder;
 }
+
 .collapsible {
   color: white;
   padding: 0px;
@@ -24,12 +25,14 @@ font-weight: bolder;
   outline: none;
   cursor: pointer;
 }
+
 .keystatscell {
   background-color:#1F2D35 !important;
   background:#2F3A3E !important;
   border-bottom:none !important;
   border-top:none !important;
 }
+
 .keystatsnumber {
   font-size: 20px !important;
   font-weight: bolder !important;
@@ -255,7 +258,13 @@ function GetCookie(cookiename) {
 	}
 }
 
+function SetCurrentPage(){
+	document.form.next_page.value = window.location.pathname.substring(1);
+	document.form.current_page.value = window.location.pathname.substring(1);
+}
+
 function initial(){
+	SetCurrentPage();
 	GetCookie("colourads");
 	GetCookie("charttypeads");
 	GetCookie("colourdomains");
@@ -267,6 +276,22 @@ function initial(){
 	changeLayout(E('charttypeads'),"BarChartBlockedAds","charttypeads");
 	Draw_Domain_Chart();
 	changeLayout(E('charttypedomains'),"BarChartReqDomains","charttypedomains");
+	
+	SetDivStatsTitle();
+	SetKeyStatsReq();
+	SetKeyStatsBlocked();
+	SetKeyStatsPercent();
+	SetKeyStatsDomains();
+	SetTopBlockedTitle();
+	SetTopRequestedTitle();
+	SetClients();
+	GetCookie("clientdomains");
+	
+	$("thead").click(function(){
+		$(this).siblings().toggle("fast");
+	})
+	
+	$(".default-collapsed").trigger("click");
 }
 
 function reload() {
@@ -276,6 +301,8 @@ function reload() {
 function applyRule() {
 	var action_script_tmp = "start_uiDivStats";
 	document.form.action_script.value = action_script_tmp;
+	var restart_time = document.form.action_wait.value*1;
+	parent.showLoading(restart_time, "waiting");
 	document.form.submit();
 }
 
@@ -463,8 +490,8 @@ function loadDivStats() {
 <iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
 <form method="post" name="form" id="ruleForm" action="/start_apply.htm" target="hidden_frame">
 <input type="hidden" name="action_script" value="start_uiDivStats">
-<input type="hidden" name="current_page" value="Advanced_MultiSubnet_Content.asp">
-<input type="hidden" name="next_page" value="Advanced_MultiSubnet_Content.asp">
+<input type="hidden" name="current_page" value="">
+<input type="hidden" name="next_page" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_wait" value="60">
@@ -522,32 +549,16 @@ function loadDivStats() {
 </tr>
 </thead>
 <tr class='even' style="text-align:center;">
-<td width="25%" class="keystatscell">
-Total Queries
-</td>
-<td width="25%" class="keystatscell">
-Queries Blocked
-</td>
-<td width="25%" class="keystatscell">
-Percent Blocked
-</td>
-<td width="25%" class="keystatscell">
-Domains on Blocklist
-</td>
+<td width="25%" class="keystatscell">Total Queries</td>
+<td width="25%" class="keystatscell">Queries Blocked</td>
+<td width="25%" class="keystatscell">Percent Blocked</td>
+<td width="25%" class="keystatscell">Domains on Blocklist</td>
 </tr>
 <tr class='even' style="text-align:center;">
-<td width="25%" class="keystatscell keystatsnumber" id="keystatstotal">
-Total
-</td>
-<td width="25%" class="keystatscell keystatsnumber" id="keystatsblocked">
-Blocked
-</td>
-<td width="25%" class="keystatscell keystatsnumber" id="keystatspercent">
-Percent
-</td>
-<td width="25%" class="keystatscell keystatsnumber" id="keystatsdomains">
-Domains
-</td>
+<td width="25%" class="keystatscell keystatsnumber" id="keystatstotal">Total</td>
+<td width="25%" class="keystatscell keystatsnumber" id="keystatsblocked">Blocked</td>
+<td width="25%" class="keystatscell keystatsnumber" id="keystatspercent">Percent</td>
+<td width="25%" class="keystatscell keystatsnumber" id="keystatsdomains">Domains</td>
 </tr>
 </table>
 <div style="line-height:10px;">&nbsp;</div>
@@ -635,30 +646,7 @@ Domains
 <td width="10" align="center" valign="top">&nbsp;</td>
 </tr>
 </table>
-<script>
-SetDivStatsTitle();
-SetKeyStatsReq();
-SetKeyStatsBlocked();
-SetKeyStatsPercent();
-SetKeyStatsDomains();
-SetTopBlockedTitle();
-SetTopRequestedTitle();
-SetClients();
-
-if ((s = cookie.get('clientdomains')) != null) {
-	if (s.match(/^([0-9]*[0-9])$/)) {
-		E('clientdomains').value = cookie.get('clientdomains') * 1;
-	}
-}
-</script>
 <div id="footer">
 </div>
-<script>
-$("thead").click(function(){
-	$(this).siblings().toggle("fast");
-})
-
-$(".default-collapsed").trigger("click");
-</script>
 </body>
 </html>
