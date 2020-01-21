@@ -441,7 +441,7 @@ Modify_WebUI_File(){
 WriteOptions_ToJS(){
 	{
 	echo "var clients;"
-	echo "clients = [];"; } >> "$2"
+	echo "clients = [];"; } > "$2"
 	contents=""
 	contents="$contents""clients.unshift("
 	while IFS='' read -r line || [ -n "$line" ]; do
