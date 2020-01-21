@@ -198,6 +198,8 @@ Create_Symlinks(){
 	rm -f "$SCRIPT_WEB_DIR/"* 2>/dev/null
 	
 	ln -s "$SCRIPT_DIR/uidivstats.js" "$SCRIPT_WEB_DIR/uidivstats.js" 2>/dev/null
+	ln -s "$SCRIPT_DIR/uidivstatsclients.js" "$SCRIPT_WEB_DIR/uidivstatsclients.js" 2>/dev/null
+	
 	ln -s "$SCRIPT_DIR/uidivstatstext.js" "$SCRIPT_WEB_DIR/uidivstatstext.js" 2>/dev/null
 	ln -s "$SCRIPT_DIR/uidivstats.txt" "$SCRIPT_WEB_DIR/uidivstatstext.htm" 2>/dev/null
 	ln -s "$SCRIPT_DIR/psstats.htm" "$SCRIPT_WEB_DIR/psstats.htm" 2>/dev/null
@@ -851,8 +853,9 @@ Generate_Stats_Diversion(){
 		WriteData_ToJS /tmp/uidivstats/div-tah "/tmp/uidivstats.js" "barDataBlockedAds" "barLabelsBlockedAds"
 		awk 'NR==FNR{a[FNR]=$0 "";next} {print a[FNR],$0}' /tmp/uidivstats/div-th /tmp/uidivstats/div-bwl >>/tmp/uidivstats/div-th-bwl
 		WriteData_ToJS /tmp/uidivstats/div-th-bwl "/tmp/uidivstats.js" "barDataDomains0" "barLabelsDomains0" "barLabelsDomainsType0"
-		WriteOptions_ToJS "$clientsFile" "/tmp/uidivstats.js"
+		WriteOptions_ToJS "$clientsFile" "/tmp/uidivstatsclients.js"
 		mv "/tmp/uidivstats.js" "$SCRIPT_DIR/uidivstats.js"
+		mv "/tmp/uidivstatsclients.js" "$SCRIPT_DIR/uidivstatsclients.js"
 		
 		printf "$(head -n 2 "$statsFile" | tail -n 1 | sed 's/^ //' | sed 's/Stats/Stats generated on/')" > /tmp/uidivtitle.txt
 		WriteStats_ToJS "/tmp/uidivtitle.txt" "/tmp/uidivstatstext.js" "SetDivStatsTitle" "statstitle"
@@ -881,6 +884,7 @@ Generate_Stats_Diversion(){
 		rm -f "$statsFile"
 		rm -f "$clientsFile"
 		rm -f "/tmp/uidivstats.js"
+		rm -f "/tmp/uidivstatsclients.js"
 		rm -f "/tmp/uidivstatstext.js"
 		rm -f /tmp/uidiv*.txt
 		rm -rf /tmp/uidivstats
