@@ -870,9 +870,9 @@ Generate_Stats_Diversion(){
 		
 		if [ "$EDITION" = "Standard" ]; then
 			if [ "$LANblockingIP" ] && [ "$LANblockingIP" = on ]; then
-				/usr/sbin/curl -s --retry 3 "http://$lanBIP/servstats" -o "$psstatsFile"
+				/usr/sbin/curl -fs --retry 3 --connect-timeout 15 "http://$lanBIP/servstats" -o "$psstatsFile"
 			else
-				/usr/sbin/curl -s --retry 3 "http://$psIP/servstats" -o "$psstatsFile"
+				/usr/sbin/curl -fs --retry 3 --connect-timeout 15 "http://$psIP/servstats" -o "$psstatsFile"
 			fi
 		else
 			echo "Pixelserv not installed" > "$psstatsFile"
