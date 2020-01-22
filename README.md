@@ -16,7 +16,7 @@ Love the script and want to support future development? Any and all donations gr
 [**PayPal donation**](https://paypal.me/jackyaz21)
 
 ## Supported Models
-All modes supported by [Asuswrt-Merlin](https://asuswrt.lostrealm.ca/about). Models confirmed to work are below:
+All models supported by [Asuswrt-Merlin](https://asuswrt.lostrealm.ca/about). Models confirmed to work are below:
 *   RT-AC86U
 
 ## Installation

@@ -485,7 +485,7 @@ WriteData_ToJS(){
 			echo "$var = [];"
 			echo "${var}.unshift('$(awk -v i=$i '{printf t $i} {t=","}' "$inputfile" | sed "s~,~\\',\\'~g")');"
 			echo; } >> "$outputfile"
-		done
+	done
 }
 
 # shellcheck disable=SC1090
