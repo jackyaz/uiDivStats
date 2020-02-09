@@ -38,7 +38,7 @@ font-weight: bolder;
 }
 </style>
 <script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
-<script language="JavaScript" type="text/javascript" src="/js/chart.min.js"></script>
+<script language="JavaScript" type="text/javascript" src="/ext/shared-jy/chart.js"></script>
 <script language="JavaScript" type="text/javascript" src="/ext/shared-jy/hammerjs.js"></script>
 <script language="JavaScript" type="text/javascript" src="/ext/shared-jy/chartjs-plugin-zoom.js"></script>
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
@@ -71,7 +71,7 @@ function Draw_Chart_NoData(txtchartname){
 	ctx.textAlign = 'center';
 	ctx.textBaseline = 'middle';
 	ctx.font = "normal normal bolder 48px Arial";
-	ctx.fillStyle = 'white'
+	ctx.fillStyle = 'white';
 	ctx.fillText('No data to display', 375, 180);
 	ctx.restore();
 }
@@ -321,7 +321,7 @@ function getSDev(datasetname){
 }
 
 function getMax(datasetname) {
-	max = Math.max(...datasetname)
+	max = Math.max(...datasetname);
 	return max + (max*0.1);
 }
 
@@ -439,23 +439,23 @@ function changeLayout(e,chartname,cookiename) {
 	layout = e.value * 1;
 	if ( layout == 0 ) {
 		if ( chartname == "BarChartBlockedAds" ) {
-			charttypead = "horizontalBar"
+			charttypead = "horizontalBar";
 		}
 		else {
-			charttypedomain = "horizontalBar"
+			charttypedomain = "horizontalBar";
 		}
 	}
 	else if ( layout == 1 ) {
 		if ( chartname == "BarChartBlockedAds" ) {
-			charttypead = "bar"
+			charttypead = "bar";
 		}
 		else {
-			charttypedomain = "bar"
+			charttypedomain = "bar";
 		}
 	}
 	else if ( layout == 2 ) {
 		if ( chartname == "BarChartBlockedAds" ) {
-			charttypead = "pie"
+			charttypead = "pie";
 		}
 		else {
 			charttypedomain = "pie"
