@@ -15,8 +15,8 @@
 
 ### Start of script variables ###
 readonly SCRIPT_NAME="uiDivStats"
-readonly SCRIPT_VERSION="v1.3.0"
-readonly SCRIPT_BRANCH="master"
+readonly SCRIPT_VERSION="v1.3.1"
+readonly SCRIPT_BRANCH="develop"
 readonly SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/""$SCRIPT_NAME""/""$SCRIPT_BRANCH"
 readonly OLD_SCRIPT_DIR="/jffs/scripts/$SCRIPT_NAME.d"
 readonly SCRIPT_DIR="/jffs/addons/$SCRIPT_NAME.d"
@@ -114,9 +114,13 @@ Update_Version(){
 		fi
 		
 		Update_File "uidivstats_www.asp"
+		Update_File "redirect.htm"
+		Update_File "chart.js"
 		Update_File "chartjs-plugin-zoom.js"
+		Update_File "chartjs-plugin-annotation.js"
+		Update_File "chartjs-plugin-datasource.js"
 		Update_File "hammerjs.js"
-		Mount_WebUI
+		Update_File "moment.js"
 		
 		if [ "$doupdate" != "false" ]; then
 			/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME.sh" -o "/jffs/scripts/$SCRIPT_NAME" && Print_Output "true" "$SCRIPT_NAME successfully updated"
@@ -134,9 +138,13 @@ Update_Version(){
 			serverver=$(/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME.sh" | grep "SCRIPT_VERSION=" | grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})')
 			Print_Output "true" "Downloading latest version ($serverver) of $SCRIPT_NAME" "$PASS"
 			Update_File "uidivstats_www.asp"
+			Update_File "redirect.htm"
+			Update_File "chart.js"
 			Update_File "chartjs-plugin-zoom.js"
+			Update_File "chartjs-plugin-annotation.js"
+			Update_File "chartjs-plugin-datasource.js"
 			Update_File "hammerjs.js"
-			Mount_WebUI
+			Update_File "moment.js"
 			/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME.sh" -o "/jffs/scripts/$SCRIPT_NAME" && Print_Output "true" "$SCRIPT_NAME successfully updated"
 			chmod 0755 /jffs/scripts/"$SCRIPT_NAME"
 			Clear_Lock
@@ -151,12 +159,12 @@ Update_File(){
 		tmpfile="/tmp/$1"
 		Download_File "$SCRIPT_REPO/$1" "$tmpfile"
 		if ! diff -q "$tmpfile" "$SCRIPT_DIR/$1" >/dev/null 2>&1; then
+			Download_File "$SCRIPT_REPO/$1" "$SCRIPT_DIR/$1"
 			Print_Output "true" "New version of $1 downloaded" "$PASS"
-			rm -f "$SCRIPT_DIR/$1"
 			Mount_WebUI
 		fi
 		rm -f "$tmpfile"
-	elif [ "$1" = "chartjs-plugin-zoom.js" ] || [ "$1" = "chartjs-plugin-annotation.js" ] || [ "$1" = "moment.js" ] || [ "$1" =  "hammerjs.js" ]; then
+	elif [ "$1" = "chart.js" ] || [ "$1" = "chartjs-plugin-zoom.js" ] || [ "$1" = "chartjs-plugin-annotation.js" ] || [ "$1" = "moment.js" ] || [ "$1" =  "hammerjs.js" ] || [ "$1" = "chartjs-plugin-datasource.js" ] || [ "$1" = "redirect.htm" ]; then
 		tmpfile="/tmp/$1"
 		Download_File "$SHARED_REPO/$1" "$tmpfile"
 		if [ ! -f "$SHARED_DIR/$1" ]; then
@@ -215,8 +223,13 @@ Create_Symlinks(){
 	ln -s "$SCRIPT_DIR/uidivstats.txt" "$SCRIPT_WEB_DIR/uidivstatstext.htm" 2>/dev/null
 	ln -s "$SCRIPT_DIR/psstats.htm" "$SCRIPT_WEB_DIR/psstats.htm" 2>/dev/null
 	
+	ln -s "$SHARED_DIR/chart.js" "$SHARED_WEB_DIR/chart.js" 2>/dev/null
 	ln -s "$SHARED_DIR/chartjs-plugin-zoom.js" "$SHARED_WEB_DIR/chartjs-plugin-zoom.js" 2>/dev/null
+	ln -s "$SHARED_DIR/chartjs-plugin-annotation.js" "$SHARED_WEB_DIR/chartjs-plugin-annotation.js" 2>/dev/null
+	ln -s "$SHARED_DIR/chartjs-plugin-datasource.js" "$SHARED_WEB_DIR/chartjs-plugin-datasource.js" 2>/dev/null
 	ln -s "$SHARED_DIR/hammerjs.js" "$SHARED_WEB_DIR/hammerjs.js" 2>/dev/null
+	ln -s "$SHARED_DIR/moment.js" "$SHARED_WEB_DIR/moment.js" 2>/dev/null
+	ln -s "$SHARED_DIR/redirect.htm" "$SHARED_WEB_DIR/redirect.htm" 2>/dev/null
 }
 
 Auto_ServiceEvent(){
@@ -332,9 +345,6 @@ Get_WebUI_Page () {
 
 Mount_WebUI(){
 	if Firmware_Version_Check "webui" ; then
-		if [ ! -f "$SCRIPT_DIR/uidivstats_www.asp" ]; then
-			Download_File "$SCRIPT_REPO/uidivstats_www.asp" "$SCRIPT_DIR/uidivstats_www.asp"
-		fi
 		Get_WebUI_Page "$SCRIPT_DIR/uidivstats_www.asp"
 		if [ "$MyPage" = "none" ]; then
 			Print_Output "true" "Unable to mount $SCRIPT_NAME WebUI page, exiting" "$CRIT"
@@ -342,13 +352,20 @@ Mount_WebUI(){
 		fi
 		Print_Output "true" "Mounting $SCRIPT_NAME WebUI page as $MyPage" "$PASS"
 		cp -f "$SCRIPT_DIR/uidivstats_www.asp" "$SCRIPT_WEBPAGE_DIR/$MyPage"
-
+		
 		if [ ! -f "/tmp/menuTree.js" ]; then
 			cp -f "/www/require/modules/menuTree.js" "/tmp/"
 		fi
-
+		
 		sed -i "\\~$MyPage~d" /tmp/menuTree.js
-		sed -i "/url: \"Tools_OtherSettings.asp\", tabName:/a {url: \"$MyPage\", tabName: \"Diversion Stats\"}," /tmp/menuTree.js
+		
+		if ! grep -q 'menuName: "Addons"' /tmp/menuTree.js ; then
+			lineinsbefore="$(( $(grep -n "exclude:" /tmp/menuTree.js | cut -f1 -d':') - 1))"
+			sed -i "$lineinsbefore"'i,\n{\nmenuName: "Addons",\nindex: "menu_Addons",\ntab: [\n{url: "ext/shared-jy/redirect.htm", tabName: "Help & Support"},\n{url: "NULL", tabName: "__INHERIT__"}\n]\n}' /tmp/menuTree.js
+		fi
+		
+		sed -i "/url: \"ext\/shared-jy\/redirect.htm\", tabName:/i {url: \"$MyPage\", tabName: \"Diversion Stats\"}," /tmp/menuTree.js
+		
 		umount /www/require/modules/menuTree.js 2>/dev/null
 		mount -o bind /tmp/menuTree.js /www/require/modules/menuTree.js
 	else
@@ -359,14 +376,6 @@ Mount_WebUI(){
 
 Mount_WebUI_Old(){
 	umount /www/Advanced_MultiSubnet_Content.asp 2>/dev/null
-	
-	if [ -f "/jffs/scripts/uidivstats_www.asp" ]; then
-		mv "/jffs/scripts/uidivstats_www.asp" "$SCRIPT_DIR/uidivstats_www.asp"
-	fi
-	
-	if [ ! -f "$SCRIPT_DIR/uidivstats_www.asp" ]; then
-		Download_File "$SCRIPT_REPO/uidivstats_www.asp" "$SCRIPT_DIR/uidivstats_www.asp"
-	fi
 	
 	mount -o bind "$SCRIPT_DIR/uidivstats_www.asp" "/www/Advanced_MultiSubnet_Content.asp"
 }
@@ -1086,8 +1095,12 @@ Menu_Install(){
 	Create_Dirs
 	Create_Symlinks
 	
+	Update_File "connmonstats_www.asp"
+	Update_File "redirect.htm"
+	Update_File "chart.js"
 	Update_File "chartjs-plugin-zoom.js"
 	Update_File "chartjs-plugin-annotation.js"
+	Update_File "chartjs-plugin-datasource.js"
 	Update_File "hammerjs.js"
 	Update_File "moment.js"
 	
@@ -1095,7 +1108,6 @@ Menu_Install(){
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
 	Shortcut_script create
-	Mount_WebUI
 	Menu_GenerateStats
 	
 	Clear_Lock
