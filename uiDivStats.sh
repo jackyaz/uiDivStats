@@ -1115,7 +1115,7 @@ Menu_Install(){
 	Create_Dirs
 	Create_Symlinks
 	
-	Update_File "connmonstats_www.asp"
+	Update_File "uidivstats_www.asp"
 	Update_File "redirect.htm"
 	Update_File "addons.png"
 	Update_File "chart.js"
