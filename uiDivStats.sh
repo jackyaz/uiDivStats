@@ -1088,7 +1088,7 @@ Menu_Install(){
 	Create_Dirs
 	Create_Symlinks
 	
-	Update_File "connmonstats_www.asp"
+	Update_File "uidivstats_www.asp"
 	Update_File "shared-jy.tar.gz"
 	
 	Auto_Startup create 2>/dev/null
