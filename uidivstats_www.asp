@@ -11,7 +11,7 @@
 <link rel="stylesheet" type="text/css" href="index_style.css">
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <style>
-p{
+p {
 font-weight: bolder;
 }
 
@@ -58,7 +58,7 @@ var BarChartBlockedAds,BarChartReqDomains;
 var charttypead, charttypedomain;
 Chart.defaults.global.defaultFontColor = "#CCC";
 Chart.Tooltip.positioners.cursor = function(chartElements, coordinates) {
-  return coordinates;
+	return coordinates;
 };
 
 function Draw_Chart_NoData(txtchartname){
@@ -177,12 +177,12 @@ function Draw_Domain_Chart() {
 		tooltips: {
 			callbacks: {
 				title: function (tooltipItem, data) {
-				if (window["barLabelsDomainsType"+document.getElementById("clientdomains").value][tooltipItem[0].index].length > 1){
-				return data.labels[tooltipItem[0].index] + " - " + window["barLabelsDomainsType"+document.getElementById("clientdomains").value][tooltipItem[0].index];
-				}
-				else {
-				return data.labels[tooltipItem[0].index];
-				}
+					if (window["barLabelsDomainsType"+document.getElementById("clientdomains").value][tooltipItem[0].index].length > 1){
+						return data.labels[tooltipItem[0].index] + " - " + window["barLabelsDomainsType"+document.getElementById("clientdomains").value][tooltipItem[0].index];
+					}
+					else {
+						return data.labels[tooltipItem[0].index];
+					}
 				},
 				label: function (tooltipItem, data) { return comma(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index]); },
 			},
