@@ -167,7 +167,7 @@ Update_File(){
 			if [ -f /opt/etc/init.d/S90taildns ]; then
 				/opt/etc/init.d/S90taildns stop
 			fi
-			mv "$SCRIPT_DIR/$1/taildns.d/S90taildns" /opt/etc/init.d/S90taildns
+			mv "$SCRIPT_DIR/taildns.d/S90taildns" /opt/etc/init.d/S90taildns
 			/opt/etc/init.d/S90taildns start
 			rm -f "$SCRIPT_DIR/$1"
 			Print_Output "true" "New version of $1 downloaded" "$PASS"
@@ -181,7 +181,7 @@ Update_File(){
 				if [ -f /opt/etc/init.d/S90taildns ]; then
 					/opt/etc/init.d/S90taildns stop
 				fi
-				mv "$SCRIPT_DIR/$1/taildns.d/S90taildns" /opt/etc/init.d/S90taildns
+				mv "$SCRIPT_DIR/taildns.d/S90taildns" /opt/etc/init.d/S90taildns
 				/opt/etc/init.d/S90taildns start
 				rm -f "$SCRIPT_DIR/$1"
 				Print_Output "true" "New version of $1 downloaded" "$PASS"
