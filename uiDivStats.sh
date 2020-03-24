@@ -115,6 +115,7 @@ Update_Version(){
 		
 		Update_File "uidivstats_www.asp"
 		Update_File "shared-jy.tar.gz"
+		Update_File "taildns.tar.gz"
 		
 		if [ "$doupdate" != "false" ]; then
 			/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME.sh" -o "/jffs/scripts/$SCRIPT_NAME" && Print_Output "true" "$SCRIPT_NAME successfully updated"
@@ -133,6 +134,7 @@ Update_Version(){
 			Print_Output "true" "Downloading latest version ($serverver) of $SCRIPT_NAME" "$PASS"
 			Update_File "uidivstats_www.asp"
 			Update_File "shared-jy.tar.gz"
+			Update_File "taildns.tar.gz"
 			/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME.sh" -o "/jffs/scripts/$SCRIPT_NAME" && Print_Output "true" "$SCRIPT_NAME successfully updated"
 			chmod 0755 /jffs/scripts/"$SCRIPT_NAME"
 			Clear_Lock
@@ -1122,6 +1124,7 @@ Menu_Install(){
 	
 	Update_File "uidivstats_www.asp"
 	Update_File "shared-jy.tar.gz"
+	Update_File "taildns.tar.gz"
 	
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
