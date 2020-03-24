@@ -157,6 +157,34 @@ Update_File(){
 			Mount_WebUI
 		fi
 		rm -f "$tmpfile"
+	elif [ "$1" = "taildns.tar.gz" ]; then
+		if [ ! -f "$SCRIPT_REPO/$1.md5" ]; then
+			Download_File "$SCRIPT_REPO/$1" "$SCRIPT_DIR/$1"
+			Download_File "$SCRIPT_REPO/$1.md5" "$SCRIPT_DIR/$1.md5"
+			tar -xzf "$SCRIPT_DIR/$1" -C "$SCRIPT_DIR"
+			if [ -f /opt/etc/init.d/S90taildns ]; then
+				/opt/etc/init.d/S90taildns stop
+			fi
+			mv "$SCRIPT_DIR/$1/taildns.d/S90taildns" /opt/etc/init.d/S90taildns
+			/opt/etc/init.d/S90taildns start
+			rm -f "$SCRIPT_DIR/$1"
+			Print_Output "true" "New version of $1 downloaded" "$PASS"
+		else
+			localmd5="$(cat "$SCRIPT_DIR/$1.md5")"
+			remotemd5="$(curl -fsL --retry 3 "$SCRIPT_REPO/$1.md5")"
+			if [ "$localmd5" != "$remotemd5" ]; then
+				Download_File "$SCRIPT_REPO/$1" "$SCRIPT_DIR/$1"
+				Download_File "$SCRIPT_REPO/$1.md5" "$SCRIPT_DIR/$1.md5"
+				tar -xzf "$SCRIPT_DIR/$1" -C "$SCRIPT_DIR"
+				if [ -f /opt/etc/init.d/S90taildns ]; then
+					/opt/etc/init.d/S90taildns stop
+				fi
+				mv "$SCRIPT_DIR/$1/taildns.d/S90taildns" /opt/etc/init.d/S90taildns
+				/opt/etc/init.d/S90taildns start
+				rm -f "$SCRIPT_DIR/$1"
+				Print_Output "true" "New version of $1 downloaded" "$PASS"
+			fi
+		fi
 	elif [ "$1" = "shared-jy.tar.gz" ]; then
 		if [ ! -f "$SHARED_DIR/$1.md5" ]; then
 			Download_File "$SHARED_REPO/$1" "$SHARED_DIR/$1"
@@ -1067,6 +1095,8 @@ Check_Requirements(){
 	if [ "$CHECKSFAILED" = "false" ]; then
 		opkg update
 		opkg install grep
+		opkg install sqlite3-cli
+		opkg install opkg install procps-ng-pkill
 		return 0
 	else
 		return 1
