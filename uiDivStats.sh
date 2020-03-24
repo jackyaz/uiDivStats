@@ -160,7 +160,7 @@ Update_File(){
 		fi
 		rm -f "$tmpfile"
 	elif [ "$1" = "taildns.tar.gz" ]; then
-		if [ ! -f "$SCRIPT_REPO/$1.md5" ]; then
+		if [ ! -f "$SCRIPT_DIR/$1.md5" ]; then
 			Download_File "$SCRIPT_REPO/$1" "$SCRIPT_DIR/$1"
 			Download_File "$SCRIPT_REPO/$1.md5" "$SCRIPT_DIR/$1.md5"
 			tar -xzf "$SCRIPT_DIR/$1" -C "$SCRIPT_DIR"
