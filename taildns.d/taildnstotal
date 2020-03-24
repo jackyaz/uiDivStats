@@ -1,0 +1,16 @@
+#!/bin/sh
+#shellcheck disable=SC2039
+trap '' SIGHUP
+
+tail -F /opt/var/log/dnsmasq.log /opt/var/log/dnsmasq.log3 | /jffs/addons/uiDivStats.d/taildns.d/dnsmasqtotal.awk | \
+
+while read line; do \
+timestamp="$(echo $line | cut -f1 -d',')" \
+srcip="$(echo $line | cut -f2 -d',')" \
+reqdmn="$(echo $line | cut -f3 -d',')" \
+qrytype="$(echo $line | cut -f4 -d',')" \
+
+echo "CREATE TABLE IF NOT EXISTS [dnsqueries] ([QueryID] INTEGER PRIMARY KEY NOT NULL, [Timestamp] NUMERIC NOT NULL, [SrcIP] TEXT NOT NULL,[ReqDmn] TEXT NOT NULL,[QryType] Text NOT NULL); \
+INSERT INTO dnsqueries ([Timestamp],[SrcIP],[ReqDmn],[QryType]) values($timestamp,\"$srcip\",\"$reqdmn\",\"$qrytype\");" > /opt/share/dnsqueriestotal.sql \
+
+/opt/bin/sqlite3 "/opt/share/dnsqueries.db" < /opt/share/dnsqueriestotal.sql ; done
