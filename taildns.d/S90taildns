@@ -8,8 +8,8 @@ if [ "$1" = "stop" ]; then
 	killall -q taildnsblocked
 	/opt/bin/pkill -f "tail -F /opt/var/log/dnsmasq.log /opt/var/log/dnsmasq.log3"
 
-	rm -f /opt/share/dnsqueriestotal.sql
-	rm -f /opt/share/dnsqueriesblocked.sql
+	rm -f /opt/share/uiDivStats.d/dnsqueriestotal.sql
+	rm -f /opt/share/uiDivStats.d/dnsqueriesblocked.sql
 fi
 
 ENABLED=yes

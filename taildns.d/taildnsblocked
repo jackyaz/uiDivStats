@@ -10,6 +10,6 @@ reqdmn="$(echo $line | cut -f3 -d',')" \
 reason="$(echo $line | cut -f4 -d',')" \
 
 echo "CREATE TABLE IF NOT EXISTS [dnsqueriesblocked] ([QueryID] INTEGER PRIMARY KEY NOT NULL, [Timestamp] NUMERIC NOT NULL, [SrcIP] NUMERIC NOT NULL, [ReqDmn] TEXT NOT NULL, [Reason] Text NOT NULL); \
-INSERT INTO dnsqueriesblocked ([Timestamp],[SrcIP],[ReqDmn],[Reason]) values($timestamp,\"$srcip\",\"$reqdmn\",\"$reason\");" > /opt/share/dnsqueriesblocked.sql \
+INSERT INTO dnsqueriesblocked ([Timestamp],[SrcIP],[ReqDmn],[Reason]) values($timestamp,\"$srcip\",\"$reqdmn\",\"$reason\");" > /opt/share/uiDivStats.d/dnsqueriesblocked.sql \
 
-/opt/bin/sqlite3 "/opt/share/dnsqueries.db" < /opt/share/dnsqueriesblocked.sql ; done
+/opt/bin/sqlite3 "/opt/share/uiDivStats.d/dnsqueries.db" < /opt/share/uiDivStats.d/dnsqueriesblocked.sql ; done

@@ -26,6 +26,8 @@ readonly OLD_SHARED_DIR="/jffs/scripts/shared-jy"
 readonly SHARED_DIR="/jffs/addons/shared-jy"
 readonly SHARED_REPO="https://raw.githubusercontent.com/jackyaz/shared-jy/master"
 readonly SHARED_WEB_DIR="$SCRIPT_WEBPAGE_DIR/shared-jy"
+readonly DNS_DB="/opt/share/uiDivStats.d/dnsqueries.db"
+readonly CSV_OUTPUT_DIR="/opt/share/uiDivStats.d/csv"
 [ -z "$(nvram get odmpid)" ] && ROUTER_MODEL=$(nvram get productid) || ROUTER_MODEL=$(nvram get odmpid)
 ### End of script variables ###
 
@@ -225,6 +227,10 @@ Create_Dirs(){
 	
 	if [ ! -d "$SCRIPT_WEB_DIR" ]; then
 		mkdir -p "$SCRIPT_WEB_DIR"
+	fi
+	
+	if [ ! -d "$CSV_OUTPUT_DIR" ]; then
+		mkdir -p "$CSV_OUTPUT_DIR"
 	fi
 }
 
