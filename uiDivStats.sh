@@ -1015,25 +1015,17 @@ Generate_Stats_From_SQLite(){
 			dbtable="dnsqueriesblocked"
 		fi
 		
-		#{
-		#	echo ".mode csv"
-		#	echo ".output $CSV_OUTPUT_DIR/$metric""daily.tmp"
-		#	echo "select '$metric',[Timestamp],COUNT([$metric]) from $dbtable WHERE [Timestamp] >= ($timenow - 86400) GROUP BY [QueryID];"
-		#} > /tmp/uidivstats-stats.sql
-		
 		WriteSql_ToFile "$metric" "$dbtable" 0.25 1 "$CSV_OUTPUT_DIR/$metric" "daily" "/tmp/uidivstats-stats.sql" "$timenow"
-		
 		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-stats.sql
-		#echo "var $metric""dailysize = 1;" >> "$SCRIPT_DIR/uidivstatsSQLdata.js"
 		Aggregate_Stats "$metric" "daily"
 		rm -f "$CSV_OUTPUT_DIR/$metric""daily.tmp"*
 		rm -f /tmp/uidivstats-stats.sql
 		
-		#WriteSql_ToFile "$metric" "$dbtable" 1 7 "$CSV_OUTPUT_DIR/$metric" "weekly" "/tmp/uidivstats-stats.sql" "$timenow"
-		#"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-stats.sql
-		#Aggregate_Stats "$metric" "weekly"
-		#rm -f "$CSV_OUTPUT_DIR/$metric""weekly.tmp"
-		#rm -f /tmp/uidivstats-stats.sql
+		WriteSql_ToFile "$metric" "$dbtable" 1 7 "$CSV_OUTPUT_DIR/$metric" "weekly" "/tmp/uidivstats-stats.sql" "$timenow"
+		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-stats.sql
+		Aggregate_Stats "$metric" "weekly"
+		rm -f "$CSV_OUTPUT_DIR/$metric""weekly.tmp"
+		rm -f /tmp/uidivstats-stats.sql
 		
 		#WriteSql_ToFile "$metric" "$dbtable" 3 30 "$CSV_OUTPUT_DIR/$metric" "monthly" "/tmp/uidivstats-stats.sql" "$timenow"
 		#"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-stats.sql
@@ -1042,7 +1034,6 @@ Generate_Stats_From_SQLite(){
 		#rm -f /tmp/uidivstats-stats.sql
 	done
 	
-	#rm -f "/tmp/uidivstats-"*".csv"
 	rm -f "/tmp/uidivstats-stats.sql"
 }
 
