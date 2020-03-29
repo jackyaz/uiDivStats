@@ -906,7 +906,7 @@ Generate_Stats_Diversion(){
 		
 		printf "$LINE End of stats report\\n" >>${statsFile}
 		
-		WriteData_ToJS /tmp/uidivstats/div-tah "/tmp/uidivstats.js" "barDataBlockedAds" "barLabelsBlockedAds"
+		WriteData_ToJS /tmp/uidivstats/div-tah "/tmp/uidivstats.js" "DataBlockedAds" "LabelsBlockedAds"
 		awk 'NR==FNR{a[FNR]=$0 "";next} {print a[FNR],$0}' /tmp/uidivstats/div-th /tmp/uidivstats/div-bwl >>/tmp/uidivstats/div-th-bwl
 		WriteData_ToJS /tmp/uidivstats/div-th-bwl "/tmp/uidivstats.js" "barDataDomains0" "barLabelsDomains0" "barLabelsDomainsType0"
 		WriteOptions_ToJS "$clientsFile" "/tmp/uidivstatsclients.js"
