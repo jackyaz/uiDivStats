@@ -954,20 +954,20 @@ Generate_Stats_Diversion(){
 #$1 fieldname $2 tablename $3 frequency (hours) $4 length (days) $5 outputfile $6 outputfrequency $7 sqlfile $8 timestamp
 WriteSql_ToFile(){
 	timenow="$8"
-	earliest="$(echo "$3" "$4" | awk '{printf "%4f\n",(60*60*$1)*((24*$2)/$1)}')"
-	chunksize="$(echo "$3" "$4" | awk '{printf "%4f\n",((24*$2)/$1)}')"
+	maxcount="$(echo "$3" "$4" | awk '{printf ((24*$2)/$1)}')"
+	multiplier="$(echo "$3" | awk '{printf (60*60*$1)}')"
 	
 	{
 		echo ".mode csv"
 		echo ".output $5$6.tmp"
 	} >> "$7"
 	
-	{
-		echo "SELECT '$1',Min([Timestamp]) ChunkStart, IFNULL(Count([$1]),'NaN') Value FROM"
-		echo "( SELECT NTILE($chunksize) OVER (ORDER BY [Timestamp]) Chunk, * FROM $2 WHERE [Timestamp] >= ($timenow - $earliest)) AS T"
-		echo "GROUP BY Chunk"
-		echo "ORDER BY ChunkStart;"
-	} >> "$7"
+	COUNTER=0
+	until [ $COUNTER -gt "$maxcount" ]; do
+		echo "select '$1',$timenow - ($multiplier*$COUNTER),count([QueryID]) from $2 WHERE ([Timestamp] >= $timenow - ($multiplier*($COUNTER+1))) AND ([Timestamp] <= $timenow - ($multiplier*$COUNTER));" >> "$7"
+		COUNTER=$((COUNTER + 1))
+	done
+	
 	echo "var $1$6""size = 1;" >> "$SCRIPT_DIR/uidivstatsSQLdata.js"
 }
 
@@ -1002,7 +1002,6 @@ Generate_Stats_From_SQLite(){
 	} > /tmp/uidivstats-stats.sql
 	
 	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-stats.sql
-	
 	rm -f "$SCRIPT_DIR/uidivstatsSQLdata.js"
 	
 	rm -f "$CSV_OUTPUT_DIR/"*
