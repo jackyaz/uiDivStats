@@ -12,10 +12,10 @@
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <style>
 p {
-font-weight: bolder;
+  font-weight: bolder;
 }
 
-.collapsible {
+thead.collapsible {
   color: white;
   padding: 0px;
   width: 100%;
@@ -25,16 +25,64 @@ font-weight: bolder;
   cursor: pointer;
 }
 
-.keystatscell {
-  background-color:#1F2D35 !important;
-  background:#2F3A3E !important;
-  border-bottom:none !important;
-  border-top:none !important;
+thead.collapsibleparent {
+  color: white;
+  padding: 0px;
+  width: 100%;
+  border: none;
+  text-align: left;
+  outline: none;
+  cursor: pointer;
 }
 
-.keystatsnumber {
+td.keystatsnumber {
   font-size: 20px !important;
   font-weight: bolder !important;
+}
+
+td.nodata {
+  font-size: 48px !important;
+  font-weight: bolder !important;
+  height: 65px !important;
+  font-family: Arial !important;
+}
+
+.StatsTable {
+  table-layout: fixed !important;
+  width: 747px !important;
+  text-align: center !important;
+}
+
+.StatsTable th {
+  background-color: #1F2D35 !important;
+  background: #2F3A3E !important;
+  border-bottom: none !important;
+  border-top: none !important;
+  font-size: 12px !important;
+  color: white !important;
+  padding: 4px !important;
+  width: 740px !important;
+}
+
+.StatsTable td {
+  padding: 2px !important;
+  word-wrap: break-word !important;
+  overflow-wrap: break-word !important;
+}
+
+.StatsTable a {
+  font-weight: bolder !important;
+  text-decoration: underline !important;
+}
+
+.StatsTable th:first-child,
+.StatsTable td:first-child {
+  border-left: none !important;
+}
+
+.StatsTable th:last-child,
+.StatsTable td:last-child {
+  border-right: none !important;
 }
 </style>
 <script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
@@ -54,47 +102,80 @@ font-weight: bolder;
 <script language="JavaScript" type="text/javascript" src="/ext/uiDivStats/uidivstatstext.js"></script>
 
 <script>
-var BarChartBlockedAds,BarChartReqDomains;
 var charttypead, charttypedomain;
+var BarChartReqDomains;
 Chart.defaults.global.defaultFontColor = "#CCC";
 Chart.Tooltip.positioners.cursor = function(chartElements, coordinates) {
 	return coordinates;
 };
 
 function Draw_Chart_NoData(txtchartname){
-	document.getElementById(txtchartname).width="735";
-	document.getElementById(txtchartname).height="360";
-	document.getElementById(txtchartname).style.width="735px";
-	document.getElementById(txtchartname).style.height="360px";
-	var ctx = document.getElementById(txtchartname).getContext("2d");
+	document.getElementById("divChart" + txtchartname).width = "735";
+	document.getElementById("divChart" + txtchartname).height = "400";
+	document.getElementById("divChart" + txtchartname).style.width = "735px";
+	document.getElementById("divChart" + txtchartname).style.height = "400px";
+	var ctx = document.getElementById("divChart" + txtchartname).getContext("2d");
 	ctx.save();
 	ctx.textAlign = 'center';
 	ctx.textBaseline = 'middle';
 	ctx.font = "normal normal bolder 48px Arial";
 	ctx.fillStyle = 'white';
-	ctx.fillText('No data to display', 375, 180);
+	ctx.fillText('No data to display', 368, 200);
 	ctx.restore();
 }
 
-function Draw_Ad_Chart() {
-	if(typeof barLabelsBlockedAds === 'undefined' || barLabelsBlockedAds === null) { Draw_Chart_NoData("ChartAds"); return; }
-	if(typeof barDataBlockedAds === 'undefined' || barDataBlockedAds === null) { Draw_Chart_NoData("ChartAds"); return; }
-	if (barLabelsBlockedAds.length == 0) { Draw_Chart_NoData("ChartAds"); return; }
-	if (BarChartBlockedAds != undefined) BarChartBlockedAds.destroy();
-	var ctx = document.getElementById("ChartAds").getContext("2d");
-	var barOptionsAds = {
-		segmentShowStroke : false,
-		segmentStrokeColor : "#000",
-		animationEasing : "easeOutQuart",
-		animationSteps : 100,
+function Draw_Chart(txtchartname) {
+	var objchartname = window["Chart" + txtchartname];
+	var objdataname = window["Data" + txtchartname];
+	var objlabeldataname = window["Labels" + txtchartname];
+	var charttype = getChartType($("#" + txtchartname + "_Type option:selected").val());
+	if (typeof objdataname === 'undefined' || objdataname === null) {
+		Draw_Chart_NoData(txtchartname);
+		return;
+	}
+	if (objdataname.length == 1 && objdataname[0] == "") {
+		Draw_Chart_NoData(txtchartname);
+		return;
+	}
+	if (typeof objlabeldataname === 'undefined' || objlabeldataname === null) {
+		Draw_Chart_NoData(txtchartname);
+		return;
+	}
+	if (objlabeldataname.length == 0) {
+		Draw_Chart_NoData(txtchartname);
+		return;
+	}
+		
+	if (objchartname != undefined) objchartname.destroy();
+	var ctx = document.getElementById("divChart" + txtchartname).getContext("2d");
+	var chartOptions = {
+		segmentShowStroke: false,
+		segmentStrokeColor: "#000",
+		animationEasing: "easeOutQuart",
+		animationSteps: 100,
 		maintainAspectRatio: false,
-		animateScale : true,
-		legend: { display: false, position: "bottom", onClick: null },
-		title: { display: false },
+		animateScale: true,
+		legend: {
+			onClick: null,
+			display: showLegend(charttype),
+			position: "left",
+			labels: {
+				fontColor: "#ffffff"
+			}
+		},
+		title: {
+			display: showTitle(charttype),
+			//text: getChartLegendTitle(charttype, txtchartname),
+			position: "top"
+		},
 		tooltips: {
 			callbacks: {
-				title: function (tooltipItem, data) { return data.labels[tooltipItem[0].index]; },
-				label: function (tooltipItem, data) { return comma(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index]); },
+				title: function(tooltipItem, data) {
+					return data.labels[tooltipItem[0].index];
+				},
+				label: function(tooltipItem, data) {
+					return comma(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index]);
+				}
 			},
 			mode: 'point',
 			position: 'cursor',
@@ -102,61 +183,282 @@ function Draw_Ad_Chart() {
 		},
 		scales: {
 			xAxes: [{
-				display: showAxis(charttypead,"x"),
-				gridLines: { display: showGrid(charttypead,"x"), color: "#282828" },
-				ticks: { display: showAxis(charttypead,"x"), beginAtZero: false }
+				display: showAxis(charttype, "x"),
+				gridLines: {
+					display: showGrid(charttype, "x"),
+					color: "#282828"
+				},
+				scaleLabel: {
+					display: true,
+					//labelString: getAxisLabel(charttype, "x", txtchartname)
+				},
+				ticks: {
+					display: showTicks(charttype, "x"),
+					beginAtZero: false
+				}
 			}],
 			yAxes: [{
-				display: showAxis(charttypead,"y"),
-				gridLines: { display: false, color: "#282828" },
-				scaleLabel: { display: false, labelString: "Blocks" },
-				ticks: { display: showAxis(charttypead,"y"), beginAtZero: false }
+				display: showAxis(charttype, "y"),
+				gridLines: {
+					display: false,
+					color: "#282828"
+				},
+				scaleLabel: {
+					display: true,
+					//labelString: getAxisLabel(charttype, "y", txtchartname)
+				},
+				ticks: {
+					display: showTicks(charttype, "y"),
+					beginAtZero: false
+				}
 			}]
 		},
 		plugins: {
 			zoom: {
 				pan: {
 					enabled: true,
-					mode: ZoomPanEnabled(charttypead),
+					mode: ZoomPanEnabled(charttype),
 					rangeMin: {
 						x: 0,
 						y: 0
 					},
 					rangeMax: {
-						x: ZoomPanMax(charttypead,"x",barDataBlockedAds),
-						y: ZoomPanMax(charttypead,"y",barDataBlockedAds)
-					},
+						x: ZoomPanMax(charttype, "x", objdataname),
+						y: ZoomPanMax(charttype, "y", objdataname)
+					}
 				},
 				zoom: {
 					enabled: true,
-					mode: ZoomPanEnabled(charttypead),
+					mode: ZoomPanEnabled(charttype),
 					rangeMin: {
 						x: 0,
 						y: 0
 					},
 					rangeMax: {
-						x: ZoomPanMax(charttypead,"x",barDataBlockedAds),
-						y: ZoomPanMax(charttypead,"y",barDataBlockedAds)
+						x: ZoomPanMax(charttype, "x", objdataname),
+						y: ZoomPanMax(charttype, "y", objdataname)
 					},
-					speed: 0.1,
+					speed: 0.1
 				}
 			}
 		}
 	};
-	var barDatasetAds = {
-		labels: barLabelsBlockedAds,
-		datasets: [{data: barDataBlockedAds,
+	var chartDataset = {
+		labels: window["Labels" + txtchartname],
+		datasets: [{
+			data: objdataname,
 			borderWidth: 1,
-			backgroundColor: poolColors(barDataBlockedAds.length),
-			borderColor: "#000000",
+			backgroundColor: poolColors(objdataname.length),
+			borderColor: "#000000"
 		}]
 	};
-	BarChartBlockedAds = new Chart(ctx, {
-		type: getChartType(charttypead),
-		options: barOptionsAds,
-		data: barDatasetAds
+	objchartname = new Chart(ctx, {
+		type: charttype,
+		options: chartOptions,
+		data: chartDataset
 	});
-	changeColour(E('colourads'),BarChartBlockedAds,barDataBlockedAds,"colourads")
+	window["Chart" + txtchartname] = objchartname;
+}
+
+function Draw_Time_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,colourname){
+	var objchartname=window["LineChart"+txtchartname];
+	var objdataname=window[txtchartname+"size"];
+	if(typeof objdataname === 'undefined' || objdataname === null) { Draw_Chart_NoData(txtchartname); return; }
+	if (objdataname == 0) { Draw_Chart_NoData(txtchartname); return; }
+	
+	factor=0;
+	if (txtunitx=="hour"){
+		factor=60*60*1000;
+	}
+	else if (txtunitx=="day"){
+		factor=60*60*24*1000;
+	}
+	if (objchartname != undefined) objchartname.destroy();
+	var ctx = document.getElementById("divLineChart"+txtchartname).getContext("2d");
+	var lineOptions = {
+		segmentShowStroke : false,
+		segmentStrokeColor : "#000",
+		animationEasing : "easeOutQuart",
+		animationSteps : 100,
+		/*animation: {
+			duration: 0 // general animation time
+		},
+		responsiveAnimationDuration: 0, */ // animation duration after a resize
+		maintainAspectRatio: false,
+		animateScale : true,
+		hover: { mode: "point" },
+		legend: { display: false, position: "bottom", onClick: null },
+		title: { display: true, text: txttitle },
+		tooltips: {
+			callbacks: {
+					title: function (tooltipItem, data) { return (moment(tooltipItem[0].xLabel,"X").format('YYYY-MM-DD HH:mm:ss')); },
+					label: function (tooltipItem, data) { return data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].y.toString() + ' ' + txtunity;}
+				},
+				mode: 'point',
+				position: 'cursor',
+				intersect: true
+		},
+		scales: {
+			xAxes: [{
+				type: "time",
+				gridLines: { display: true, color: "#282828" },
+				ticks: {
+					min: moment().subtract(numunitx, txtunitx+"s"),
+					display: true
+				},
+				time: { parser: "X", unit: txtunitx, stepSize: 1 }
+			}],
+			yAxes: [{
+				gridLines: { display: false, color: "#282828" },
+				scaleLabel: { display: false, labelString: txttitle },
+				ticks: {
+					display: true,
+					callback: function (value, index, values) {
+						return round(value,3).toFixed(3) + ' ' + txtunity;
+					}
+				},
+			}]
+		},
+		plugins: {
+			zoom: {
+				pan: {
+					enabled: false,
+					mode: 'xy',
+					rangeMin: {
+						x: new Date().getTime() - (factor * numunitx),
+						y: getLimit(txtchartname,"y","min",false) - Math.sqrt(Math.pow(getLimit(txtchartname,"y","min",false),2))*0.1,
+					},
+					rangeMax: {
+						x: new Date().getTime(),
+						y: getLimit(txtchartname,"y","max",false) + getLimit(txtchartname,"y","max",false)*0.1,
+					},
+				},
+				zoom: {
+					enabled: true,
+					drag: true,
+					mode: 'xy',
+					rangeMin: {
+						x: new Date().getTime() - (factor * numunitx),
+						y: getLimit(txtchartname,"y","min",false) - Math.sqrt(Math.pow(getLimit(txtchartname,"y","min",false),2))*0.1,
+					},
+					rangeMax: {
+						x: new Date().getTime(),
+						y: getLimit(txtchartname,"y","max",false) + getLimit(txtchartname,"y","max",false)*0.1,
+					},
+					speed: 0.1
+				},
+			},
+			datasource: {
+				type: 'csv',
+				url: '/ext/connmon/csv/'+txtchartname+'.htm',
+				delimiter: ',',
+				rowMapping: 'datapoint',
+				datapointLabelMapping: {
+					_dataset: 'Metric',
+					x: 'Time',
+					y: 'Value'
+				}
+			},
+			deferred: {
+				delay: 250
+			},
+		},
+		annotation: {
+			drawTime: 'afterDatasetsDraw',
+			annotations: [{
+				//id: 'avgline',
+				type: ShowLines,
+				mode: 'horizontal',
+				scaleID: 'y-axis-0',
+				value: getAverage(txtchartname),
+				borderColor: colourname,
+				borderWidth: 1,
+				borderDash: [5, 5],
+				label: {
+					backgroundColor: 'rgba(0,0,0,0.3)',
+					fontFamily: "sans-serif",
+					fontSize: 10,
+					fontStyle: "bold",
+					fontColor: "#fff",
+					xPadding: 6,
+					yPadding: 6,
+					cornerRadius: 6,
+					position: "center",
+					enabled: true,
+					xAdjust: 0,
+					yAdjust: 0,
+					content: "Avg=" + round(getAverage(txtchartname),3).toFixed(3)+txtunity,
+				}
+			},
+			{
+				//id: 'maxline',
+				type: ShowLines,
+				mode: 'horizontal',
+				scaleID: 'y-axis-0',
+				value: getLimit(txtchartname,"y","max",true),
+				borderColor: colourname,
+				borderWidth: 1,
+				borderDash: [5, 5],
+				label: {
+					backgroundColor: 'rgba(0,0,0,0.3)',
+					fontFamily: "sans-serif",
+					fontSize: 10,
+					fontStyle: "bold",
+					fontColor: "#fff",
+					xPadding: 6,
+					yPadding: 6,
+					cornerRadius: 6,
+					position: "center",
+					enabled: true,
+					xAdjust: 0,
+					yAdjust: 0,
+					content: "Max=" + round(getLimit(txtchartname,"y","max",true),3).toFixed(3)+txtunity,
+				}
+			},
+			{
+				//id: 'minline',
+				type: ShowLines,
+				mode: 'horizontal',
+				scaleID: 'y-axis-0',
+				value: getLimit(txtchartname,"y","min",true),
+				borderColor: colourname,
+				borderWidth: 1,
+				borderDash: [5, 5],
+				label: {
+					backgroundColor: 'rgba(0,0,0,0.3)',
+					fontFamily: "sans-serif",
+					fontSize: 10,
+					fontStyle: "bold",
+					fontColor: "#fff",
+					xPadding: 6,
+					yPadding: 6,
+					cornerRadius: 6,
+					position: "center",
+					enabled: true,
+					xAdjust: 0,
+					yAdjust: 0,
+					content: "Min=" + round(getLimit(txtchartname,"y","min",true),3).toFixed(3)+txtunity,
+				}
+			}]
+		}
+	};
+	var lineDataset = {
+		datasets: [{label: txttitle,
+			borderWidth: 1,
+			pointRadius: 1,
+			lineTension: 0,
+			fill: ShowFill,
+			backgroundColor: colourname,
+			borderColor: colourname,
+		}]
+	};
+	objchartname = new Chart(ctx, {
+		type: 'line',
+		plugins: [ChartDataSource,datafilterPlugin],
+		options: lineOptions,
+		data: lineDataset
+	});
+	window["LineChart"+txtchartname]=objchartname;
 }
 
 function Draw_Domain_Chart() {
@@ -242,20 +544,24 @@ function Draw_Domain_Chart() {
 		}]
 	};
 	BarChartReqDomains = new Chart(ctx, {
-		type: getChartType(charttypedomain),
+		type: getChartType($("#charttypedomains option:selected").val()),
 		options: barOptionsDomains,
 		data: barDatasetDomains
 	});
-	changeColour(E('colourdomains'),BarChartReqDomains,window["barDataDomains"+document.getElementById("clientdomains").value],"colourdomains")
 }
 
 function GetCookie(cookiename) {
 	var s;
-	if ((s = cookie.get(cookiename)) != null) {
-			if (s.match(/^([0-2])$/)) {
-				E(cookiename).value = cookie.get(cookiename) * 1;
-			}
+	if ((s = cookie.get("uidivstats_"+cookiename)) != null) {
+		return cookie.get("uidivstats_"+cookiename);
 	}
+	else {
+		return "";
+	}
+}
+
+function SetCookie(cookiename,cookievalue) {
+	cookie.set("uidivstats_"+cookiename, cookievalue, 31);
 }
 
 function SetCurrentPage(){
@@ -265,17 +571,15 @@ function SetCurrentPage(){
 
 function initial(){
 	SetCurrentPage();
-	GetCookie("colourads");
 	GetCookie("charttypeads");
-	GetCookie("colourdomains");
-	GetCookie("colourdomains");
 	
 	show_menu();
 	loadDivStats();
-	Draw_Ad_Chart();
-	changeLayout(E('charttypeads'),"BarChartBlockedAds","charttypeads");
 	Draw_Domain_Chart();
 	changeLayout(E('charttypedomains'),"BarChartReqDomains","charttypedomains");
+	
+	$("#BlockedAds_Type").val(GetCookie("BlockedAds_Type"));
+	Draw_Chart("BlockedAds");
 	
 	SetDivStatsTitle();
 	SetKeyStatsReq();
@@ -351,88 +655,149 @@ function poolColors(a) {
 	return pool;
 }
 
-function getChartType(e) {
-	if (e == null) {
-		return 'horizontalBar';
-	}
-	else {
-		return e;
-	}
+function getChartType(layout) {
+	var charttype = "horizontalBar";
+	if (layout == 0) charttype = "horizontalBar";
+	else if (layout == 1) charttype = "bar";
+	else if (layout == 2) charttype = "pie";
+	return charttype;
 }
 
 function ZoomPanEnabled(charttype) {
 	if (charttype == "bar") {
-		return 'y';
-	}
-	else if (charttype == "horizontalBar") {
-		return 'x';
+			return 'y';
+	} else if (charttype == "horizontalBar") {
+			return 'x';
+	} else {
+			return '';
 	}
 }
 
 function ZoomPanMax(charttype, axis, datasetname) {
 	if (axis == "x") {
-		if (charttype == "bar") {
-			return null;
-		}
-		else if (charttype == "horizontalBar") {
-			return getMax(datasetname);
-		}
-	}
-	else if (axis == "y") {
-		if (charttype == "bar") {
-			return getMax(datasetname);
-		}
-		else if (charttype == "horizontalBar") {
-			return null;
-		}
+			if (charttype == "bar") {
+					return null;
+			} else if (charttype == "horizontalBar") {
+					return getMax(datasetname);
+			} else {
+					return null;
+			}
+	} else if (axis == "y") {
+			if (charttype == "bar") {
+					return getMax(datasetname);
+			} else if (charttype == "horizontalBar") {
+					return null;
+			} else {
+					return null;
+			}
 	}
 }
 
-function showGrid(e,axis) {
+function showGrid(e, axis) {
 	if (e == null) {
-		return true;
-	}
-	else if (e == "pie") {
-		return false;
-	}
-	else {
-		return true;
-	}
-}
-
-function showAxis(e,axis) {
-	if (e == "bar" && axis == "x") {
-		return false;
-	}
-	else {
-		if (e == null) {
 			return true;
-		}
-		else if (e == "pie") {
+	} else if (e == "pie") {
 			return false;
-		}
-		else {
+	} else {
 			return true;
-		}
 	}
 }
 
-function changeClient(e,chartname,cookiename) {
-	index = e.value * 1;
-	cookie.set(cookiename, index, 31);
-	Draw_Domain_Chart();
+function showAxis(e, axis) {
+	if (e == "bar" && axis == "x") {
+			return true;
+	} else {
+			if (e == null) {
+					return true;
+			} else if (e == "pie") {
+					return false;
+			} else {
+					return true;
+			}
+	}
 }
 
-function changeColour(e,chartname,datasetname,cookiename) {
-	colour = e.value * 1;
-	if ( colour == 0 ) {
-		chartname.config.data.datasets[0].backgroundColor = poolColors(datasetname.length);
+function showTicks(e, axis) {
+	if (e == "bar" && axis == "x") {
+			return false;
+	} else {
+			if (e == null) {
+					return true;
+			} else if (e == "pie") {
+					return false;
+			} else {
+					return true;
+			}
 	}
-	else {
-		chartname.config.data.datasets[0].backgroundColor = "rgba(2, 53, 135, 1)";
+}
+
+function showLegend(e) {
+	if (e == "pie") {
+			return true;
+	} else {
+			return false;
 	}
-	cookie.set(cookiename, colour, 31);
-	chartname.update();
+}
+
+function showTitle(e) {
+	if (e == "pie") {
+			return true;
+	} else {
+			return false;
+	}
+}
+
+function changeChart(e) {
+	value = e.value * 1;
+	name = e.id.substring(0, e.id.indexOf("_"));
+	SetCookie("BlockedAds_Type",value);
+	Draw_Chart(name);
+}
+
+function BuildChartHtml(txttitle, txtbase, multilabel) {
+	var charthtml = '<div style="line-height:10px;">&nbsp;</div>';
+	charthtml += '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">';
+	charthtml += '<thead class="collapsible expanded" id="uidivstats_chart_' + txtbase + '"';
+	charthtml += '<tr><td colspan="2">' + txttitle + ' (click to expand/collapse)</td></tr>';
+	charthtml += '</thead>';
+	/* Colour selector start ---
+	charthtml+='<tr class="even">';
+	charthtml+='<th width="40%">Style for chart</th>';
+	charthtml+='<td>';
+	charthtml+='<select style="width:100px" class="input_option" onchange="changeChart(this,\''+multilabel+'\')" id="' + txtbase + '_Colour">';
+	charthtml+='<option value=0>Colour</option>';
+	charthtml+='<option value=1>Plain</option>';
+	charthtml+='</select>';
+	charthtml+='</td>';
+	charthtml+='</tr>';
+	--- Colour selector end */
+	charthtml += '<tr class="even">';
+	charthtml += '<th width="40%">Layout for chart</th>';
+	charthtml += '<td>';
+	charthtml += '<select style="width:100px" class="input_option" onchange="changeChart(this)" id="' + txtbase + '_Type">';
+	charthtml += '<option value=0>Horizontal</option>';
+	charthtml += '<option value=1>Vertical</option>';
+	charthtml += '<option value=2>Pie</option>';
+	charthtml += '</select>';
+	charthtml += '</td>';
+	charthtml += '</tr>';
+	if (perip == "true") {
+			charthtml += '<tr class="even">';
+			charthtml += '<th width="40%">Client to display</th>';
+			charthtml += '<td>';
+			charthtml += '<select style="width:100px" class="input_option" onchange="changeChart(this)" id="' + txtbase + '_Clients">';
+			charthtml += '<option value=0>All (*)</option>';
+			charthtml += '</select>';
+			charthtml += '</td>';
+			charthtml += '</tr>';
+	}
+	charthtml += '<tr>';
+	charthtml += '<td colspan="2" style="padding: 2px;">';
+	charthtml += '<div style="background-color:#2f3e44;border-radius:10px;width:735px;padding-left:5px;"><canvas id="divChart' + txtbase + '" height="360"></div>';
+	charthtml += '</td>';
+	charthtml += '</tr>';
+	charthtml += '</table>';
+	return charthtml;
 }
 
 function changeLayout(e,chartname,cookiename) {
@@ -468,6 +833,12 @@ function changeLayout(e,chartname,cookiename) {
 	else if ( chartname == "BarChartReqDomains" ) {
 		Draw_Domain_Chart();
 	}
+}
+
+function changeClient(e,chartname,cookiename) {
+	index = e.value * 1;
+	cookie.set(cookiename, index, 31);
+	Draw_Domain_Chart();
 }
 
 function loadDivStats() {
@@ -570,18 +941,9 @@ function loadDivStats() {
 </tr>
 </thead>
 <tr class="even">
-<th width="40%">Style for charts</th>
-<td>
-<select style="width:100px" class="input_option" onchange="changeColour(this,BarChartBlockedAds,barDataBlockedAds,'colourads')" id="colourads">
-<option value="0">Colour</option>
-<option value="1">Plain</option>
-</select>
-</td>
-</tr>
-<tr class="even">
 <th width="40%">Layout for charts</th>
 <td>
-<select style="width:100px" class="input_option" onchange="changeLayout(this,'BarChartBlockedAds','charttypeads')" id="charttypeads">
+<select style="width:100px" class="input_option" onchange="changeChart(this)" id="BlockedAds_Type">
 <option value="0">Horizontal</option>
 <option value="1">Vertical</option>
 <option value="2">Pie</option>
@@ -590,7 +952,7 @@ function loadDivStats() {
 </tr>
 <tr>
 <td colspan="2" style="padding: 2px;">
-<div style="background-color:#2f3e44;border-radius:10px;width:735px;padding-left:5px;"><canvas id="ChartAds" height="360" /></div>
+<div style="background-color:#2f3e44;border-radius:10px;width:735px;padding-left:5px;"><canvas id="divChartBlockedAds" height="400" /></div>
 </td>
 </tr>
 </table>
@@ -606,15 +968,6 @@ function loadDivStats() {
 <td>
 <select style="width:300px" class="input_option" onchange="changeClient(this,BarChartReqDomains,'clientdomains')" id="clientdomains">
 <option value="0">All Clients</option>
-</select>
-</td>
-</tr>
-<tr class="even">
-<th width="40%">Style for charts</th>
-<td>
-<select style="width:100px" class="input_option" onchange="changeColour(this,BarChartReqDomains,window['barDataDomains'+document.getElementById('clientdomains').value],'colourdomains')" id="colourdomains">
-<option value="0">Colour</option>
-<option value="1">Plain</option>
 </select>
 </td>
 </tr>
