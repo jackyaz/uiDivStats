@@ -35,11 +35,6 @@ thead.collapsibleparent {
   cursor: pointer;
 }
 
-td.keystatsnumber {
-  font-size: 20px !important;
-  font-weight: bolder !important;
-}
-
 td.nodata {
   font-size: 48px !important;
   font-weight: bolder !important;
@@ -62,12 +57,16 @@ td.nodata {
   color: white !important;
   padding: 4px !important;
   width: 740px !important;
+  font-size: 14px !important;
+  font-weight: bolder !important;
 }
 
 .StatsTable td {
   padding: 2px !important;
   word-wrap: break-word !important;
   overflow-wrap: break-word !important;
+  font-size: 16px !important;
+  font-weight: bolder !important;
 }
 
 .StatsTable a {
@@ -86,9 +85,13 @@ td.nodata {
 }
 </style>
 <script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
+<script language="JavaScript" type="text/javascript" src="/ext/shared-jy/moment.js"></script>
 <script language="JavaScript" type="text/javascript" src="/ext/shared-jy/chart.js"></script>
 <script language="JavaScript" type="text/javascript" src="/ext/shared-jy/hammerjs.js"></script>
 <script language="JavaScript" type="text/javascript" src="/ext/shared-jy/chartjs-plugin-zoom.js"></script>
+<script language="JavaScript" type="text/javascript" src="/ext/shared-jy/chartjs-plugin-annotation.js"></script>
+<script language="JavaScript" type="text/javascript" src="/ext/shared-jy/chartjs-plugin-datasource.js"></script>
+<script language="JavaScript" type="text/javascript" src="/ext/shared-jy/chartjs-plugin-deferred.js"></script>
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
@@ -100,9 +103,54 @@ td.nodata {
 <script language="JavaScript" type="text/javascript" src="/ext/uiDivStats/uidivstats.js"></script>
 <script language="JavaScript" type="text/javascript" src="/ext/uiDivStats/uidivstatsclients.js"></script>
 <script language="JavaScript" type="text/javascript" src="/ext/uiDivStats/uidivstatstext.js"></script>
-
 <script>
-var charttypead, charttypedomain;
+// Keep the real data in a seperate object called allData
+// Put only that part of allData in the dataset to optimize zoom/pan performance
+// Author: Evert van der Weit - 2018
+
+function filterData(chartInstance) {
+	var datasets = chartInstance.data.datasets;
+	var originalDatasets = chartInstance.data.allData;
+	var chartOptions = chartInstance.options.scales.xAxes[0];
+	
+	var startX = chartOptions.time.min;
+	var endX = chartOptions.time.max;
+	if(typeof originalDatasets === 'undefined' || originalDatasets === null) { return; }
+	for(var i = 0; i < originalDatasets.length; i++) {
+		var dataset = datasets[i];
+		var originalData = originalDatasets[i];
+		
+		if (!originalData.length) break
+		
+		var s = startX;
+		var e = endX;
+		var sI = null;
+		var eI = null;
+		
+		for (var j = 0; j < originalData.length; j++) {
+			if ((sI==null) && originalData[j].x > s) {
+				sI = j;
+			}
+			if ((eI==null) && originalData[j].x > e) {
+				eI = j;
+			}
+		}
+		if (sI==null) sI = 0;
+		if (originalData[originalData.length - 1].x < s) eI = 0
+			else if (eI==null) eI = originalData.length
+		
+		dataset.data = originalData.slice(sI, eI);
+	}
+}
+
+var datafilterPlugin = {
+	beforeUpdate: function(chartInstance) {
+		filterData(chartInstance);
+	}
+}
+</script>
+<script>
+var charttypedomain;
 var BarChartReqDomains;
 Chart.defaults.global.defaultFontColor = "#CCC";
 Chart.Tooltip.positioners.cursor = function(chartElements, coordinates) {
@@ -165,7 +213,7 @@ function Draw_Chart(txtchartname) {
 		},
 		title: {
 			display: showTitle(charttype),
-			//text: getChartLegendTitle(charttype, txtchartname),
+			text: getChartLegendTitle(),
 			position: "top"
 		},
 		tooltips: {
@@ -190,7 +238,7 @@ function Draw_Chart(txtchartname) {
 				},
 				scaleLabel: {
 					display: true,
-					//labelString: getAxisLabel(charttype, "x", txtchartname)
+					labelString: getAxisLabel(charttype, "x")
 				},
 				ticks: {
 					display: showTicks(charttype, "x"),
@@ -205,7 +253,7 @@ function Draw_Chart(txtchartname) {
 				},
 				scaleLabel: {
 					display: true,
-					//labelString: getAxisLabel(charttype, "y", txtchartname)
+					labelString: getAxisLabel(charttype, "y")
 				},
 				ticks: {
 					display: showTicks(charttype, "y"),
@@ -280,10 +328,6 @@ function Draw_Time_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,colour
 		segmentStrokeColor : "#000",
 		animationEasing : "easeOutQuart",
 		animationSteps : 100,
-		/*animation: {
-			duration: 0 // general animation time
-		},
-		responsiveAnimationDuration: 0, */ // animation duration after a resize
 		maintainAspectRatio: false,
 		animateScale : true,
 		hover: { mode: "point" },
@@ -578,6 +622,8 @@ function initial(){
 	Draw_Domain_Chart();
 	changeLayout(E('charttypedomains'),"BarChartReqDomains","charttypedomains");
 	
+	$("#uidivstats_table_psstats").after(BuildTableHtml("Key Stats", "keystats"));
+	$("#uidivstats_table_keystats").after(BuildChartHtml("Top blocked domains", "BlockedAds", "false"));
 	$("#BlockedAds_Type").val(GetCookie("BlockedAds_Type"));
 	Draw_Chart("BlockedAds");
 	
@@ -586,12 +632,11 @@ function initial(){
 	SetKeyStatsBlocked();
 	SetKeyStatsPercent();
 	SetKeyStatsDomains();
-	SetTopBlockedTitle();
 	SetTopRequestedTitle();
 	SetClients();
 	GetCookie("clientdomains");
 	
-	$("thead").click(function(){
+	$("thead.collapsible").click(function(){
 		$(this).siblings().toggle("fast");
 	})
 	
@@ -747,6 +792,33 @@ function showTitle(e) {
 	}
 }
 
+function getChartLegendTitle() {
+	var chartlegendtitlelabel = "Domain name";
+	
+	for (i = 0; i < 350 - chartlegendtitlelabel.length; i++) {
+		chartlegendtitlelabel = chartlegendtitlelabel + " ";
+	}
+	
+	return chartlegendtitlelabel;
+}
+
+function getAxisLabel(type, axis) {
+	var axislabel = "";
+	if (axis == "x") {
+		if (type == "horizontalBar") axislabel = "Hits";
+			else if (type == "bar") {
+				axislabel = "Domain";
+			} else if (type == "pie") axislabel = "";
+			return axislabel;
+	} else if (axis == "y") {
+		if (type == "horizontalBar") {
+			axislabel = "Domain";
+		} else if (type == "bar") axislabel = "Hits";
+		else if (type == "pie") axislabel = "";
+		return axislabel;
+	}
+}
+
 function changeChart(e) {
 	value = e.value * 1;
 	name = e.id.substring(0, e.id.indexOf("_"));
@@ -754,10 +826,10 @@ function changeChart(e) {
 	Draw_Chart(name);
 }
 
-function BuildChartHtml(txttitle, txtbase, multilabel) {
+function BuildChartHtml(txttitle, txtbase, perip) {
 	var charthtml = '<div style="line-height:10px;">&nbsp;</div>';
-	charthtml += '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">';
-	charthtml += '<thead class="collapsible expanded" id="uidivstats_chart_' + txtbase + '"';
+	charthtml += '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" id="uidivstats_chart_' + txtbase + '">';
+	charthtml += '<thead class="collapsible expanded"';
 	charthtml += '<tr><td colspan="2">' + txttitle + ' (click to expand/collapse)</td></tr>';
 	charthtml += '</thead>';
 	/* Colour selector start ---
@@ -793,11 +865,48 @@ function BuildChartHtml(txttitle, txtbase, multilabel) {
 	}
 	charthtml += '<tr>';
 	charthtml += '<td colspan="2" style="padding: 2px;">';
-	charthtml += '<div style="background-color:#2f3e44;border-radius:10px;width:735px;padding-left:5px;"><canvas id="divChart' + txtbase + '" height="360"></div>';
+	charthtml += '<div style="background-color:#2f3e44;border-radius:10px;width:735px;padding-left:5px;"><canvas id="divChart' + txtbase + '" height="400"></div>';
 	charthtml += '</td>';
 	charthtml += '</tr>';
 	charthtml += '</table>';
 	return charthtml;
+}
+
+function BuildTableHtml(txttitle, txtbase) {
+		var tablehtml = '<div style="line-height:10px;">&nbsp;</div>';
+		tablehtml += '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" id="uidivstats_table_' + txtbase + '">';
+		tablehtml += '<thead class="collapsible expanded">';
+		tablehtml += '<tr><td colspan="2">' + txttitle + ' (click to expand/collapse)</td></tr>';
+		tablehtml += '</thead>';
+		tablehtml += '<tr>';
+		tablehtml += '<td colspan="2" align="center" style="padding: 0px;">';
+		tablehtml += '<div class="collapsiblecontent">';
+		tablehtml += '<table border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable StatsTable">';
+		tablehtml += '</tr>';
+		tablehtml += '<col style="width:187.5px;">';
+		tablehtml += '<col style="width:187.5px;">';
+		tablehtml += '<col style="width:187.5px;">';
+		tablehtml += '<col style="width:187.5px;">';
+		tablehtml += '<thead>';
+		tablehtml += '<tr>';
+		tablehtml += '<th>Total Queries</th>';
+		tablehtml += '<th>Queries Blocked</th>';
+		tablehtml += '<th>Percent Blocked</th>';
+		tablehtml += '<th>Domains on Blocklist</th>';
+		tablehtml += '</tr>';
+		tablehtml += '</thead>';
+		tablehtml += '<tr class="even" style="text-align:center;">';
+		tablehtml += '<td id="keystatstotal">Total</td>';
+		tablehtml += '<td id="keystatsblocked">Blocked</td>';
+		tablehtml += '<td id="keystatspercent">Percent</td>';
+		tablehtml += '<td id="keystatsdomains">Domains</td>';
+		tablehtml += '</tr>';
+		tablehtml += '</table>';
+		tablehtml += '</div>';
+		tablehtml += '</td>';
+		tablehtml += '</tr>';
+		tablehtml += '</table>';
+		return tablehtml;
 }
 
 function changeLayout(e,chartname,cookiename) {
@@ -902,7 +1011,7 @@ function loadDivStats() {
 </tr>
 </table>
 <div style="line-height:10px;">&nbsp;</div>
-<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#4D595D" class="FormTable">
+<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#4D595D" class="FormTable" id="uidivstats_table_psstats">
 <thead class="collapsible default-collapsed" >
 <tr>
 <td colspan="2">Pixelserv Statistics Report (click to expand/collapse)</td>
@@ -913,49 +1022,12 @@ function loadDivStats() {
 <iframe src="/ext/uiDivStats/psstats.htm" style="width:99%;height:420px;"></iframe>
 </td>
 </tr>
-</table><div style="line-height:10px;">&nbsp;</div>
-<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
-<thead class="collapsible">
-<tr>
-<td colspan="4" id="keystats">Key Stats (click to expand/collapse)</td>
-</tr>
-</thead>
-<tr class="even" style="text-align:center;">
-<td width="25%" class="keystatscell">Total Queries</td>
-<td width="25%" class="keystatscell">Queries Blocked</td>
-<td width="25%" class="keystatscell">Percent Blocked</td>
-<td width="25%" class="keystatscell">Domains on Blocklist</td>
-</tr>
-<tr class="even" style="text-align:center;">
-<td width="25%" class="keystatscell keystatsnumber" id="keystatstotal">Total</td>
-<td width="25%" class="keystatscell keystatsnumber" id="keystatsblocked">Blocked</td>
-<td width="25%" class="keystatscell keystatsnumber" id="keystatspercent">Percent</td>
-<td width="25%" class="keystatscell keystatsnumber" id="keystatsdomains">Domains</td>
-</tr>
 </table>
-<div style="line-height:10px;">&nbsp;</div>
-<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
-<thead class="collapsible">
-<tr>
-<td colspan="2" id="topblocked">Top X blocked domains (click to expand/collapse)</td>
-</tr>
-</thead>
-<tr class="even">
-<th width="40%">Layout for charts</th>
-<td>
-<select style="width:100px" class="input_option" onchange="changeChart(this)" id="BlockedAds_Type">
-<option value="0">Horizontal</option>
-<option value="1">Vertical</option>
-<option value="2">Pie</option>
-</select>
-</td>
-</tr>
-<tr>
-<td colspan="2" style="padding: 2px;">
-<div style="background-color:#2f3e44;border-radius:10px;width:735px;padding-left:5px;"><canvas id="divChartBlockedAds" height="400" /></div>
-</td>
-</tr>
-</table>
+
+<!-- Keystats table -->
+
+<!-- Blocked Ads -->
+
 <div style="line-height:10px;">&nbsp;</div>
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 <thead class="collapsible">
