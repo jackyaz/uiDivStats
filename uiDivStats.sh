@@ -244,6 +244,10 @@ Create_Symlinks(){
 	ln -s "$SCRIPT_DIR/uidivstats.txt" "$SCRIPT_WEB_DIR/uidivstatstext.htm" 2>/dev/null
 	ln -s "$SCRIPT_DIR/psstats.htm" "$SCRIPT_WEB_DIR/psstats.htm" 2>/dev/null
 	
+	if [ ! -d "$SCRIPT_WEB_DIR/csv" ]; then
+		ln -s "$CSV_OUTPUT_DIR" "$SCRIPT_WEB_DIR/csv" 2>/dev/null
+	fi
+	
 	if [ ! -d "$SHARED_WEB_DIR" ]; then
 		ln -s "$SHARED_DIR" "$SHARED_WEB_DIR" 2>/dev/null
 	fi
@@ -946,6 +950,102 @@ Generate_Stats_Diversion(){
 	fi
 }
 
+#$1 fieldname $2 tablename $3 frequency (hours) $4 length (days) $5 outputfile $6 outputfrequency $7 sqlfile $8 timestamp
+WriteSql_ToFile(){
+	timenow="$8"
+	earliest="$(echo "$3" "$4" | awk '{printf "%4f\n",(60*60*$1)*((24*$2)/$1)}')"
+	chunksize="$(echo "$3" "$4" | awk '{printf "%4f\n",((24*$2)/$1)}')"
+	
+	{
+		echo ".mode csv"
+		echo ".output $5$6.tmp"
+	} >> "$7"
+	
+	{
+		echo "SELECT '$1',Min([Timestamp]) ChunkStart, IFNULL(Count([$1]),'NaN') Value FROM"
+		echo "( SELECT NTILE($chunksize) OVER (ORDER BY [Timestamp]) Chunk, * FROM $2 WHERE [Timestamp] >= ($timenow - $earliest)) AS T"
+		echo "GROUP BY Chunk"
+		echo "ORDER BY ChunkStart;"
+	} >> "$7"
+	echo "var $1$6""size = 1;" >> "$SCRIPT_DIR/uidivstatsSQLdata.js"
+}
+
+Aggregate_Stats(){
+	metricname="$1"
+	period="$2"
+	sed -i '1iMetric,Time,Value' "$CSV_OUTPUT_DIR/$metricname$period.tmp"
+	head -c -2 "$CSV_OUTPUT_DIR/$metricname$period.tmp" > "$CSV_OUTPUT_DIR/$metricname$period.htm"
+	dos2unix "$CSV_OUTPUT_DIR/$metricname$period.htm"
+	cp "$CSV_OUTPUT_DIR/$metricname$period.htm" "$CSV_OUTPUT_DIR/$metricname$period.tmp"
+	sed -i '1d' "$CSV_OUTPUT_DIR/$metricname$period.tmp"
+	min="$(cut -f3 -d"," "$CSV_OUTPUT_DIR/$metricname$period.tmp" | sort -n | head -1)"
+	max="$(cut -f3 -d"," "$CSV_OUTPUT_DIR/$metricname$period.tmp" | sort -n | tail -1)"
+	avg="$(cut -f3 -d"," "$CSV_OUTPUT_DIR/$metricname$period.tmp" | sort -n | awk '{ total += $1; count++ } END { print total/count }')"
+	{
+	echo "var $metricname$period""min = $min;"
+	echo "var $metricname$period""max = $max;"
+	echo "var $metricname$period""avg = $avg;"
+	} >> "$SCRIPT_DIR/uidivstatsSQLdata.js"
+}
+
+Generate_Stats_From_SQLite(){
+	TZ=$(cat /etc/TZ)
+	export TZ
+	
+	timenow=$(date +"%s")
+	#timenowfriendly=$(date +"%c")
+	
+	{
+		echo "DELETE FROM [dnsqueries] WHERE [Timestamp] < ($timenow - (86400*30));"
+		echo "DELETE FROM [dnsqueriesblocked] WHERE [Timestamp] < ($timenow - (86400*30));"
+	} > /tmp/uidivstats-stats.sql
+	
+	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-stats.sql
+	
+	rm -f "$SCRIPT_DIR/uidivstatsSQLdata.js"
+	
+	rm -f "$CSV_OUTPUT_DIR/"*
+	rm -f /tmp/uidivstats-stats.sql
+	
+	metriclist="Total Blocked"
+	
+	for metric in $metriclist; do
+		dbtable="dnsqueries"
+		if [ "$metric" = "Blocked" ]; then
+			dbtable="dnsqueriesblocked"
+		fi
+		
+		#{
+		#	echo ".mode csv"
+		#	echo ".output $CSV_OUTPUT_DIR/$metric""daily.tmp"
+		#	echo "select '$metric',[Timestamp],COUNT([$metric]) from $dbtable WHERE [Timestamp] >= ($timenow - 86400) GROUP BY [QueryID];"
+		#} > /tmp/uidivstats-stats.sql
+		
+		WriteSql_ToFile "$metric" "$dbtable" 0.25 1 "$CSV_OUTPUT_DIR/$metric" "daily" "/tmp/uidivstats-stats.sql" "$timenow"
+		
+		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-stats.sql
+		#echo "var $metric""dailysize = 1;" >> "$SCRIPT_DIR/uidivstatsSQLdata.js"
+		Aggregate_Stats "$metric" "daily"
+		rm -f "$CSV_OUTPUT_DIR/$metric""daily.tmp"*
+		rm -f /tmp/uidivstats-stats.sql
+		
+		#WriteSql_ToFile "$metric" "$dbtable" 1 7 "$CSV_OUTPUT_DIR/$metric" "weekly" "/tmp/uidivstats-stats.sql" "$timenow"
+		#"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-stats.sql
+		#Aggregate_Stats "$metric" "weekly"
+		#rm -f "$CSV_OUTPUT_DIR/$metric""weekly.tmp"
+		#rm -f /tmp/uidivstats-stats.sql
+		
+		#WriteSql_ToFile "$metric" "$dbtable" 3 30 "$CSV_OUTPUT_DIR/$metric" "monthly" "/tmp/uidivstats-stats.sql" "$timenow"
+		#"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-stats.sql
+		#Aggregate_Stats "$metric" "monthly"
+		#rm -f "$CSV_OUTPUT_DIR/$metric""monthly.tmp"
+		#rm -f /tmp/uidivstats-stats.sql
+	done
+	
+	#rm -f "/tmp/uidivstats-"*".csv"
+	rm -f "/tmp/uidivstats-stats.sql"
+}
+
 Shortcut_script(){
 	case $1 in
 		create)
@@ -1237,6 +1337,12 @@ case "$1" in
 			Check_Lock
 			Menu_GenerateStats
 		fi
+		exit 0
+	;;
+	sql)
+		Check_Lock
+		Generate_Stats_From_SQLite
+		Clear_Lock
 		exit 0
 	;;
 	update)
