@@ -1050,11 +1050,11 @@ Generate_Stats_From_SQLite(){
 		rm -f "$CSV_OUTPUT_DIR/$metric""weekly.tmp"
 		rm -f /tmp/uidivstats-stats.sql
 		
-		#WriteSql_ToFile "$metric" "$dbtable" 3 30 "$CSV_OUTPUT_DIR/$metric" "monthly" "/tmp/uidivstats-stats.sql" "$timenow"
-		#"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-stats.sql
-		#Aggregate_Stats "$metric" "monthly"
-		#rm -f "$CSV_OUTPUT_DIR/$metric""monthly.tmp"
-		#rm -f /tmp/uidivstats-stats.sql
+		WriteSql_ToFile "$metric" "$dbtable" 3 30 "$CSV_OUTPUT_DIR/$metric" "monthly" "/tmp/uidivstats-stats.sql" "$timenow"
+		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-stats.sql
+		Aggregate_Stats "$metric" "monthly"
+		rm -f "$CSV_OUTPUT_DIR/$metric""monthly.tmp"
+		rm -f /tmp/uidivstats-stats.sql
 	done
 	
 	rm -f "/tmp/uidivstats-stats.sql"
