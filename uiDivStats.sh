@@ -30,6 +30,7 @@ readonly DNS_DB="/opt/share/uiDivStats.d/dnsqueries.db"
 readonly CSV_OUTPUT_DIR="/opt/share/uiDivStats.d/csv"
 [ -z "$(nvram get odmpid)" ] && ROUTER_MODEL=$(nvram get productid) || ROUTER_MODEL=$(nvram get odmpid)
 [ -f /opt/bin/sqlite3 ] && SQLITE3_PATH=/opt/bin/sqlite3 || SQLITE3_PATH=/usr/sbin/sqlite3
+readonly DIVERSION_DIR="/opt/share/diversion"
 ### End of script variables ###
 
 ### Start of output format variables ###
@@ -544,6 +545,16 @@ WriteData_ToJS(){
 	done
 }
 
+WritePlainData_ToJS(){
+	outputfile="$1"
+	shift
+	for var in "$@"; do
+		varname="$(echo $var | cut -f1 -d',')"
+		varvalue="$(echo $var | cut -f2 -d',')"
+		echo "var $varname = $varvalue;" >> "$outputfile"
+	done
+}
+
 # shellcheck disable=SC1090
 # shellcheck disable=SC2154
 # shellcheck disable=SC2034
@@ -573,8 +584,6 @@ Generate_Stats_Diversion(){
 	Create_Symlinks
 	
 	Print_Output "true" "Starting Diversion statistic generation..." "$PASS"
-	
-	DIVERSION_DIR=/opt/share/diversion
 	
 	if [ -f "${DIVERSION_DIR}/.conf/diversion.conf" ] && [ -s /opt/var/log/dnsmasq.log ]; then
 		diversion count_ads
@@ -612,8 +621,7 @@ Generate_Stats_Diversion(){
 		fi
 		
 		printf "%-13s%s\\n" " $(echo $BD | human_number)" "domains in total are blocked" >>${statsFile}
-		echo "$(echo $BD | human_number)" > /tmp/uidivstatskeystatsdomains.txt
-		WriteStats_ToJS "/tmp/uidivstatskeystatsdomains.txt" "/tmp/uidivstatstext.js" "SetKeyStatsDomains" "keystatsdomains"
+		
 		if [ "$bfFs" = "on" ]; then
 			if [ "$bfTypeinUse" = "primary" ]; then
 				printf "%-13s%s\\n" " $(echo $BL | human_number)" "blocked by primary blocking list in use" >>${statsFile}
@@ -629,7 +637,7 @@ Generate_Stats_Diversion(){
 		printf "%-13s%s\\n" " $(/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/blacklist" | wc -l)" "blocked by blacklist" >>${statsFile}
 		printf "%-13s%s\\n" " $(/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/wc_blacklist" | wc -l)" "blocked by wildcard blacklist" >>${statsFile}
 		printf "\\n" >>${statsFile}
-		keystatsblocked=0;
+		
 		if [ "$bfFs" = "on" ] && [ "$alternateBF" = "on" ]; then
 			if [ "$excludeIP" = "on" ]; then
 				sed -ri "/$(echo $excludeIPlist | sed 's/ /|/g')/d" /opt/var/log/dnsmasq.log*
@@ -648,8 +656,6 @@ Generate_Stats_Diversion(){
 			printf "%-13s%s\\n" " $(echo $(($adsBlocked+$adsBlockedAlt)) | human_number)" "ads in total blocked" >>${statsFile}
 			printf "%-13s%s\\n" " $(echo $(($adsWeek+$adsWeekAlt)) | human_number)" "ads this week, since last $bfUpdateDay" >>${statsFile}
 			printf "%-13s%s\\n" " $(echo $(($adsNew+$adsNewAlt)) | human_number)" "new ads, since $adsPrevCount" >>${statsFile}
-			echo "$(echo $(($adsWeek+$adsWeekAlt)) | human_number)" > /tmp/uidivstatskeystatsblocked.txt
-			keystatsblocked=$(($adsWeek+$adsWeekAlt))
 		else
 			if [ "$excludeIP" = "on" ]; then
 				sed -ri "/$(echo $excludeIPlist | sed 's/ /|/g')/d" /opt/var/log/dnsmasq.log /opt/var/log/dnsmasq.log1 /opt/var/log/dnsmasq.log2
@@ -659,11 +665,7 @@ Generate_Stats_Diversion(){
 			printf "%-13s%s\\n" " $(echo $adsBlocked | human_number)" "ads in total blocked" >>${statsFile}
 			printf "%-13s%s\\n" " $(echo $adsWeek | human_number)" "ads this week, since last $bfUpdateDay" >>${statsFile}
 			printf "%-13s%s\\n" " $(echo $adsNew | human_number)" "new ads, since $adsPrevCount" >>${statsFile}
-			echo "$(echo $adsWeek | human_number)" > /tmp/uidivstatskeystatsblocked.txt
-			keystatsblocked=$adsWeek
 		fi
-		
-		WriteStats_ToJS "/tmp/uidivstatskeystatsblocked.txt" "/tmp/uidivstatstext.js" "SetKeyStatsBlocked" "keystatsblocked"
 		
 		[ -d /tmp/uidivstats ] && rm -rf /tmp/uidivstats
 		mkdir /tmp/uidivstats
@@ -731,11 +733,6 @@ Generate_Stats_Diversion(){
 		while IFS='' read -r line || [ -n "$line" ]; do
 			reqdomains=$((reqdomains+line))
 		done < /tmp/uidivstats/div-th-all-count
-		echo "$(echo $reqdomains | human_number)" > /tmp/uidivstatskeystatsreq.txt
-		WriteStats_ToJS "/tmp/uidivstatskeystatsreq.txt" "/tmp/uidivstatstext.js" "SetKeyStatsReq" "keystatstotal"
-		
-		echo "$(echo "$keystatsblocked" "$reqdomains" | awk '{printf "%3.2f\n",$1/$2*100}')%"  > /tmp/uidivstatskeystatsprecent.txt
-		WriteStats_ToJS "/tmp/uidivstatskeystatsprecent.txt" "/tmp/uidivstatstext.js" "SetKeyStatsPercent" "keystatspercent"
 		
 		head -$wsTopHosts /tmp/uidivstats/div-th-all >>/tmp/uidivstats/div-th
 		# show if found in any of these lists
@@ -968,7 +965,7 @@ WriteSql_ToFile(){
 		COUNTER=$((COUNTER + 1))
 	done
 	
-	echo "var $1$6""size = 1;" >> "$SCRIPT_DIR/uidivstatsSQLdata.js"
+	WritePlainData_ToJS "$SCRIPT_DIR/SQLData.js" "$1$6""size,1"
 }
 
 Aggregate_Stats(){
@@ -982,27 +979,56 @@ Aggregate_Stats(){
 	min="$(cut -f3 -d"," "$CSV_OUTPUT_DIR/$metricname$period.tmp" | sort -n | head -1)"
 	max="$(cut -f3 -d"," "$CSV_OUTPUT_DIR/$metricname$period.tmp" | sort -n | tail -1)"
 	avg="$(cut -f3 -d"," "$CSV_OUTPUT_DIR/$metricname$period.tmp" | sort -n | awk '{ total += $1; count++ } END { print total/count }')"
-	{
-	echo "var $metricname$period""min = $min;"
-	echo "var $metricname$period""max = $max;"
-	echo "var $metricname$period""avg = $avg;"
-	} >> "$SCRIPT_DIR/uidivstatsSQLdata.js"
+	
+	WritePlainData_ToJS "$SCRIPT_DIR/SQLData.js" "$metricname$period""min,$min" "$metricname$period""avg,$avg" "$metricname$period""max,$max"
 }
 
-Generate_Stats_From_SQLite(){
+Generate_NG(){
+	rm -f "$SCRIPT_DIR/SQLdata.js"
 	TZ=$(cat /etc/TZ)
 	export TZ
 	
 	timenow=$(date +"%s")
-	#timenowfriendly=$(date +"%c")
+	timenowfriendly=$(date +"%c")
+	Generate_KeyStats "$timenow"
+	Generate_Stats_From_SQLite "$timenow"
+}
+
+Generate_KeyStats(){
+	timenow="$1"
 	
+	echo "SELECT COUNT(QueryID) FROM [dnsqueries] WHERE [Timestamp] >= ($timenow - (86400*7));" > /tmp/uidivstats-stats.sql
+	totalqueries="$("$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-stats.sql)"
+	rm -f /tmp/uidivstats-stats.sql
+	
+	echo "SELECT COUNT(QueryID) FROM [dnsqueriesblocked] WHERE [Timestamp] >= ($timenow - (86400*7));" > /tmp/uidivstats-stats.sql
+	totalqueriesblocked="$("$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-stats.sql)"
+	rm -f /tmp/uidivstats-stats.sql
+	
+	blockedpercentage="$(echo "$totalqueriesblocked" "$totalqueries" | awk '{printf "%3.2f\n",$1/$2*100}')%"
+	
+	blockinglistfile="$DIVERSION_DIR/list/blockinglist"
+	blacklistfile="$DIVERSION_DIR/list/blacklist"
+	blacklistwcfile="$DIVERSION_DIR/list/wc_blacklist"
+	
+	if /opt/bin/grep -qm1 'devEnv' /opt/bin/diversion; then
+		blocklistdomains="$(($(/opt/bin/grep "^[^#]" "$blockinglistfile" | wc -w)-$(/opt/bin/grep "^[^#]" "$blockinglistfile" | wc -l)))"
+		blocklistdomains="$(($blocklistdomains+$(/opt/bin/grep "^[^#]" "$blacklistwcfile" "$blacklistfile" | wc -l)))"
+	else
+		blocklistdomains=$(/opt/bin/grep "^[^#]" "$blockinglistfile" "$blacklistfile" "$blacklistwcfile" | wc -l)
+	fi
+	
+	WritePlainData_ToJS "$SCRIPT_DIR/SQLData.js" "QueriesTotal,$totalqueries" "QueriesBlocked,$totalqueriesblocked" "BlockedPercentage,$blockedpercentage" "BlockedDomains,$blocklistdomains"
+}
+
+Generate_Stats_From_SQLite(){
+	timenow="$1"
 	{
 		echo "DELETE FROM [dnsqueries] WHERE [Timestamp] < ($timenow - (86400*30));"
 		echo "DELETE FROM [dnsqueriesblocked] WHERE [Timestamp] < ($timenow - (86400*30));"
 	} > /tmp/uidivstats-stats.sql
 	
 	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-stats.sql
-	rm -f "$SCRIPT_DIR/uidivstatsSQLdata.js"
 	
 	rm -f "$CSV_OUTPUT_DIR/"*
 	rm -f /tmp/uidivstats-stats.sql
@@ -1332,7 +1358,7 @@ case "$1" in
 	;;
 	sql)
 		Check_Lock
-		Generate_Stats_From_SQLite
+		Generate_NG
 		Clear_Lock
 		exit 0
 	;;

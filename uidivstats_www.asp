@@ -103,6 +103,7 @@ td.nodata {
 <script language="JavaScript" type="text/javascript" src="/ext/uiDivStats/uidivstats.js"></script>
 <script language="JavaScript" type="text/javascript" src="/ext/uiDivStats/uidivstatsclients.js"></script>
 <script language="JavaScript" type="text/javascript" src="/ext/uiDivStats/uidivstatstext.js"></script>
+<script language="JavaScript" type="text/javascript" src="/ext/uiDivStats/SQLData.js"></script>
 <script>
 // Keep the real data in a seperate object called allData
 // Put only that part of allData in the dataset to optimize zoom/pan performance
@@ -626,21 +627,12 @@ function initial(){
 	$("#uidivstats_table_keystats").after(BuildChartHtml("Top blocked domains", "BlockedAds", "false"));
 	$("#BlockedAds_Type").val(GetCookie("BlockedAds_Type"));
 	Draw_Chart("BlockedAds");
+	Assign_EventHandlers();
 	
 	SetDivStatsTitle();
-	SetKeyStatsReq();
-	SetKeyStatsBlocked();
-	SetKeyStatsPercent();
-	SetKeyStatsDomains();
 	SetTopRequestedTitle();
 	SetClients();
 	GetCookie("clientdomains");
-	
-	$("thead.collapsible").click(function(){
-		$(this).siblings().toggle("fast");
-	})
-	
-	$(".default-collapsed").trigger("click");
 }
 
 function reload() {
@@ -896,10 +888,10 @@ function BuildTableHtml(txttitle, txtbase) {
 		tablehtml += '</tr>';
 		tablehtml += '</thead>';
 		tablehtml += '<tr class="even" style="text-align:center;">';
-		tablehtml += '<td id="keystatstotal">Total</td>';
-		tablehtml += '<td id="keystatsblocked">Blocked</td>';
-		tablehtml += '<td id="keystatspercent">Percent</td>';
-		tablehtml += '<td id="keystatsdomains">Domains</td>';
+		tablehtml += '<td id="keystatstotal">'+QueriesTotal+'</td>';
+		tablehtml += '<td id="keystatsblocked">'+QueriesBlocked+'</td>';
+		tablehtml += '<td id="keystatspercent">'+BlockedPercentage+'</td>';
+		tablehtml += '<td id="keystatsdomains">'+BlockedDomains+'</td>';
 		tablehtml += '</tr>';
 		tablehtml += '</table>';
 		tablehtml += '</div>';
@@ -955,12 +947,20 @@ function loadDivStats() {
 		url: '/ext/uiDivStats/uidivstatstext.htm',
 		dataType: 'text',
 		error: function(xhr){
-			setTimeout("loadDivStats();", 5000);
+			setTimeout("loadDivStats();", 1000);
 		},
 		success: function(data){
 			document.getElementById("divstats").innerHTML=data;
 		}
 	});
+}
+
+function Assign_EventHandlers(){
+	$("thead.collapsible").click(function(){
+		$(this).siblings().toggle("fast");
+	})
+	
+	$(".default-collapsed").trigger("click");
 }
 </script>
 </head>
