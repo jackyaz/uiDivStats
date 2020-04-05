@@ -240,6 +240,7 @@ Create_Symlinks(){
 	rm -f "$SCRIPT_WEB_DIR/"* 2>/dev/null
 	
 	ln -s "$SCRIPT_DIR/uidivstats.js" "$SCRIPT_WEB_DIR/uidivstats.js" 2>/dev/null
+	ln -s "$SCRIPT_DIR/SQLdata.js" "$SCRIPT_WEB_DIR/SQLdata.js" 2>/dev/null
 	ln -s "$SCRIPT_DIR/uidivstatsclients.js" "$SCRIPT_WEB_DIR/uidivstatsclients.js" 2>/dev/null
 	
 	ln -s "$SCRIPT_DIR/uidivstatstext.js" "$SCRIPT_WEB_DIR/uidivstatstext.js" 2>/dev/null
@@ -984,7 +985,7 @@ Aggregate_Stats(){
 }
 
 Generate_NG(){
-	rm -f "$SCRIPT_DIR/SQLdata.js"
+	rm -f "$SCRIPT_DIR/SQLData.js"
 	TZ=$(cat /etc/TZ)
 	export TZ
 	
@@ -1005,7 +1006,7 @@ Generate_KeyStats(){
 	totalqueriesblocked="$("$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-stats.sql)"
 	rm -f /tmp/uidivstats-stats.sql
 	
-	blockedpercentage="$(echo "$totalqueriesblocked" "$totalqueries" | awk '{printf "%3.2f\n",$1/$2*100}')%"
+	blockedpercentage="$(echo "$totalqueriesblocked" "$totalqueries" | awk '{printf "%3.2f\n",$1/$2*100}')"
 	
 	blockinglistfile="$DIVERSION_DIR/list/blockinglist"
 	blacklistfile="$DIVERSION_DIR/list/blacklist"
@@ -1023,12 +1024,12 @@ Generate_KeyStats(){
 
 Generate_Stats_From_SQLite(){
 	timenow="$1"
-	{
-		echo "DELETE FROM [dnsqueries] WHERE [Timestamp] < ($timenow - (86400*30));"
-		echo "DELETE FROM [dnsqueriesblocked] WHERE [Timestamp] < ($timenow - (86400*30));"
-	} > /tmp/uidivstats-stats.sql
+	#{
+	#	echo "DELETE FROM [dnsqueries] WHERE [Timestamp] < ($timenow - (86400*30));"
+	#	echo "DELETE FROM [dnsqueriesblocked] WHERE [Timestamp] < ($timenow - (86400*30));"
+	#} > /tmp/uidivstats-stats.sql
 	
-	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-stats.sql
+	#"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-stats.sql
 	
 	rm -f "$CSV_OUTPUT_DIR/"*
 	rm -f /tmp/uidivstats-stats.sql
