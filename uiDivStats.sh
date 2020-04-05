@@ -568,8 +568,8 @@ WritePlainData_ToJS(){
 	outputfile="$1"
 	shift
 	for var in "$@"; do
-		varname="$(echo $var | cut -f1 -d',')"
-		varvalue="$(echo $var | cut -f2 -d',')"
+		varname="$(echo "$var" | cut -f1 -d',')"
+		varvalue="$(echo "$var" | cut -f2 -d',')"
 		echo "var $varname = $varvalue;" >> "$outputfile"
 	done
 }
@@ -1028,7 +1028,7 @@ Generate_KeyStats(){
 	
 	if /opt/bin/grep -qm1 'devEnv' /opt/bin/diversion; then
 		blocklistdomains="$(($(/opt/bin/grep "^[^#]" "$blockinglistfile" | wc -w)-$(/opt/bin/grep "^[^#]" "$blockinglistfile" | wc -l)))"
-		blocklistdomains="$(($blocklistdomains+$(/opt/bin/grep "^[^#]" "$blacklistwcfile" "$blacklistfile" | wc -l)))"
+		blocklistdomains="$((blocklistdomains+$(/opt/bin/grep "^[^#]" "$blacklistwcfile" "$blacklistfile" | wc -l)))"
 	else
 		blocklistdomains=$(/opt/bin/grep "^[^#]" "$blockinglistfile" "$blacklistfile" "$blacklistwcfile" | wc -l)
 	fi
