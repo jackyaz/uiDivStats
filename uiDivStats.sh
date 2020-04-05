@@ -328,17 +328,35 @@ Auto_Startup(){
 Auto_Cron(){
 	case $1 in
 		create)
-			STARTUPLINECOUNT=$(cru l | grep -c "$SCRIPT_NAME")
+			STARTUPLINECOUNT=$(cru l | grep -cx "0 \* \* \* \* /jffs/scripts/$SCRIPT_NAME generate #uiDivStats#")
+			if [ "$STARTUPLINECOUNT" -gt 0 ]; then
+				cru d "$SCRIPT_NAME"
+			fi
 			
-			if [ "$STARTUPLINECOUNT" -eq 0 ]; then
-				cru a "$SCRIPT_NAME" "0 * * * * /jffs/scripts/$SCRIPT_NAME generate"
+			STARTUPLINECOUNTGENERATE=$(cru l | grep -c "$SCRIPT_NAME""_generate")
+			STARTUPLINECOUNTTRIM=$(cru l | grep -c "$SCRIPT_NAME""_trim")
+			
+			if [ "$STARTUPLINECOUNTGENERATE" -eq 0 ]; then
+				cru a "$SCRIPT_NAME""_generate" "0 * * * * /jffs/scripts/$SCRIPT_NAME generate"
+			fi
+			if [ "$STARTUPLINECOUNTTRIM" -eq 0 ]; then
+				cru a "$SCRIPT_NAME""_trim" "3 3 * * * /jffs/scripts/$SCRIPT_NAME trimdb"
 			fi
 		;;
 		delete)
-			STARTUPLINECOUNT=$(cru l | grep -c "$SCRIPT_NAME")
-			
+			STARTUPLINECOUNT=$(cru l | grep -cx "0 \* \* \* \* /jffs/scripts/$SCRIPT_NAME generate #uiDivStats#")
 			if [ "$STARTUPLINECOUNT" -gt 0 ]; then
 				cru d "$SCRIPT_NAME"
+			fi
+			
+			STARTUPLINECOUNTGENERATE=$(cru l | grep -c "$SCRIPT_NAME""_generate")
+			STARTUPLINECOUNTTRIM=$(cru l | grep -c "$SCRIPT_NAME""_trim")
+			
+			if [ "$STARTUPLINECOUNTGENERATE" -gt 0 ]; then
+				cru d "$SCRIPT_NAME""_generate"
+			fi
+			if [ "$STARTUPLINECOUNTTRIM" -gt 0 ]; then
+				cru d "$SCRIPT_NAME""_trim"
 			fi
 		;;
 	esac
@@ -986,7 +1004,7 @@ Generate_NG(){
 	export TZ
 	
 	timenow=$(date +"%s")
-	timenowfriendly=$(date +"%c")
+	#timenowfriendly=$(date +"%c")
 	Generate_KeyStats "$timenow"
 	Generate_Stats_From_SQLite "$timenow"
 }
@@ -1058,6 +1076,21 @@ Generate_Stats_From_SQLite(){
 	done
 	
 	rm -f "/tmp/uidivstats-stats.sql"
+}
+
+Trim_DNS_DB(){
+	/opt/etc/init.d/S90taildns stop
+	
+	{
+		echo "DELETE FROM [dnsqueries] WHERE [Timestamp] < ($timenow - (86400*30));"
+		echo "DELETE FROM [dnsqueriesblocked] WHERE [Timestamp] < ($timenow - (86400*30));"
+	} > /tmp/uidivstats-stats.sql
+	
+	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-stats.sql
+	
+	/opt/etc/init.d/S90taildns start
+	
+	rm -f /tmp/uidivstats-stats.sql
 }
 
 Shortcut_script(){
@@ -1356,6 +1389,12 @@ case "$1" in
 	sql)
 		Check_Lock
 		Generate_NG
+		Clear_Lock
+		exit 0
+	;;
+	trim)
+		Check_Lock
+		Trim_DNS_DB
 		Clear_Lock
 		exit 0
 	;;
