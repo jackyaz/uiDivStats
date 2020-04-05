@@ -960,11 +960,7 @@ WriteSql_ToFile(){
 		echo ".output $5$6.tmp"
 	} >> "$7"
 	
-	COUNTER=0
-	until [ $COUNTER -gt "$maxcount" ]; do
-		echo "select '$1',$timenow - ($multiplier*$COUNTER),count([QueryID]) from $2 WHERE ([Timestamp] >= $timenow - ($multiplier*($COUNTER+1))) AND ([Timestamp] <= $timenow - ($multiplier*$COUNTER));" >> "$7"
-		COUNTER=$((COUNTER + 1))
-	done
+	echo "SELECT '$1', [Timestamp], COUNT([QueryID]) FROM $2 WHERE ([Timestamp] >= $timenow - ($multiplier*$maxcount)) GROUP BY ([Timestamp]/($multiplier));" >> "$7"
 	
 	WritePlainData_ToJS "$SCRIPT_DIR/SQLData.js" "$1$6""size,1"
 }
@@ -1034,7 +1030,7 @@ Generate_Stats_From_SQLite(){
 	rm -f "$CSV_OUTPUT_DIR/"*
 	rm -f /tmp/uidivstats-stats.sql
 	
-	metriclist="Total Blocked"
+	metriclist="Total" # Blocked"
 	
 	for metric in $metriclist; do
 		dbtable="dnsqueries"
