@@ -1392,7 +1392,7 @@ case "$1" in
 		Clear_Lock
 		exit 0
 	;;
-	trim)
+	trimdb)
 		Check_Lock
 		Trim_DNS_DB
 		Clear_Lock
