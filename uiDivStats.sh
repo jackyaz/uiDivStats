@@ -1038,12 +1038,6 @@ Generate_KeyStats(){
 
 Generate_Stats_From_SQLite(){
 	timenow="$1"
-	#{
-	#	echo "DELETE FROM [dnsqueries] WHERE [Timestamp] < ($timenow - (86400*30));"
-	#	echo "DELETE FROM [dnsqueriesblocked] WHERE [Timestamp] < ($timenow - (86400*30));"
-	#} > /tmp/uidivstats-stats.sql
-	
-	#"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-stats.sql
 	
 	rm -f "$CSV_OUTPUT_DIR/"*
 	rm -f /tmp/uidivstats-stats.sql
