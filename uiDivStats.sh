@@ -1048,7 +1048,7 @@ Generate_Stats_From_SQLite(){
 	rm -f "$CSV_OUTPUT_DIR/"*
 	rm -f /tmp/uidivstats-stats.sql
 	
-	metriclist="Total" # Blocked"
+	metriclist="Total Blocked"
 	
 	for metric in $metriclist; do
 		dbtable="dnsqueries"
