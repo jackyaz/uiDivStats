@@ -1245,7 +1245,7 @@ Check_Requirements(){
 		opkg update
 		opkg install grep
 		opkg install sqlite3-cli
-		opkg install opkg install procps-ng-pkill
+		opkg install procps-ng-pkill
 		return 0
 	else
 		return 1
