@@ -531,7 +531,7 @@ Generate_NG(){
 	rm -f /tmp/uidivstats.sql
 	if [ "$journalmode" != "wal" ]; then
 		/opt/etc/init.d/S90taildns stop
-		echo "PRAGMA journal_mode=WAL;PRAGMA cache_size=-20000" > /tmp/uidivstats.sql
+		echo "PRAGMA journal_mode=WAL;PRAGMA cache_size=-20000;" > /tmp/uidivstats.sql
 		echo "create index idx_dns on dnsqueries (Timestamp,ReqDmn);" > /tmp/uidivstats.sql
 		echo "create index idx_dnsblocked on dnsqueriesblocked (Timestamp,ReqDmn);create index idx_dns_clients on dnsqueries (Timestamp,ReqDmn,SrcIP);" >> /tmp/uidivstats.sql
 		echo "create index idx_dnsblocked_clients on dnsqueriesblocked (Timestamp,ReqDmn,SrcIP);" >> /tmp/uidivstats.sql
