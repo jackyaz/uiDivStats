@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.com/jackyaz/uiDivStats.svg?branch=master)](https://travis-ci.com/jackyaz/uiDivStats)
 
 ## v2.0.0
-### Updated on 2020-03-24
+### Updated on 2020-04-19
 ## About
 See statistics and graphs for Diversion Ad-blocking on your router.
 
@@ -15,9 +15,8 @@ uiDivStats is free to use under the [GNU General Public License version 3](https
 Love the script and want to support future development? Any and all donations gratefully received!
 [**PayPal donation**](https://paypal.me/jackyaz21)
 
-## Supported Models
-All models supported by [Asuswrt-Merlin](https://asuswrt.lostrealm.ca/about). Models confirmed to work are below:
-*   RT-AC86U
+## Supported firmware versions
+You must be running firmware Merlin 384.15/384.13_4 or Fork 43E5 (or later) [Asuswrt-Merlin](https://asuswrt.lostrealm.ca/)
 
 ## Installation
 Using your preferred SSH client/terminal, copy and paste the following command, then press Enter:

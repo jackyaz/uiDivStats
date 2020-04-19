@@ -84,119 +84,85 @@ td.nodata {
   border-right: none !important;
 }
 </style>
-<script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
+<script language="JavaScript" type="text/javascript" src="/ext/shared-jy/jquery.js"></script>
 <script language="JavaScript" type="text/javascript" src="/ext/shared-jy/moment.js"></script>
 <script language="JavaScript" type="text/javascript" src="/ext/shared-jy/chart.js"></script>
 <script language="JavaScript" type="text/javascript" src="/ext/shared-jy/hammerjs.js"></script>
 <script language="JavaScript" type="text/javascript" src="/ext/shared-jy/chartjs-plugin-zoom.js"></script>
 <script language="JavaScript" type="text/javascript" src="/ext/shared-jy/chartjs-plugin-annotation.js"></script>
-<script language="JavaScript" type="text/javascript" src="/ext/shared-jy/chartjs-plugin-datasource.js"></script>
 <script language="JavaScript" type="text/javascript" src="/ext/shared-jy/chartjs-plugin-deferred.js"></script>
+<script language="JavaScript" type="text/javascript" src="/ext/shared-jy/d3.js"></script>
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
+<script language="JavaScript" type="text/javascript" src="/ext/shared-jy/detect.js"></script>
 <script language="JavaScript" type="text/javascript" src="/tmhist.js"></script>
 <script language="JavaScript" type="text/javascript" src="/tmmenu.js"></script>
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
-<script language="JavaScript" type="text/javascript" src="/validator.js"></script>
-<script language="JavaScript" type="text/javascript" src="/ext/uiDivStats/uidivstats.js"></script>
-<script language="JavaScript" type="text/javascript" src="/ext/uiDivStats/uidivstatsclients.js"></script>
-<script language="JavaScript" type="text/javascript" src="/ext/uiDivStats/uidivstatstext.js"></script>
+<script language="JavaScript" type="text/javascript" src="/ext/shared-jy/validator.js"></script>
 <script language="JavaScript" type="text/javascript" src="/ext/uiDivStats/SQLData.js"></script>
 <script>
-// Keep the real data in a seperate object called allData
-// Put only that part of allData in the dataset to optimize zoom/pan performance
-// Author: Evert van der Weit - 2018
-
-function filterData(chartInstance) {
-	var datasets = chartInstance.data.datasets;
-	var originalDatasets = chartInstance.data.allData;
-	var chartOptions = chartInstance.options.scales.xAxes[0];
-	
-	var startX = chartOptions.time.min;
-	var endX = chartOptions.time.max;
-	if(typeof originalDatasets === 'undefined' || originalDatasets === null) { return; }
-	for(var i = 0; i < originalDatasets.length; i++) {
-		var dataset = datasets[i];
-		var originalData = originalDatasets[i];
-		
-		if (!originalData.length) break
-		
-		var s = startX;
-		var e = endX;
-		var sI = null;
-		var eI = null;
-		
-		for (var j = 0; j < originalData.length; j++) {
-			if ((sI==null) && originalData[j].x > s) {
-				sI = j;
-			}
-			if ((eI==null) && originalData[j].x > e) {
-				eI = j;
-			}
-		}
-		if (sI==null) sI = 0;
-		if (originalData[originalData.length - 1].x < s) eI = 0
-			else if (eI==null) eI = originalData.length
-		
-		dataset.data = originalData.slice(sI, eI);
-	}
-}
-
-var datafilterPlugin = {
-	beforeUpdate: function(chartInstance) {
-		filterData(chartInstance);
-	}
-}
-</script>
-<script>
-var charttypedomain;
-var BarChartReqDomains;
+var $j = jQuery.noConflict(); //avoid conflicts on John's fork (state.js)
+var maxNoCharts = 3;
+var currentNoCharts = 0;
 Chart.defaults.global.defaultFontColor = "#CCC";
 Chart.Tooltip.positioners.cursor = function(chartElements, coordinates) {
 	return coordinates;
 };
 
+function keyHandler(e) {
+	if (e.keyCode == 27){
+		$j(document).off("keydown");
+		ResetZoom();
+	}
+}
+
+$j(document).keydown(function(e){keyHandler(e);});
+$j(document).keyup(function(e){
+	$j(document).keydown(function(e){
+		keyHandler(e);
+	});
+});
+
+var chartlist = ["daily","weekly","monthly"];
+var timeunitlist = ["hour","day","day"];
+var intervallist = [24,7,30];
+
 function Draw_Chart_NoData(txtchartname){
-	document.getElementById("divChart" + txtchartname).width = "735";
-	document.getElementById("divChart" + txtchartname).height = "400";
-	document.getElementById("divChart" + txtchartname).style.width = "735px";
-	document.getElementById("divChart" + txtchartname).style.height = "400px";
-	var ctx = document.getElementById("divChart" + txtchartname).getContext("2d");
+	document.getElementById("canvasChart" + txtchartname).width = "735";
+	document.getElementById("canvasChart" + txtchartname).height = "500";
+	document.getElementById("canvasChart" + txtchartname).style.width = "735px";
+	document.getElementById("canvasChart" + txtchartname).style.height = "500px";
+	var ctx = document.getElementById("canvasChart" + txtchartname).getContext("2d");
 	ctx.save();
 	ctx.textAlign = 'center';
 	ctx.textBaseline = 'middle';
 	ctx.font = "normal normal bolder 48px Arial";
 	ctx.fillStyle = 'white';
-	ctx.fillText('No data to display', 368, 200);
+	ctx.fillText('No data to display', 368, 250);
 	ctx.restore();
 }
 
-function Draw_Chart(txtchartname) {
-	var objchartname = window["Chart" + txtchartname];
-	var objdataname = window["Data" + txtchartname];
-	var objlabeldataname = window["Labels" + txtchartname];
-	var charttype = getChartType($("#" + txtchartname + "_Type option:selected").val());
-	if (typeof objdataname === 'undefined' || objdataname === null) {
-		Draw_Chart_NoData(txtchartname);
-		return;
-	}
-	if (objdataname.length == 1 && objdataname[0] == "") {
-		Draw_Chart_NoData(txtchartname);
-		return;
-	}
-	if (typeof objlabeldataname === 'undefined' || objlabeldataname === null) {
-		Draw_Chart_NoData(txtchartname);
-		return;
-	}
-	if (objlabeldataname.length == 0) {
-		Draw_Chart_NoData(txtchartname);
-		return;
-	}
-		
+function Draw_Chart(txtchartname){
+	var chartperiod = getChartPeriod($j("#" + txtchartname + "_Period option:selected").val());
+	var charttype = getChartType($j("#" + txtchartname + "_Type option:selected").val());
+	var chartclient = getChartClient($j("#" + txtchartname + "_Clients option:selected").val());
+	
+	var dataobject = window[txtchartname+chartperiod];
+	if(typeof dataobject === 'undefined' || dataobject === null) { Draw_Chart_NoData(txtchartname); return; }
+	if (dataobject.length == 0) { Draw_Chart_NoData(txtchartname); return; }
+	
+	var chartData = dataobject.filter(function(item) {
+		return item.SrcIP == objchannels[i];
+	}).map(function(d) {return d.Count});
+	
+	var chartLabels = dataobject.map(function(d) {return d.ReqDmn});
+	var chartData = dataobject.map(function(d) {return d.Count});
+	var objchartname = window["Chart" + txtchartname];;
+	
 	if (objchartname != undefined) objchartname.destroy();
-	var ctx = document.getElementById("divChart" + txtchartname).getContext("2d");
+	var ctx = document.getElementById("canvasChart" + txtchartname).getContext("2d");
 	var chartOptions = {
 		segmentShowStroke: false,
 		segmentStrokeColor: "#000",
@@ -272,8 +238,8 @@ function Draw_Chart(txtchartname) {
 						y: 0
 					},
 					rangeMax: {
-						x: ZoomPanMax(charttype, "x", objdataname),
-						y: ZoomPanMax(charttype, "y", objdataname)
+						x: ZoomPanMax(charttype, "x", chartData),
+						y: ZoomPanMax(charttype, "y", chartData)
 					}
 				},
 				zoom: {
@@ -284,8 +250,8 @@ function Draw_Chart(txtchartname) {
 						y: 0
 					},
 					rangeMax: {
-						x: ZoomPanMax(charttype, "x", objdataname),
-						y: ZoomPanMax(charttype, "y", objdataname)
+						x: ZoomPanMax(charttype, "x", chartData),
+						y: ZoomPanMax(charttype, "y", chartData)
 					},
 					speed: 0.1
 				}
@@ -293,11 +259,11 @@ function Draw_Chart(txtchartname) {
 		}
 	};
 	var chartDataset = {
-		labels: window["Labels" + txtchartname],
+		labels: chartLabels,
 		datasets: [{
-			data: objdataname,
+			data: chartData,
 			borderWidth: 1,
-			backgroundColor: poolColors(objdataname.length),
+			backgroundColor: poolColors(chartLabels.length),
 			borderColor: "#000000"
 		}]
 	};
@@ -589,7 +555,7 @@ function Draw_Domain_Chart() {
 		}]
 	};
 	BarChartReqDomains = new Chart(ctx, {
-		type: getChartType($("#charttypedomains option:selected").val()),
+		type: getChartType($j("#charttypedomains option:selected").val()),
 		options: barOptionsDomains,
 		data: barDatasetDomains
 	});
@@ -616,23 +582,33 @@ function SetCurrentPage(){
 
 function initial(){
 	SetCurrentPage();
-	GetCookie("charttypeads");
 	
 	show_menu();
-	loadDivStats();
-	Draw_Domain_Chart();
-	changeLayout(E('charttypedomains'),"BarChartReqDomains","charttypedomains");
+	//Draw_Domain_Chart();
+	//changeLayout(E('charttypedomains'),"BarChartReqDomains","charttypedomains");
 	
-	$("#uidivstats_table_psstats").after(BuildTableHtml("Key Stats", "keystats"));
-	$("#uidivstats_table_keystats").after(BuildChartHtml("Top blocked domains", "BlockedAds", "false"));
-	$("#BlockedAds_Type").val(GetCookie("BlockedAds_Type"));
-	Draw_Chart("BlockedAds");
+	$j("#uidivstats_title").after(BuildTableHtml("Key Stats", "keystats"));
+	$j("#uidivstats_table_keystats").after(BuildChartHtml("Top blocked domains", "BlockedAds", "true"));
+	//$j("#BlockedAds_Type").val(GetCookie("BlockedAds_Type"));
+	for (i = 0; i < chartlist.length; i++) {
+		d3.csv('/ext/uiDivStats/csv/Blocked'+chartlist[i]+'.htm').then(SetGlobalDataset.bind(null,"BlockedAds"+chartlist[i]));
+	}
 	Assign_EventHandlers();
 	
-	SetDivStatsTitle();
-	SetTopRequestedTitle();
-	SetClients();
-	GetCookie("clientdomains");
+	//SetDivStatsTitle();
+	//SetTopRequestedTitle();
+	//SetClients();
+	//GetCookie("clientdomains");
+}
+
+function SetGlobalDataset(txtchartname,dataobject){
+	window[txtchartname] = dataobject;
+	
+	currentNoCharts++;
+	
+	if(currentNoCharts == maxNoCharts) {
+		Draw_Chart("BlockedAds");
+	}
 }
 
 function reload() {
@@ -700,87 +676,112 @@ function getChartType(layout) {
 	return charttype;
 }
 
+function getChartPeriod(period) {
+	var chartperiod = "daily";
+	if (period == 0) chartperiod = "daily";
+	else if (period == 1) chartperiod = "weekly";
+	else if (period == 2) chartperiod = "monthly";
+	return chartperiod;
+}
+
 function ZoomPanEnabled(charttype) {
 	if (charttype == "bar") {
-			return 'y';
-	} else if (charttype == "horizontalBar") {
-			return 'x';
-	} else {
-			return '';
+		return 'y';
+	}
+	else if (charttype == "horizontalBar") {
+		return 'x';
+	}
+	else {
+		return '';
 	}
 }
 
 function ZoomPanMax(charttype, axis, datasetname) {
 	if (axis == "x") {
-			if (charttype == "bar") {
-					return null;
-			} else if (charttype == "horizontalBar") {
-					return getMax(datasetname);
-			} else {
-					return null;
-			}
-	} else if (axis == "y") {
-			if (charttype == "bar") {
-					return getMax(datasetname);
-			} else if (charttype == "horizontalBar") {
-					return null;
-			} else {
-					return null;
-			}
+		if (charttype == "bar") {
+			return null;
+		}
+		else if (charttype == "horizontalBar") {
+			return getMax(datasetname);
+		}
+		else {
+			return null;
+		}
+	}
+	else if (axis == "y") {
+		if (charttype == "bar") {
+			return getMax(datasetname);
+		}
+		else if (charttype == "horizontalBar") {
+			return null;
+		}
+		else {
+			return null;
+		}
 	}
 }
 
 function showGrid(e, axis) {
 	if (e == null) {
 			return true;
-	} else if (e == "pie") {
-			return false;
-	} else {
-			return true;
+	}
+	else if (e == "pie") {
+		return false;
+	}
+	else {
+		return true;
 	}
 }
 
 function showAxis(e, axis) {
 	if (e == "bar" && axis == "x") {
 			return true;
-	} else {
-			if (e == null) {
-					return true;
-			} else if (e == "pie") {
-					return false;
-			} else {
-					return true;
-			}
+	}
+	else {
+		if (e == null) {
+			return true;
+		}
+		else if (e == "pie") {
+			return false;
+		}
+		else {
+			return true;
+		}
 	}
 }
 
 function showTicks(e, axis) {
 	if (e == "bar" && axis == "x") {
+		return false;
+	}
+	else {
+		if (e == null) {
+			return true;
+		}
+		else if (e == "pie") {
 			return false;
-	} else {
-			if (e == null) {
-					return true;
-			} else if (e == "pie") {
-					return false;
-			} else {
-					return true;
-			}
+		}
+		else {
+			return true;
+		}
 	}
 }
 
 function showLegend(e) {
 	if (e == "pie") {
-			return true;
-	} else {
-			return false;
+		return true;
+	}
+	else {
+		return false;
 	}
 }
 
 function showTitle(e) {
 	if (e == "pie") {
-			return true;
-	} else {
-			return false;
+		return true;
+	}
+	else {
+		return false;
 	}
 }
 
@@ -814,7 +815,9 @@ function getAxisLabel(type, axis) {
 function changeChart(e) {
 	value = e.value * 1;
 	name = e.id.substring(0, e.id.indexOf("_"));
-	SetCookie("BlockedAds_Type",value);
+	if(e.id.indexOf("Clients") == -1){
+		SetCookie(e.id,value);
+	}
 	Draw_Chart(name);
 }
 
@@ -824,17 +827,16 @@ function BuildChartHtml(txttitle, txtbase, perip) {
 	charthtml += '<thead class="collapsible expanded"';
 	charthtml += '<tr><td colspan="2">' + txttitle + ' (click to expand/collapse)</td></tr>';
 	charthtml += '</thead>';
-	/* Colour selector start ---
-	charthtml+='<tr class="even">';
-	charthtml+='<th width="40%">Style for chart</th>';
-	charthtml+='<td>';
-	charthtml+='<select style="width:100px" class="input_option" onchange="changeChart(this,\''+multilabel+'\')" id="' + txtbase + '_Colour">';
-	charthtml+='<option value=0>Colour</option>';
-	charthtml+='<option value=1>Plain</option>';
-	charthtml+='</select>';
-	charthtml+='</td>';
-	charthtml+='</tr>';
-	--- Colour selector end */
+	charthtml += '<tr class="even">';
+	charthtml += '<th width="40%">Period to display</th>';
+	charthtml += '<td>';
+	charthtml += '<select style="width:125px" class="input_option" onchange="changeChart(this)" id="' + txtbase + '_Period">';
+	charthtml += '<option value=0>Last 24 hours</option>';
+	charthtml += '<option value=1>Last 7 days</option>';
+	charthtml += '<option value=2>Last 30 days</option>';
+	charthtml += '</select>';
+	charthtml += '</td>';
+	charthtml += '</tr>';
 	charthtml += '<tr class="even">';
 	charthtml += '<th width="40%">Layout for chart</th>';
 	charthtml += '<td>';
@@ -857,7 +859,7 @@ function BuildChartHtml(txttitle, txtbase, perip) {
 	}
 	charthtml += '<tr>';
 	charthtml += '<td colspan="2" style="padding: 2px;">';
-	charthtml += '<div style="background-color:#2f3e44;border-radius:10px;width:735px;padding-left:5px;"><canvas id="divChart' + txtbase + '" height="400"></div>';
+	charthtml += '<div style="background-color:#2f3e44;border-radius:10px;width:735px;padding-left:5px;" id="divChart' + txtbase + '"><canvas id="canvasChart' + txtbase + '" height="500"></div>';
 	charthtml += '</td>';
 	charthtml += '</tr>';
 	charthtml += '</table>';
@@ -928,10 +930,7 @@ function changeLayout(e,chartname,cookiename) {
 		}
 	}
 	cookie.set(cookiename, layout, 31);
-	if ( chartname == "BarChartBlockedAds" ) {
-		Draw_Ad_Chart();
-	}
-	else if ( chartname == "BarChartReqDomains" ) {
+	if ( chartname == "BarChartReqDomains" ) {
 		Draw_Domain_Chart();
 	}
 }
@@ -942,25 +941,12 @@ function changeClient(e,chartname,cookiename) {
 	Draw_Domain_Chart();
 }
 
-function loadDivStats() {
-	$.ajax({
-		url: '/ext/uiDivStats/uidivstatstext.htm',
-		dataType: 'text',
-		error: function(xhr){
-			setTimeout("loadDivStats();", 1000);
-		},
-		success: function(data){
-			document.getElementById("divstats").innerHTML=data;
-		}
-	});
-}
-
 function Assign_EventHandlers(){
-	$("thead.collapsible").click(function(){
-		$(this).siblings().toggle("fast");
+	$j("thead.collapsible").click(function(){
+		$j(this).siblings().toggle("fast");
 	})
 	
-	$(".default-collapsed").trigger("click");
+	$j(".default-collapsed").trigger("click");
 }
 </script>
 </head>
@@ -996,33 +982,8 @@ function Assign_EventHandlers(){
 <tr bgcolor="#4D595D">
 <td valign="top">
 <div style="line-height:10px;">&nbsp;</div>
-<div class="formfonttitle" style="margin-bottom:0px;" id="statstitle">Diversion Statistics</div>
+<div class="formfonttitle" style="margin-bottom:0px;" id="uidivstats_title">Diversion Statistics</div>
 <div style="line-height:10px;">&nbsp;</div>
-<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#4D595D" class="FormTable">
-<thead class="collapsible default-collapsed" >
-<tr>
-<td colspan="2">Diversion Statistics Report (click to expand/collapse)</td>
-</tr>
-</thead>
-<tr>
-<td style="padding: 0px;">
-<textarea cols="75" rows="35" wrap="off" readonly="readonly" id="divstats" class="textarea_log_table" style="font-family:'Courier New', Courier, mono; font-size:11px;border: none;padding: 0px;">"Stats will show here"</textarea>
-</td>
-</tr>
-</table>
-<div style="line-height:10px;">&nbsp;</div>
-<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#4D595D" class="FormTable" id="uidivstats_table_psstats">
-<thead class="collapsible default-collapsed" >
-<tr>
-<td colspan="2">Pixelserv Statistics Report (click to expand/collapse)</td>
-</tr>
-</thead>
-<tr>
-<td style="padding: 0px;">
-<iframe src="/ext/uiDivStats/psstats.htm" style="width:99%;height:420px;"></iframe>
-</td>
-</tr>
-</table>
 
 <!-- Keystats table -->
 
@@ -1055,7 +1016,7 @@ function Assign_EventHandlers(){
 </tr>
 <tr>
 <td colspan="2" style="padding: 2px;">
-<div style="background-color:#2f3e44;border-radius:10px;width:735px;padding-left:5px;"><canvas id="ChartDomains" height="360" /></div>
+<div style="background-color:#2f3e44;border-radius:10px;width:735px;padding-left:5px;"><canvas id="divChartChartDomains" height="360" /></div>
 </td>
 </tr>
 </table>
