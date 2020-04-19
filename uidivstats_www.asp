@@ -104,7 +104,7 @@ td.nodata {
 <script language="JavaScript" type="text/javascript" src="/ext/uiDivStats/SQLData.js"></script>
 <script>
 var $j = jQuery.noConflict(); //avoid conflicts on John's fork (state.js)
-var maxNoCharts = 3;
+var maxNoCharts = 6;
 var currentNoCharts = 0;
 Chart.defaults.global.defaultFontColor = "#CCC";
 Chart.Tooltip.positioners.cursor = function(chartElements, coordinates) {
@@ -147,18 +147,32 @@ function Draw_Chart_NoData(txtchartname){
 function Draw_Chart(txtchartname){
 	var chartperiod = getChartPeriod($j("#" + txtchartname + "_Period option:selected").val());
 	var charttype = getChartType($j("#" + txtchartname + "_Type option:selected").val());
-	var chartclient = getChartClient($j("#" + txtchartname + "_Clients option:selected").val());
+	var chartclient = $j("#" + txtchartname + "_Clients option:selected").text();
 	
-	var dataobject = window[txtchartname+chartperiod];
+	var dataobject;
+	if(chartclient == "All (*)"){
+		dataobject = window[txtchartname+chartperiod];
+	}
+	else {
+		dataobject = window[txtchartname+chartperiod+"clients"];
+	}
 	if(typeof dataobject === 'undefined' || dataobject === null) { Draw_Chart_NoData(txtchartname); return; }
 	if (dataobject.length == 0) { Draw_Chart_NoData(txtchartname); return; }
 	
-	var chartData = dataobject.filter(function(item) {
-		return item.SrcIP == objchannels[i];
-	}).map(function(d) {return d.Count});
+	var chartData,chartLabels;
 	
-	var chartLabels = dataobject.map(function(d) {return d.ReqDmn});
-	var chartData = dataobject.map(function(d) {return d.Count});
+	if(chartclient == "All (*)"){
+		chartData = dataobject.map(function(d) {return d.Count});
+		chartLabels = dataobject.map(function(d) {return d.ReqDmn});
+	}
+	else {
+		chartData = dataobject.filter(function(item) {
+			return item.SrcIP == chartclient;
+		}).map(function(d) {return d.Count});
+		chartLabels = dataobject.filter(function(item) {
+			return item.SrcIP == chartclient;
+		}).map(function(d) {return d.ReqDmn});
+	}
 	var objchartname = window["Chart" + txtchartname];;
 	
 	if (objchartname != undefined) objchartname.destroy();
@@ -584,20 +598,18 @@ function initial(){
 	SetCurrentPage();
 	
 	show_menu();
-	//Draw_Domain_Chart();
-	//changeLayout(E('charttypedomains'),"BarChartReqDomains","charttypedomains");
 	
 	$j("#uidivstats_title").after(BuildTableHtml("Key Stats", "keystats"));
 	$j("#uidivstats_table_keystats").after(BuildChartHtml("Top blocked domains", "BlockedAds", "true"));
 	//$j("#BlockedAds_Type").val(GetCookie("BlockedAds_Type"));
 	for (i = 0; i < chartlist.length; i++) {
 		d3.csv('/ext/uiDivStats/csv/Blocked'+chartlist[i]+'.htm').then(SetGlobalDataset.bind(null,"BlockedAds"+chartlist[i]));
+		d3.csv('/ext/uiDivStats/csv/Blocked'+chartlist[i]+'clients.htm').then(SetGlobalDataset.bind(null,"BlockedAds"+chartlist[i]+"clients"));
 	}
 	Assign_EventHandlers();
 	
 	//SetDivStatsTitle();
 	//SetTopRequestedTitle();
-	//SetClients();
 	//GetCookie("clientdomains");
 }
 
@@ -607,7 +619,29 @@ function SetGlobalDataset(txtchartname,dataobject){
 	currentNoCharts++;
 	
 	if(currentNoCharts == maxNoCharts) {
+		SetClients("BlockedAds");
 		Draw_Chart("BlockedAds");
+	}
+}
+
+function SetClients(txtchartname){
+	var dataobject = window[txtchartname+getChartPeriod($j("#" + txtchartname + "_Period option:selected").val())+"clients"];
+	
+	var unique = [];
+	var chartClients = [];
+	for( let i = 0; i < dataobject.length; i++ ){
+		if( !unique[dataobject[i].SrcIP]){
+			chartClients.push(dataobject[i].SrcIP);
+			unique[dataobject[i].SrcIP] = 1;
+		}
+	}
+	
+	chartClients.sort();
+	for (i = 0; i < chartClients.length; i++) {
+		$j('#BlockedAds_Clients').append($j('<option>', {
+			value: i+1,
+			text: chartClients[i]
+		}));
 	}
 }
 
@@ -818,6 +852,10 @@ function changeChart(e) {
 	if(e.id.indexOf("Clients") == -1){
 		SetCookie(e.id,value);
 	}
+	if(e.id.indexOf("Period") != -1){
+		$j("#"+name+"_Clients option[value!=0]").remove();
+		SetClients(name);
+	}
 	Draw_Chart(name);
 }
 
@@ -851,7 +889,7 @@ function BuildChartHtml(txttitle, txtbase, perip) {
 			charthtml += '<tr class="even">';
 			charthtml += '<th width="40%">Client to display</th>';
 			charthtml += '<td>';
-			charthtml += '<select style="width:100px" class="input_option" onchange="changeChart(this)" id="' + txtbase + '_Clients">';
+			charthtml += '<select style="width:125px" class="input_option" onchange="changeChart(this)" id="' + txtbase + '_Clients">';
 			charthtml += '<option value=0>All (*)</option>';
 			charthtml += '</select>';
 			charthtml += '</td>';
@@ -901,44 +939,6 @@ function BuildTableHtml(txttitle, txtbase) {
 		tablehtml += '</tr>';
 		tablehtml += '</table>';
 		return tablehtml;
-}
-
-function changeLayout(e,chartname,cookiename) {
-	layout = e.value * 1;
-	if ( layout == 0 ) {
-		if ( chartname == "BarChartBlockedAds" ) {
-			charttypead = "horizontalBar";
-		}
-		else {
-			charttypedomain = "horizontalBar";
-		}
-	}
-	else if ( layout == 1 ) {
-		if ( chartname == "BarChartBlockedAds" ) {
-			charttypead = "bar";
-		}
-		else {
-			charttypedomain = "bar";
-		}
-	}
-	else if ( layout == 2 ) {
-		if ( chartname == "BarChartBlockedAds" ) {
-			charttypead = "pie";
-		}
-		else {
-			charttypedomain = "pie"
-		}
-	}
-	cookie.set(cookiename, layout, 31);
-	if ( chartname == "BarChartReqDomains" ) {
-		Draw_Domain_Chart();
-	}
-}
-
-function changeClient(e,chartname,cookiename) {
-	index = e.value * 1;
-	cookie.set(cookiename, index, 31);
-	Draw_Domain_Chart();
 }
 
 function Assign_EventHandlers(){

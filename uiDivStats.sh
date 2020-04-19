@@ -480,7 +480,7 @@ Write_Count_Sql_ToFile(){
 		echo ".output $4$5.htm"
 	} > "$6"
 	
-	echo "SELECT '$1' Fieldname, Count([ReqDmn]) Count, [ReqDmn] ReqDmn FROM $2 WHERE ([Timestamp] >= $timenow - (86400*$3)) GROUP BY [ReqDmn] ORDER BY COUNT([ReqDmn]) DESC LIMIT 30;" >> "$6"
+	echo "SELECT '$1' Fieldname, [ReqDmn] ReqDmn, Count([ReqDmn]) Count FROM $2 WHERE ([Timestamp] >= $timenow - (86400*$3)) GROUP BY [ReqDmn] ORDER BY COUNT([ReqDmn]) DESC LIMIT 30;" >> "$6"
 }
 
 #$1 fieldname $2 tablename $3 length (days) $4 outputfile $5 outputfrequency $6 sqlfile $7 timestamp
@@ -492,16 +492,16 @@ Write_Count_PerClient_Sql_ToFile(){
 	} > "$6"
 	
 	clients="$("$SQLITE3_PATH" "$DNS_DB" < "$6")"
-	rm -f "$6"
-	echo "$clients"
 	
-	#{
-	#	echo ".mode csv"
-	#	echo ".headers on"
-	#	echo ".output $4$5.htm"
-	#} >> "$6"
+	{
+		echo ".mode csv"
+		echo ".headers off"
+		echo ".output ""$4$5""clients.htm"
+	} > "$6"
 	
-	#echo "SELECT '$1' Fieldname, Count([ReqDmn]) Count, [ReqDmn] ReqDmn FROM $2 WHERE ([Timestamp] >= $timenow - (86400*$3)) GROUP BY [ReqDmn] ORDER BY COUNT([ReqDmn]) DESC LIMIT 30;" >> "$6"
+	for client in $clients; do
+		echo "SELECT '$1' Fieldname, [SrcIP] SrcIP, [ReqDmn] ReqDmn, Count([ReqDmn]) Count FROM $2 WHERE ([Timestamp] >= $timenow - (86400*$3)) AND ([SrcIP] = '$client') GROUP BY [ReqDmn] ORDER BY COUNT([ReqDmn]) DESC LIMIT 30;" >> "$6"
+	done
 }
 
 #$1 fieldname $2 tablename $3 frequency (hours) $4 length (days) $5 outputfile $6 outputfrequency $7 sqlfile $8 timestamp
@@ -583,36 +583,36 @@ Generate_Stats_From_SQLite(){
 		if [ "$metric" = "Blocked" ]; then
 			dbtable="dnsqueriesblocked"
 		fi
-		echo "1"
+		
 		Write_Time_Sql_ToFile "$metric" "$dbtable" 0.25 1 "$CSV_OUTPUT_DIR/$metric" "daily" "/tmp/uidivstats.sql" "$timenow"
 		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql
 		
-		echo "2"
 		Write_Time_Sql_ToFile "$metric" "$dbtable" 1 7 "$CSV_OUTPUT_DIR/$metric" "weekly" "/tmp/uidivstats.sql" "$timenow"
 		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql
 		
-		echo "3"
 		Write_Time_Sql_ToFile "$metric" "$dbtable" 3 30 "$CSV_OUTPUT_DIR/$metric" "monthly" "/tmp/uidivstats.sql" "$timenow"
 		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql
 		
-		echo "4"
 		Write_Count_Sql_ToFile "$metric" "$dbtable" 1 "$CSV_OUTPUT_DIR/$metric" "daily" "/tmp/uidivstats.sql" "$timenow"
 		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql
 		
-		echo "5"
 		Write_Count_Sql_ToFile "$metric" "$dbtable" 7 "$CSV_OUTPUT_DIR/$metric" "weekly" "/tmp/uidivstats.sql" "$timenow"
 		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql
 		
-		echo "6"
 		Write_Count_Sql_ToFile "$metric" "$dbtable" 30 "$CSV_OUTPUT_DIR/$metric" "monthly" "/tmp/uidivstats.sql" "$timenow"
 		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql
 		
-		echo "7"
 		Write_Count_PerClient_Sql_ToFile "$metric" "$dbtable" 1 "$CSV_OUTPUT_DIR/$metric" "daily" "/tmp/uidivstats.sql" "$timenow"
+		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql
+		sed -i '1i Fieldname,SrcIP,ReqDmn,Count' "$CSV_OUTPUT_DIR/$metric""dailyclients.htm"
 		
-		echo "break"
-		#"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql
-		#rm -f /tmp/uidivstats.sql
+		Write_Count_PerClient_Sql_ToFile "$metric" "$dbtable" 7 "$CSV_OUTPUT_DIR/$metric" "weekly" "/tmp/uidivstats.sql" "$timenow"
+		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql
+		sed -i '1i Fieldname,SrcIP,ReqDmn,Count' "$CSV_OUTPUT_DIR/$metric""weeklyclients.htm"
+		
+		Write_Count_PerClient_Sql_ToFile "$metric" "$dbtable" 30 "$CSV_OUTPUT_DIR/$metric" "monthly" "/tmp/uidivstats.sql" "$timenow"
+		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql
+		sed -i '1i Fieldname,SrcIP,ReqDmn,Count' "$CSV_OUTPUT_DIR/$metric""monthlyclients.htm"
 	done
 }
 
