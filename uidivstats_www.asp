@@ -600,11 +600,11 @@ function initial(){
 	show_menu();
 	
 	$j("#uidivstats_title").after(BuildTableHtml("Key Stats", "keystats"));
-	$j("#uidivstats_table_keystats").after(BuildChartHtml("Top blocked domains", "BlockedAds", "true"));
-	//$j("#BlockedAds_Type").val(GetCookie("BlockedAds_Type"));
+	$j("#uidivstats_table_keystats").after(BuildChartHtml("Top blocked domains", "Blocked", "true"));
+	//$j("#Blocked_Type").val(GetCookie("Blocked_Type"));
 	for (i = 0; i < chartlist.length; i++) {
-		d3.csv('/ext/uiDivStats/csv/Blocked'+chartlist[i]+'.htm').then(SetGlobalDataset.bind(null,"BlockedAds"+chartlist[i]));
-		d3.csv('/ext/uiDivStats/csv/Blocked'+chartlist[i]+'clients.htm').then(SetGlobalDataset.bind(null,"BlockedAds"+chartlist[i]+"clients"));
+		d3.csv('/ext/uiDivStats/csv/Blocked'+chartlist[i]+'.htm').then(SetGlobalDataset.bind(null,"Blocked"+chartlist[i]));
+		d3.csv('/ext/uiDivStats/csv/Blocked'+chartlist[i]+'clients.htm').then(SetGlobalDataset.bind(null,"Blocked"+chartlist[i]+"clients"));
 	}
 	Assign_EventHandlers();
 	
@@ -619,8 +619,8 @@ function SetGlobalDataset(txtchartname,dataobject){
 	currentNoCharts++;
 	
 	if(currentNoCharts == maxNoCharts) {
-		SetClients("BlockedAds");
-		Draw_Chart("BlockedAds");
+		SetClients("Blocked");
+		Draw_Chart("Blocked");
 	}
 }
 
@@ -638,7 +638,7 @@ function SetClients(txtchartname){
 	
 	chartClients.sort();
 	for (i = 0; i < chartClients.length; i++) {
-		$j('#BlockedAds_Clients').append($j('<option>', {
+		$j('#Blocked_Clients').append($j('<option>', {
 			value: i+1,
 			text: chartClients[i]
 		}));
