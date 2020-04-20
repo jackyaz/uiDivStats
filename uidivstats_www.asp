@@ -104,8 +104,10 @@ td.nodata {
 <script language="JavaScript" type="text/javascript" src="/ext/uiDivStats/SQLData.js"></script>
 <script>
 var $j = jQuery.noConflict(); //avoid conflicts on John's fork (state.js)
-var maxNoCharts = 6;
-var currentNoCharts = 0;
+var maxNoChartsBlocked = 6;
+var currentNoChartsBlocked = 0;
+var maxNoChartsTotal = 6;
+var currentNoChartsTotal = 0;
 Chart.defaults.global.defaultFontColor = "#CCC";
 Chart.Tooltip.positioners.cursor = function(chartElements, coordinates) {
 	return coordinates;
@@ -125,6 +127,7 @@ $j(document).keyup(function(e){
 	});
 });
 
+var metriclist = ["Blocked","Total"];
 var chartlist = ["daily","weekly","monthly"];
 var timeunitlist = ["hour","day","day"];
 var intervallist = [24,7,30];
@@ -223,7 +226,7 @@ function Draw_Chart(txtchartname){
 				},
 				ticks: {
 					display: showTicks(charttype, "x"),
-					beginAtZero: false
+					beginAtZero: true
 				}
 			}],
 			yAxes: [{
@@ -486,95 +489,6 @@ function Draw_Time_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,colour
 	window["LineChart"+txtchartname]=objchartname;
 }
 
-function Draw_Domain_Chart() {
-	if(typeof window["barLabelsDomains"+document.getElementById("clientdomains").value] === 'undefined' || window["barLabelsDomains"+document.getElementById("clientdomains").value] === null) { Draw_Chart_NoData("ChartDomains"); return; }
-	if(typeof window["barDataDomains"+document.getElementById("clientdomains").value] === 'undefined' || window["barDataDomains"+document.getElementById("clientdomains").value] === null) { Draw_Chart_NoData("ChartDomains"); return; }
-	if (window["barLabelsDomains"+document.getElementById("clientdomains").value].length == 0) { Draw_Chart_NoData("ChartDomains"); return; }
-	if (BarChartReqDomains != undefined) BarChartReqDomains.destroy();
-	var ctx = document.getElementById("ChartDomains").getContext("2d");
-	var barOptionsDomains = {
-		segmentShowStroke : false,
-		segmentStrokeColor : "#000",
-		animationEasing : "easeOutQuart",
-		animationSteps : 100,
-		maintainAspectRatio: false,
-		animateScale : true,
-		legend: { display: false, position: "bottom", onClick: null },
-		title: { display: false },
-		tooltips: {
-			callbacks: {
-				title: function (tooltipItem, data) {
-					if (window["barLabelsDomainsType"+document.getElementById("clientdomains").value][tooltipItem[0].index].length > 1){
-						return data.labels[tooltipItem[0].index] + " - " + window["barLabelsDomainsType"+document.getElementById("clientdomains").value][tooltipItem[0].index];
-					}
-					else {
-						return data.labels[tooltipItem[0].index];
-					}
-				},
-				label: function (tooltipItem, data) { return comma(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index]); },
-			},
-			mode: 'point',
-			position: 'cursor',
-			intersect: true
-		},
-		scales: {
-			xAxes: [{
-				display: showAxis(charttypedomain,"x"),
-				gridLines: { display: showGrid(charttypedomain,"x"), color: "#282828" },
-				ticks: { display: showAxis(charttypedomain,"x"), beginAtZero: false }
-			}],
-			yAxes: [{
-				display: showAxis(charttypedomain,"y"),
-				gridLines: { display: false, color: "#282828" },
-				scaleLabel: { display: false, labelString: "Domains" },
-				ticks: { display: showAxis(charttypedomain,"y"), beginAtZero: false }
-			}]
-		},
-		plugins: {
-			zoom: {
-				pan: {
-					enabled: true,
-					mode: ZoomPanEnabled(charttypedomain),
-					rangeMin: {
-						x: 0,
-						y: 0
-					},
-					rangeMax: {
-						x: ZoomPanMax(charttypedomain,"x",window["barDataDomains"+document.getElementById("clientdomains").value]),
-						y: ZoomPanMax(charttypedomain,"y",window["barDataDomains"+document.getElementById("clientdomains").value])
-					},
-				},
-				zoom: {
-					enabled: true,
-					mode: ZoomPanEnabled(charttypedomain),
-					rangeMin: {
-						x: 0,
-						y: 0
-					},
-					rangeMax: {
-						x: ZoomPanMax(charttypedomain,"x",window["barDataDomains"+document.getElementById("clientdomains").value]),
-						y: ZoomPanMax(charttypedomain,"y",window["barDataDomains"+document.getElementById("clientdomains").value])
-					},
-					speed: 0.1,
-				}
-			}
-		}
-	};
-	var barDatasetDomains = {
-		labels: window["barLabelsDomains"+document.getElementById("clientdomains").value],
-		datasets: [{data: window["barDataDomains"+document.getElementById("clientdomains").value],
-			borderWidth: 1,
-			backgroundColor: poolColors(window["barDataDomains"+document.getElementById("clientdomains").value].length),
-			borderColor: "#000000",
-		}]
-	};
-	BarChartReqDomains = new Chart(ctx, {
-		type: getChartType($j("#charttypedomains option:selected").val()),
-		options: barOptionsDomains,
-		data: barDatasetDomains
-	});
-}
-
 function GetCookie(cookiename) {
 	var s;
 	if ((s = cookie.get("uidivstats_"+cookiename)) != null) {
@@ -600,27 +514,37 @@ function initial(){
 	show_menu();
 	
 	$j("#uidivstats_title").after(BuildTableHtml("Key Stats", "keystats"));
+	$j("#uidivstats_table_keystats").after(BuildChartHtml("Top requested domains", "Total", "true"));
 	$j("#uidivstats_table_keystats").after(BuildChartHtml("Top blocked domains", "Blocked", "true"));
-	//$j("#Blocked_Type").val(GetCookie("Blocked_Type"));
-	for (i = 0; i < chartlist.length; i++) {
-		d3.csv('/ext/uiDivStats/csv/Blocked'+chartlist[i]+'.htm').then(SetGlobalDataset.bind(null,"Blocked"+chartlist[i]));
-		d3.csv('/ext/uiDivStats/csv/Blocked'+chartlist[i]+'clients.htm').then(SetGlobalDataset.bind(null,"Blocked"+chartlist[i]+"clients"));
+	for (i = 0; i < metriclist.length; i++) {
+		$j("#"+metriclist[i]+"_Period").val(GetCookie(metriclist[i]+"_Period"));
+		$j("#"+metriclist[i]+"_Type").val(GetCookie(metriclist[i]+"_Type"));
+		for (i2 = 0; i2 < chartlist.length; i2++) {
+			d3.csv('/ext/uiDivStats/csv/'+metriclist[i]+chartlist[i2]+'.htm').then(SetGlobalDataset.bind(null,metriclist[i]+chartlist[i2]));
+			d3.csv('/ext/uiDivStats/csv/'+metriclist[i]+chartlist[i2]+'clients.htm').then(SetGlobalDataset.bind(null,metriclist[i]+chartlist[i2]+"clients"));
+		}
 	}
 	Assign_EventHandlers();
 	
 	//SetDivStatsTitle();
-	//SetTopRequestedTitle();
-	//GetCookie("clientdomains");
 }
 
 function SetGlobalDataset(txtchartname,dataobject){
 	window[txtchartname] = dataobject;
 	
-	currentNoCharts++;
-	
-	if(currentNoCharts == maxNoCharts) {
-		SetClients("Blocked");
-		Draw_Chart("Blocked");
+	if(txtchartname.indexOf("Blocked") != -1){
+		currentNoChartsBlocked++;
+		if(currentNoChartsBlocked == maxNoChartsBlocked) {
+			SetClients("Blocked");
+			Draw_Chart("Blocked");
+		}
+	}
+	else if (txtchartname.indexOf("Total") != -1){
+		currentNoChartsTotal++;
+		if(currentNoChartsTotal == maxNoChartsTotal) {
+			SetClients("Total");
+			Draw_Chart("Total");
+		}
 	}
 }
 
@@ -638,7 +562,7 @@ function SetClients(txtchartname){
 	
 	chartClients.sort();
 	for (i = 0; i < chartClients.length; i++) {
-		$j('#Blocked_Clients').append($j('<option>', {
+		$j('#'+txtchartname+'_Clients').append($j('<option>', {
 			value: i+1,
 			text: chartClients[i]
 		}));
@@ -989,37 +913,8 @@ function Assign_EventHandlers(){
 
 <!-- Blocked Ads -->
 
-<div style="line-height:10px;">&nbsp;</div>
-<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
-<thead class="collapsible">
-<tr>
-<td colspan="2" id="toprequested">Top X requested domains (click to expand/collapse)</td>
-</tr>
-</thead>
-<tr class="even">
-<th width="40%">Client to display</th>
-<td>
-<select style="width:300px" class="input_option" onchange="changeClient(this,BarChartReqDomains,'clientdomains')" id="clientdomains">
-<option value="0">All Clients</option>
-</select>
-</td>
-</tr>
-<tr class="even">
-<th width="40%">Layout for charts</th>
-<td>
-<select style="width:100px" class="input_option" onchange="changeLayout(this,'BarChartReqDomains','charttypedomains')" id="charttypedomains">
-<option value="0">Horizontal</option>
-<option value="1">Vertical</option>
-<option value="2">Pie</option>
-</select>
-</td>
-</tr>
-<tr>
-<td colspan="2" style="padding: 2px;">
-<div style="background-color:#2f3e44;border-radius:10px;width:735px;padding-left:5px;"><canvas id="divChartChartDomains" height="360" /></div>
-</td>
-</tr>
-</table>
+<!-- Requested Ads -->
+
 <div style="line-height:10px;">&nbsp;</div>
 </td>
 </tr>
