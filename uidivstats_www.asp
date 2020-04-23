@@ -133,7 +133,8 @@ var metriclist = ["Blocked","Total"];
 var chartlist = ["daily","weekly","monthly"];
 var timeunitlist = ["hour","day","day"];
 var intervallist = [24,7,30];
-var colourlist = ["#fc8500","#42ecf5","#ffffff"];
+var bordercolourlist = ["#fc8500","#42ecf5"];
+var backgroundcolourlist = ["rgba(252,133,0,0.5)","rgba(66,236,245,0.5)"];
 
 function Draw_Chart_NoData(txtchartname){
 	document.getElementById("canvasChart" + txtchartname).width = "735";
@@ -231,8 +232,10 @@ function Draw_Chart(txtchartname){
 					display: showTicks(charttype, "x"),
 					beginAtZero: true,
 					callback: function (value, index, values) {
-						if(showTicks(charttype, "x") == true){
+						if(! isNaN(value)){
 							return round(value,0).toFixed(0);
+						} else {
+							return value;
 						}
 					}
 				}
@@ -251,8 +254,10 @@ function Draw_Chart(txtchartname){
 					display: showTicks(charttype, "y"),
 					beginAtZero: false,
 					callback: function (value, index, values) {
-						if(showTicks(charttype, "y") == true){
+						if(! isNaN(value)){
 							return round(value,0).toFixed(0);
+						} else {
+							return value;
 						}
 					}
 				}
@@ -261,7 +266,7 @@ function Draw_Chart(txtchartname){
 		plugins: {
 			zoom: {
 				pan: {
-					enabled: true,
+					enabled: false,
 					mode: ZoomPanEnabled(charttype),
 					rangeMin: {
 						x: 0,
@@ -274,6 +279,7 @@ function Draw_Chart(txtchartname){
 				},
 				zoom: {
 					enabled: true,
+					drag: true,
 					mode: ZoomPanEnabled(charttype),
 					rangeMin: {
 						x: 0,
@@ -347,7 +353,7 @@ function Draw_Time_Chart(txtchartname,txtunitx,numunitx){
 		maintainAspectRatio: false,
 		animateScale : true,
 		hover: { mode: "point" },
-		legend: { display: false, position: "bottom", onClick: null },
+		legend: { display: true, position: "top"},//, onClick: null },
 		title: { display: true, text: txttitle },
 		tooltips: {
 			callbacks: {
@@ -355,7 +361,7 @@ function Draw_Time_Chart(txtchartname,txtunitx,numunitx){
 					label: function (tooltipItem, data) { return data.datasets[tooltipItem.datasetIndex].label + ": " + data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].y;}
 				},
 				mode: 'x',
-				//position: 'nearest',
+				position: 'cursor',
 				intersect: false
 		},
 		scales: {
@@ -433,8 +439,9 @@ function getDataSets(txtchartname, objdata, objQueryTypes) {
 			return item.Fieldname == objQueryTypes[i];
 		}).map(function(d) {return {x: d.Time, y: d.QueryCount}});
 		
-		datasets.push({ label: objQueryTypes[i], data: querytypedata, borderWidth: 1, pointRadius: 1, lineTension: 0, fill: true, backgroundColor: colourlist[i], borderColor: colourlist[i]});
+		datasets.push({ label: objQueryTypes[i], data: querytypedata, borderWidth: 1, pointRadius: 1, lineTension: 0, fill: true, backgroundColor: backgroundcolourlist[i], borderColor: bordercolourlist[i]});
 	}
+	datasets.reverse();
 	return datasets;
 }
 
@@ -667,12 +674,13 @@ function ZoomPanMax(charttype, axis, datasetname) {
 
 function ResetZoom(){
 	for(i = 0; i < metriclist.length; i++){
-		for (i2 = 0; i2 < chartlist.length; i2++) {
-			var chartobj = window["Chart"+metriclist[i]+chartlist[i2]];
-			if(typeof chartobj === 'undefined' || chartobj === null) { continue; }
-			chartobj.resetZoom();
-		}
+		var chartobj = window["Chart"+metriclist[i]];
+		if(typeof chartobj === 'undefined' || chartobj === null) { continue; }
+		chartobj.resetZoom();
 	}
+	var chartobj = window["ChartTotalBlockedtime"];
+	if(typeof chartobj === 'undefined' || chartobj === null) { return; }
+	chartobj.resetZoom();
 }
 
 function DragZoom(button){
