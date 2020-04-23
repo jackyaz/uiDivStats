@@ -108,6 +108,8 @@ var maxNoChartsBlocked = 6;
 var currentNoChartsBlocked = 0;
 var maxNoChartsTotal = 6;
 var currentNoChartsTotal = 0;
+var maxNoChartsTotalBlocked = 3;
+var currentNoChartsTotalBlocked = 0;
 Chart.defaults.global.defaultFontColor = "#CCC";
 Chart.Tooltip.positioners.cursor = function(chartElements, coordinates) {
 	return coordinates;
@@ -131,6 +133,7 @@ var metriclist = ["Blocked","Total"];
 var chartlist = ["daily","weekly","monthly"];
 var timeunitlist = ["hour","day","day"];
 var intervallist = [24,7,30];
+var colourlist = ["#fc8500","#42ecf5","#ffffff"];
 
 function Draw_Chart_NoData(txtchartname){
 	document.getElementById("canvasChart" + txtchartname).width = "735";
@@ -226,7 +229,12 @@ function Draw_Chart(txtchartname){
 				},
 				ticks: {
 					display: showTicks(charttype, "x"),
-					beginAtZero: true
+					beginAtZero: true,
+					callback: function (value, index, values) {
+						if(showTicks(charttype, "x") == true){
+							return round(value,0).toFixed(0);
+						}
+					}
 				}
 			}],
 			yAxes: [{
@@ -241,7 +249,12 @@ function Draw_Chart(txtchartname){
 				},
 				ticks: {
 					display: showTicks(charttype, "y"),
-					beginAtZero: false
+					beginAtZero: false,
+					callback: function (value, index, values) {
+						if(showTicks(charttype, "y") == true){
+							return round(value,0).toFixed(0);
+						}
+					}
 				}
 			}]
 		},
@@ -292,11 +305,30 @@ function Draw_Chart(txtchartname){
 	window["Chart" + txtchartname] = objchartname;
 }
 
-function Draw_Time_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,colourname){
-	var objchartname=window["LineChart"+txtchartname];
-	var objdataname=window[txtchartname+"size"];
-	if(typeof objdataname === 'undefined' || objdataname === null) { Draw_Chart_NoData(txtchartname); return; }
-	if (objdataname == 0) { Draw_Chart_NoData(txtchartname); return; }
+function Draw_Time_Chart(txtchartname,txtunitx,numunitx){
+	var chartperiod = getChartPeriod($j("#" + txtchartname + "time_Period option:selected").val());
+	var txttitle = "DNS Queries";
+	var txtunitx = timeunitlist[$j("#" + txtchartname + "time_Period option:selected").val()];
+	var numunitx = intervallist[$j("#" + txtchartname + "time_Period option:selected").val()];
+	var dataobject = window[txtchartname+chartperiod+"time"];
+	
+	if(typeof dataobject === 'undefined' || dataobject === null) { Draw_Chart_NoData(txtchartname+"time"); return; }
+	if (dataobject.length == 0) { Draw_Chart_NoData(txtchartname+"time"); return; }
+	
+	var unique = [];
+	var chartQueryTypes = [];
+	for( let i = 0; i < dataobject.length; i++ ){
+		if( !unique[dataobject[i].Fieldname]){
+			chartQueryTypes.push(dataobject[i].Fieldname);
+			unique[dataobject[i].Fieldname] = 1;
+		}
+	}
+	
+	var chartData = dataobject.filter(function(item) {
+		return item.Fieldname == "Total";
+	}).map(function(d){ return {x: d.Time, y: d.QueryCount}});
+	
+	var objchartname = window["Chart" + txtchartname + "time"];;
 	
 	factor=0;
 	if (txtunitx=="hour"){
@@ -306,7 +338,7 @@ function Draw_Time_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,colour
 		factor=60*60*24*1000;
 	}
 	if (objchartname != undefined) objchartname.destroy();
-	var ctx = document.getElementById("divLineChart"+txtchartname).getContext("2d");
+	var ctx = document.getElementById("canvasChart"+txtchartname+"time").getContext("2d");
 	var lineOptions = {
 		segmentShowStroke : false,
 		segmentStrokeColor : "#000",
@@ -320,11 +352,11 @@ function Draw_Time_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,colour
 		tooltips: {
 			callbacks: {
 					title: function (tooltipItem, data) { return (moment(tooltipItem[0].xLabel,"X").format('YYYY-MM-DD HH:mm:ss')); },
-					label: function (tooltipItem, data) { return data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].y.toString() + ' ' + txtunity;}
+					label: function (tooltipItem, data) { return data.datasets[tooltipItem.datasetIndex].label + ": " + data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].y;}
 				},
-				mode: 'point',
-				position: 'cursor',
-				intersect: true
+				mode: 'x',
+				//position: 'nearest',
+				intersect: false
 		},
 		scales: {
 			xAxes: [{
@@ -342,7 +374,7 @@ function Draw_Time_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,colour
 				ticks: {
 					display: true,
 					callback: function (value, index, values) {
-						return round(value,3).toFixed(3) + ' ' + txtunity;
+						return round(value,0).toFixed(0);
 					}
 				},
 			}]
@@ -354,11 +386,11 @@ function Draw_Time_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,colour
 					mode: 'xy',
 					rangeMin: {
 						x: new Date().getTime() - (factor * numunitx),
-						y: getLimit(txtchartname,"y","min",false) - Math.sqrt(Math.pow(getLimit(txtchartname,"y","min",false),2))*0.1,
+						y: getLimit(chartData,"y","min",false),
 					},
 					rangeMax: {
 						x: new Date().getTime(),
-						y: getLimit(txtchartname,"y","max",false) + getLimit(txtchartname,"y","max",false)*0.1,
+						y: getLimit(chartData,"y","max",false),
 					},
 				},
 				zoom: {
@@ -367,126 +399,43 @@ function Draw_Time_Chart(txtchartname,txttitle,txtunity,txtunitx,numunitx,colour
 					mode: 'xy',
 					rangeMin: {
 						x: new Date().getTime() - (factor * numunitx),
-						y: getLimit(txtchartname,"y","min",false) - Math.sqrt(Math.pow(getLimit(txtchartname,"y","min",false),2))*0.1,
+						y: getLimit(chartData,"y","min",false),
 					},
 					rangeMax: {
 						x: new Date().getTime(),
-						y: getLimit(txtchartname,"y","max",false) + getLimit(txtchartname,"y","max",false)*0.1,
+						y: getLimit(chartData,"y","max",false),
 					},
 					speed: 0.1
 				},
 			},
-			datasource: {
-				type: 'csv',
-				url: '/ext/connmon/csv/'+txtchartname+'.htm',
-				delimiter: ',',
-				rowMapping: 'datapoint',
-				datapointLabelMapping: {
-					_dataset: 'Metric',
-					x: 'Time',
-					y: 'Value'
-				}
-			},
 			deferred: {
 				delay: 250
 			},
-		},
-		annotation: {
-			drawTime: 'afterDatasetsDraw',
-			annotations: [{
-				//id: 'avgline',
-				type: ShowLines,
-				mode: 'horizontal',
-				scaleID: 'y-axis-0',
-				value: getAverage(txtchartname),
-				borderColor: colourname,
-				borderWidth: 1,
-				borderDash: [5, 5],
-				label: {
-					backgroundColor: 'rgba(0,0,0,0.3)',
-					fontFamily: "sans-serif",
-					fontSize: 10,
-					fontStyle: "bold",
-					fontColor: "#fff",
-					xPadding: 6,
-					yPadding: 6,
-					cornerRadius: 6,
-					position: "center",
-					enabled: true,
-					xAdjust: 0,
-					yAdjust: 0,
-					content: "Avg=" + round(getAverage(txtchartname),3).toFixed(3)+txtunity,
-				}
-			},
-			{
-				//id: 'maxline',
-				type: ShowLines,
-				mode: 'horizontal',
-				scaleID: 'y-axis-0',
-				value: getLimit(txtchartname,"y","max",true),
-				borderColor: colourname,
-				borderWidth: 1,
-				borderDash: [5, 5],
-				label: {
-					backgroundColor: 'rgba(0,0,0,0.3)',
-					fontFamily: "sans-serif",
-					fontSize: 10,
-					fontStyle: "bold",
-					fontColor: "#fff",
-					xPadding: 6,
-					yPadding: 6,
-					cornerRadius: 6,
-					position: "center",
-					enabled: true,
-					xAdjust: 0,
-					yAdjust: 0,
-					content: "Max=" + round(getLimit(txtchartname,"y","max",true),3).toFixed(3)+txtunity,
-				}
-			},
-			{
-				//id: 'minline',
-				type: ShowLines,
-				mode: 'horizontal',
-				scaleID: 'y-axis-0',
-				value: getLimit(txtchartname,"y","min",true),
-				borderColor: colourname,
-				borderWidth: 1,
-				borderDash: [5, 5],
-				label: {
-					backgroundColor: 'rgba(0,0,0,0.3)',
-					fontFamily: "sans-serif",
-					fontSize: 10,
-					fontStyle: "bold",
-					fontColor: "#fff",
-					xPadding: 6,
-					yPadding: 6,
-					cornerRadius: 6,
-					position: "center",
-					enabled: true,
-					xAdjust: 0,
-					yAdjust: 0,
-					content: "Min=" + round(getLimit(txtchartname,"y","min",true),3).toFixed(3)+txtunity,
-				}
-			}]
 		}
 	};
 	var lineDataset = {
-		datasets: [{label: txttitle,
-			borderWidth: 1,
-			pointRadius: 1,
-			lineTension: 0,
-			fill: ShowFill,
-			backgroundColor: colourname,
-			borderColor: colourname,
-		}]
+		datasets: getDataSets(txtchartname, dataobject, chartQueryTypes)
 	};
 	objchartname = new Chart(ctx, {
 		type: 'line',
-		plugins: [ChartDataSource,datafilterPlugin],
-		options: lineOptions,
-		data: lineDataset
+		data: lineDataset,
+		options: lineOptions
 	});
-	window["LineChart"+txtchartname]=objchartname;
+	window["Chart"+txtchartname+"time"]=objchartname;
+}
+
+function getDataSets(txtchartname, objdata, objQueryTypes) {
+	var datasets = [];
+	colourname="#fc8500";
+	
+	for(var i = 0; i < objQueryTypes.length; i++) {
+		var querytypedata = objdata.filter(function(item) {
+			return item.Fieldname == objQueryTypes[i];
+		}).map(function(d) {return {x: d.Time, y: d.QueryCount}});
+		
+		datasets.push({ label: objQueryTypes[i], data: querytypedata, borderWidth: 1, pointRadius: 1, lineTension: 0, fill: true, backgroundColor: colourlist[i], borderColor: colourlist[i]});
+	}
+	return datasets;
 }
 
 function GetCookie(cookiename) {
@@ -514,8 +463,9 @@ function initial(){
 	show_menu();
 	
 	$j("#uidivstats_title").after(BuildTableHtml("Key Stats", "keystats"));
-	$j("#uidivstats_table_keystats").after(BuildChartHtml("Top requested domains", "Total", "true"));
-	$j("#uidivstats_table_keystats").after(BuildChartHtml("Top blocked domains", "Blocked", "true"));
+	$j("#uidivstats_table_keystats").after(BuildChartHtml("Top requested domains", "Total", "false", "true"));
+	$j("#uidivstats_table_keystats").after(BuildChartHtml("Top blocked domains", "Blocked", "false", "true"));
+	$j("#uidivstats_table_keystats").after(BuildChartHtml("DNS Queries", "TotalBlockedtime", "true", "false"));
 	for (i = 0; i < metriclist.length; i++) {
 		$j("#"+metriclist[i]+"_Period").val(GetCookie(metriclist[i]+"_Period"));
 		$j("#"+metriclist[i]+"_Type").val(GetCookie(metriclist[i]+"_Type"));
@@ -523,6 +473,10 @@ function initial(){
 			d3.csv('/ext/uiDivStats/csv/'+metriclist[i]+chartlist[i2]+'.htm').then(SetGlobalDataset.bind(null,metriclist[i]+chartlist[i2]));
 			d3.csv('/ext/uiDivStats/csv/'+metriclist[i]+chartlist[i2]+'clients.htm').then(SetGlobalDataset.bind(null,metriclist[i]+chartlist[i2]+"clients"));
 		}
+	}
+	for (i = 0; i < chartlist.length; i++) {
+		$j("#TotalBlockedtime_Period").val(GetCookie("TotalBlockedtime_Period"));
+		d3.csv('/ext/uiDivStats/csv/TotalBlocked'+chartlist[i]+'time.htm').then(SetGlobalDataset.bind(null,"TotalBlocked"+chartlist[i]+"time"));
 	}
 	Assign_EventHandlers();
 	
@@ -532,7 +486,13 @@ function initial(){
 function SetGlobalDataset(txtchartname,dataobject){
 	window[txtchartname] = dataobject;
 	
-	if(txtchartname.indexOf("Blocked") != -1){
+	if(txtchartname.indexOf("TotalBlocked") != -1){
+		currentNoChartsTotalBlocked++;
+		if(currentNoChartsTotalBlocked == maxNoChartsTotalBlocked) {
+			Draw_Time_Chart("TotalBlocked");
+		}
+	}
+	else if(txtchartname.indexOf("Blocked") != -1){
 		currentNoChartsBlocked++;
 		if(currentNoChartsBlocked == maxNoChartsBlocked) {
 			SetClients("Blocked");
@@ -581,34 +541,60 @@ function applyRule() {
 	document.form.submit();
 }
 
-function getSDev(datasetname){
-	var avg = getAvg(datasetname);
+function ToggleFill() {
+	if(ShowFill == "false"){
+		ShowFill = "origin";
+		SetCookie("ShowFill","origin");
+	}
+	else {
+		ShowFill = "false";
+		SetCookie("ShowFill","false");
+	}
+	for(i = 0; i < metriclist.length; i++){
+		for(i2 = 0; i2 < chartlist.length; i2++){
+			window["Chart"+metriclist[i]+chartlist[i2]+"time"].data.datasets[0].fill=ShowFill;
+			window["Chart"+metriclist[i]+chartlist[i2]+"time"].update();
+		}
+	}
+}
+
+function getLimit(datasetname,axis,maxmin,isannotation) {
+	var limit=0;
+	var values;
+	if(axis == "x"){
+		values = datasetname.map(function(o) { return o.x } );
+	}
+	else{
+		values = datasetname.map(function(o) { return o.y } );
+	}
 	
-	var squareDiffs = datasetname.map(function(value){
-		var diff = value - avg;
-		var sqrDiff = diff * diff;
-		return sqrDiff;
-	});
-	
-	var avgSquareDiff = getAvg(squareDiffs);
-	var stdDev = Math.sqrt(avgSquareDiff);
-	return stdDev;
+	if(maxmin == "max"){
+		limit=Math.max.apply(Math, values);
+	}
+	else{
+		limit=Math.min.apply(Math, values);
+	}
+	if(maxmin == "max" && limit == 0 && isannotation == false){
+		limit = 1;
+	}
+	return limit;
+}
+
+function getAverage(datasetname) {
+	var total = 0;
+	for(var i = 0; i < datasetname.length; i++) {
+		total += (datasetname[i].y*1);
+	}
+	var avg = total / datasetname.length;
+	return avg;
 }
 
 function getMax(datasetname) {
-	max = Math.max(...datasetname);
-	return max + (max*0.1);
+	return Math.max(...datasetname);
 }
 
-function getAvg(datasetname) {
-	var sum, avg = 0;
-	
-	if (datasetname.length) {
-		sum = datasetname.reduce(function(a, b) { return a*1 + b*1; });
-		avg = sum / datasetname.length;
-	}
-	
-	return avg;
+function round(value, decimals) {
+	return Number(Math.round(value+'e'+decimals)+'e-'+decimals);
 }
 
 function getRandomColor() {
@@ -675,6 +661,43 @@ function ZoomPanMax(charttype, axis, datasetname) {
 		}
 		else {
 			return null;
+		}
+	}
+}
+
+function ResetZoom(){
+	for(i = 0; i < metriclist.length; i++){
+		for (i2 = 0; i2 < chartlist.length; i2++) {
+			var chartobj = window["Chart"+metriclist[i]+chartlist[i2]];
+			if(typeof chartobj === 'undefined' || chartobj === null) { continue; }
+			chartobj.resetZoom();
+		}
+	}
+}
+
+function DragZoom(button){
+	var drag = true;
+	var pan = false;
+	var buttonvalue = "";
+	if(button.value.indexOf("On") != -1){
+		drag = false;
+		pan = true;
+		buttonvalue = "Drag Zoom Off";
+	}
+	else {
+		drag = true;
+		pan = false;
+		buttonvalue = "Drag Zoom On";
+	}
+	
+	for(i = 0; i < metriclist.length; i++){
+		for (i2 = 0; i2 < chartlist.length; i2++) {
+			var chartobj = window["Chart"+metriclist[i]+chartlist[i2]];
+			if(typeof chartobj === 'undefined' || chartobj === null) { continue; }
+			chartobj.options.plugins.zoom.zoom.drag = drag;
+			chartobj.options.plugins.zoom.pan.enabled = pan;
+			button.value = buttonvalue;
+			chartobj.update();
 		}
 	}
 }
@@ -777,13 +800,20 @@ function changeChart(e) {
 		SetCookie(e.id,value);
 	}
 	if(e.id.indexOf("Period") != -1){
-		$j("#"+name+"_Clients option[value!=0]").remove();
-		SetClients(name);
+		if(e.id.indexOf("TotalBlocked") == -1){
+			$j("#"+name+"_Clients option[value!=0]").remove();
+			SetClients(name);
+		}
 	}
-	Draw_Chart(name);
+	if(e.id.indexOf("time") == -1){
+		Draw_Chart(name);
+	}
+	else{
+		Draw_Time_Chart(name.replace("time",""));
+	}
 }
 
-function BuildChartHtml(txttitle, txtbase, perip) {
+function BuildChartHtml(txttitle, txtbase, istime, perip) {
 	var charthtml = '<div style="line-height:10px;">&nbsp;</div>';
 	charthtml += '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" id="uidivstats_chart_' + txtbase + '">';
 	charthtml += '<thead class="collapsible expanded"';
@@ -799,16 +829,18 @@ function BuildChartHtml(txttitle, txtbase, perip) {
 	charthtml += '</select>';
 	charthtml += '</td>';
 	charthtml += '</tr>';
-	charthtml += '<tr class="even">';
-	charthtml += '<th width="40%">Layout for chart</th>';
-	charthtml += '<td>';
-	charthtml += '<select style="width:100px" class="input_option" onchange="changeChart(this)" id="' + txtbase + '_Type">';
-	charthtml += '<option value=0>Horizontal</option>';
-	charthtml += '<option value=1>Vertical</option>';
-	charthtml += '<option value=2>Pie</option>';
-	charthtml += '</select>';
-	charthtml += '</td>';
-	charthtml += '</tr>';
+	if (istime == "false") {
+		charthtml += '<tr class="even">';
+		charthtml += '<th width="40%">Layout for chart</th>';
+		charthtml += '<td>';
+		charthtml += '<select style="width:100px" class="input_option" onchange="changeChart(this)" id="' + txtbase + '_Type">';
+		charthtml += '<option value=0>Horizontal</option>';
+		charthtml += '<option value=1>Vertical</option>';
+		charthtml += '<option value=2>Pie</option>';
+		charthtml += '</select>';
+		charthtml += '</td>';
+		charthtml += '</tr>';
+	}
 	if (perip == "true") {
 			charthtml += '<tr class="even">';
 			charthtml += '<th width="40%">Client to display</th>';
