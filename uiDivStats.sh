@@ -525,20 +525,7 @@ Generate_NG(){
 	
 	timenow=$(date +"%s")
 	#timenowfriendly=$(date +"%c")
-	
-	echo "PRAGMA journal_mode;" > /tmp/uidivstats.sql
-	journalmode="$("$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql)"
-	rm -f /tmp/uidivstats.sql
-	if [ "$journalmode" != "wal" ]; then
-		/opt/etc/init.d/S90taildns stop
-		echo "PRAGMA journal_mode=WAL;" > /tmp/uidivstats.sql
-		echo "create index idx_dns on dnsqueries (Timestamp,ReqDmn);" > /tmp/uidivstats.sql
-		echo "create index idx_dnsblocked on dnsqueriesblocked (Timestamp,ReqDmn);create index idx_dns_clients on dnsqueries (Timestamp,ReqDmn,SrcIP);" >> /tmp/uidivstats.sql
-		echo "create index idx_dnsblocked_clients on dnsqueriesblocked (Timestamp,ReqDmn,SrcIP);" >> /tmp/uidivstats.sql
-		journalmode="$("$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql)"
-		rm -f /tmp/uidivstats.sql
-		/opt/etc/init.d/S90taildns start
-	fi
+
 	Generate_KeyStats "$timenow"
 	Generate_Stats_From_SQLite "$timenow"
 }
@@ -641,6 +628,24 @@ Trim_DNS_DB(){
 	rm -f /tmp/uidivstats.sql
 	
 	/opt/etc/init.d/S90taildns start
+}
+
+Process_Upgrade(){
+	if [ ! -f "$SCRIPT_DIR/.upgraded" ]; then
+		/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
+		{
+			echo "PRAGMA journal_mode=WAL;"
+			echo "CREATE TABLE IF NOT EXISTS [dnsqueries] ([QueryID] INTEGER PRIMARY KEY NOT NULL, [Timestamp] NUMERIC NOT NULL, [SrcIP] TEXT NOT NULL,[ReqDmn] TEXT NOT NULL,[QryType] Text NOT NULL);"
+			echo "CREATE TABLE IF NOT EXISTS [dnsqueriesblocked] ([QueryID] INTEGER PRIMARY KEY NOT NULL, [Timestamp] NUMERIC NOT NULL, [SrcIP] NUMERIC NOT NULL, [ReqDmn] TEXT NOT NULL, [Reason] Text NOT NULL);"
+			echo "create index idx_dns on dnsqueries (Timestamp,ReqDmn);"
+			echo "create index idx_dnsblocked on dnsqueriesblocked (Timestamp,ReqDmn);create index idx_dns_clients on dnsqueries (Timestamp,ReqDmn,SrcIP);"
+			echo "create index idx_dnsblocked_clients on dnsqueriesblocked (Timestamp,ReqDmn,SrcIP);"
+		}  > /tmp/uidivstats.sql
+		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql
+		rm -f /tmp/uidivstats.sql
+		/opt/etc/init.d/S90taildns start >/dev/null 2>&1
+		touch "$SCRIPT_DIR/.upgraded"
+	fi
 }
 
 Shortcut_script(){
@@ -834,6 +839,7 @@ Menu_Install(){
 	Auto_ServiceEvent create 2>/dev/null
 	Shortcut_script create
 	
+	Process_Upgrade
 	/opt/etc/init.d/S90taildns start
 	
 	Clear_Lock
@@ -911,6 +917,7 @@ if [ -z "$1" ]; then
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
 	Shortcut_script create
+	Process_Upgrade
 	ScriptHeader
 	MainMenu
 	exit 0
