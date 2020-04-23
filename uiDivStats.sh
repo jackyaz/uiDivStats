@@ -513,7 +513,7 @@ Write_Time_Sql_ToFile(){
 	{
 		echo ".mode csv"
 		echo ".headers on"
-		echo ".output $5$6.htm"
+		echo ".output $5$6""time.htm"
 	} > "$7"
 	
 	echo "SELECT '$1' Fieldname, [Timestamp] Time, COUNT([QueryID]) QueryCount FROM $2 WHERE ([Timestamp] >= $timenow - ($multiplier*$maxcount)) GROUP BY ([Timestamp]/($multiplier));" >> "$7"
