@@ -330,9 +330,11 @@ function Draw_Time_Chart(txtchartname,txtunitx,numunitx){
 		}
 	}
 	
-	var chartData = dataobject.filter(function(item) {
-		return item.Fieldname == "Total";
-	}).map(function(d){ return {x: d.Time, y: d.QueryCount}});
+	//var chartData = dataobject.filter(function(item) {
+	//	return item.Fieldname == "Total";
+	//}).map(function(d){ return {x: d.Time, y: d.QueryCount}});
+	
+	var chartData = dataobject.map(function(d){ return {x: d.Time, y: d.QueryCount}});
 	
 	var objchartname = window["Chart" + txtchartname + "time"];;
 	
