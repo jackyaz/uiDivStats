@@ -512,7 +512,7 @@ Write_Time_Sql_ToFile(){
 	
 	{
 		echo ".mode csv"
-		echo ".headers on"
+		echo ".headers off"
 		echo ".output $5$6""time.htm"
 	} > "$7"
 	
@@ -614,6 +614,15 @@ Generate_Stats_From_SQLite(){
 		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql
 		sed -i '1i Fieldname,SrcIP,ReqDmn,Count' "$CSV_OUTPUT_DIR/$metric""monthlyclients.htm"
 	done
+	
+	cat "$CSV_OUTPUT_DIR/Totaldailytime.htm" "$CSV_OUTPUT_DIR/Blockeddailytime.htm" > "$CSV_OUTPUT_DIR/TotalBlockeddailytime.htm"
+	sed -i '1i Fieldname,Time,QueryCount' "$CSV_OUTPUT_DIR/TotalBlockeddailytime.htm"
+	
+	cat "$CSV_OUTPUT_DIR/Totalweeklytime.htm" "$CSV_OUTPUT_DIR/Blockedweeklytime.htm" > "$CSV_OUTPUT_DIR/TotalBlockedweeklytime.htm"
+	sed -i '1i Fieldname,Time,QueryCount' "$CSV_OUTPUT_DIR/TotalBlockedweeklytime.htm"
+	
+	cat "$CSV_OUTPUT_DIR/Totaldailytime.htm" "$CSV_OUTPUT_DIR/Blockeddailytime.htm" > "$CSV_OUTPUT_DIR/TotalBlockedmonthlytime.htm"
+	sed -i '1i Fieldname,Time,QueryCount' "$CSV_OUTPUT_DIR/TotalBlockedmonthlytime.htm"
 }
 
 Trim_DNS_DB(){
