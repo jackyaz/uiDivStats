@@ -453,7 +453,7 @@ function GetCookie(cookiename) {
 		return cookie.get("uidivstats_"+cookiename);
 	}
 	else {
-		return "";
+		return 0;
 	}
 }
 
