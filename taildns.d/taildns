@@ -8,18 +8,15 @@ if [ ! -f /opt/bin/pkill ]; then
 fi
 
 /jffs/addons/uiDivStats.d/taildns.d/taildnstotal &
-/jffs/addons/uiDivStats.d/taildns.d/taildnsblocked &
 
 while true; do
 	sleep 5
-	if [ "$(pidof taildnstotal | wc -w)" -lt 2 ] || [ "$(pidof taildnsblocked | wc -w)" -lt 2 ]; then
+	if [ "$(pidof taildnstotal | wc -w)" -lt 2 ]; then
 		logger -t "uiDivStats" "taildns dead, restarting..."
 		killall -q taildnstotal
-		killall -q taildnsblocked
 		/opt/bin/pkill -f "tail -F /opt/var/log/dnsmasq.log /opt/var/log/dnsmasq.log3"
 		sleep 5
 		/jffs/addons/uiDivStats.d/taildns.d/taildnstotal &
-		/jffs/addons/uiDivStats.d/taildns.d/taildnsblocked &
 		logger -t "uiDivStats" "taildns restarted"
 	fi
 done
