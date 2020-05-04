@@ -1,20 +1,20 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
-<html xmlns:v>
 <head>
 <meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
-<meta HTTP-EQUIV="Expires" CONTENT="-1">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="-1">
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
 <title>Diversion Statistics</title>
 <link rel="stylesheet" type="text/css" href="index_style.css">
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <style>
-p{
+p {
 font-weight: bolder;
 }
+
 .collapsible {
   color: white;
   padding: 0px;
@@ -24,21 +24,23 @@ font-weight: bolder;
   outline: none;
   cursor: pointer;
 }
+
 .keystatscell {
   background-color:#1F2D35 !important;
   background:#2F3A3E !important;
   border-bottom:none !important;
   border-top:none !important;
 }
+
 .keystatsnumber {
   font-size: 20px !important;
   font-weight: bolder !important;
 }
 </style>
 <script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
-<script language="JavaScript" type="text/javascript" src="/js/chart.min.js"></script>
-<script language="JavaScript" type="text/javascript" src="/ext/uiDivStats/hammerjs.js"></script>
-<script language="JavaScript" type="text/javascript" src="/ext/uiDivStats/chartjs-plugin-zoom.js"></script>
+<script language="JavaScript" type="text/javascript" src="/ext/shared-jy/chart.js"></script>
+<script language="JavaScript" type="text/javascript" src="/ext/shared-jy/hammerjs.js"></script>
+<script language="JavaScript" type="text/javascript" src="/ext/shared-jy/chartjs-plugin-zoom.js"></script>
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
@@ -48,6 +50,7 @@ font-weight: bolder;
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <script language="JavaScript" type="text/javascript" src="/validator.js"></script>
 <script language="JavaScript" type="text/javascript" src="/ext/uiDivStats/uidivstats.js"></script>
+<script language="JavaScript" type="text/javascript" src="/ext/uiDivStats/uidivstatsclients.js"></script>
 <script language="JavaScript" type="text/javascript" src="/ext/uiDivStats/uidivstatstext.js"></script>
 
 <script>
@@ -55,11 +58,28 @@ var BarChartBlockedAds,BarChartReqDomains;
 var charttypead, charttypedomain;
 Chart.defaults.global.defaultFontColor = "#CCC";
 Chart.Tooltip.positioners.cursor = function(chartElements, coordinates) {
-  return coordinates;
+	return coordinates;
 };
 
+function Draw_Chart_NoData(txtchartname){
+	document.getElementById(txtchartname).width="735";
+	document.getElementById(txtchartname).height="360";
+	document.getElementById(txtchartname).style.width="735px";
+	document.getElementById(txtchartname).style.height="360px";
+	var ctx = document.getElementById(txtchartname).getContext("2d");
+	ctx.save();
+	ctx.textAlign = 'center';
+	ctx.textBaseline = 'middle';
+	ctx.font = "normal normal bolder 48px Arial";
+	ctx.fillStyle = 'white';
+	ctx.fillText('No data to display', 375, 180);
+	ctx.restore();
+}
+
 function Draw_Ad_Chart() {
-	if (barLabelsBlockedAds.length == 0) return;
+	if(typeof barLabelsBlockedAds === 'undefined' || barLabelsBlockedAds === null) { Draw_Chart_NoData("ChartAds"); return; }
+	if(typeof barDataBlockedAds === 'undefined' || barDataBlockedAds === null) { Draw_Chart_NoData("ChartAds"); return; }
+	if (barLabelsBlockedAds.length == 0) { Draw_Chart_NoData("ChartAds"); return; }
 	if (BarChartBlockedAds != undefined) BarChartBlockedAds.destroy();
 	var ctx = document.getElementById("ChartAds").getContext("2d");
 	var barOptionsAds = {
@@ -140,7 +160,9 @@ function Draw_Ad_Chart() {
 }
 
 function Draw_Domain_Chart() {
-	if (window["barLabelsDomains"+document.getElementById("clientdomains").value].length == 0) return;
+	if(typeof window["barLabelsDomains"+document.getElementById("clientdomains").value] === 'undefined' || window["barLabelsDomains"+document.getElementById("clientdomains").value] === null) { Draw_Chart_NoData("ChartDomains"); return; }
+	if(typeof window["barDataDomains"+document.getElementById("clientdomains").value] === 'undefined' || window["barDataDomains"+document.getElementById("clientdomains").value] === null) { Draw_Chart_NoData("ChartDomains"); return; }
+	if (window["barLabelsDomains"+document.getElementById("clientdomains").value].length == 0) { Draw_Chart_NoData("ChartDomains"); return; }
 	if (BarChartReqDomains != undefined) BarChartReqDomains.destroy();
 	var ctx = document.getElementById("ChartDomains").getContext("2d");
 	var barOptionsDomains = {
@@ -155,12 +177,12 @@ function Draw_Domain_Chart() {
 		tooltips: {
 			callbacks: {
 				title: function (tooltipItem, data) {
-				if (window["barLabelsDomainsType"+document.getElementById("clientdomains").value][tooltipItem[0].index].length > 1){
-				return data.labels[tooltipItem[0].index] + " - " + window["barLabelsDomainsType"+document.getElementById("clientdomains").value][tooltipItem[0].index];
-				}
-				else {
-				return data.labels[tooltipItem[0].index];
-				}
+					if (window["barLabelsDomainsType"+document.getElementById("clientdomains").value][tooltipItem[0].index].length > 1){
+						return data.labels[tooltipItem[0].index] + " - " + window["barLabelsDomainsType"+document.getElementById("clientdomains").value][tooltipItem[0].index];
+					}
+					else {
+						return data.labels[tooltipItem[0].index];
+					}
 				},
 				label: function (tooltipItem, data) { return comma(data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index]); },
 			},
@@ -236,7 +258,13 @@ function GetCookie(cookiename) {
 	}
 }
 
+function SetCurrentPage(){
+	document.form.next_page.value = window.location.pathname.substring(1);
+	document.form.current_page.value = window.location.pathname.substring(1);
+}
+
 function initial(){
+	SetCurrentPage();
 	GetCookie("colourads");
 	GetCookie("charttypeads");
 	GetCookie("colourdomains");
@@ -248,6 +276,22 @@ function initial(){
 	changeLayout(E('charttypeads'),"BarChartBlockedAds","charttypeads");
 	Draw_Domain_Chart();
 	changeLayout(E('charttypedomains'),"BarChartReqDomains","charttypedomains");
+	
+	SetDivStatsTitle();
+	SetKeyStatsReq();
+	SetKeyStatsBlocked();
+	SetKeyStatsPercent();
+	SetKeyStatsDomains();
+	SetTopBlockedTitle();
+	SetTopRequestedTitle();
+	SetClients();
+	GetCookie("clientdomains");
+	
+	$("thead").click(function(){
+		$(this).siblings().toggle("fast");
+	})
+	
+	$(".default-collapsed").trigger("click");
 }
 
 function reload() {
@@ -257,6 +301,8 @@ function reload() {
 function applyRule() {
 	var action_script_tmp = "start_uiDivStats";
 	document.form.action_script.value = action_script_tmp;
+	var restart_time = document.form.action_wait.value*1;
+	showLoading();
 	document.form.submit();
 }
 
@@ -275,7 +321,7 @@ function getSDev(datasetname){
 }
 
 function getMax(datasetname) {
-	max = Math.max(...datasetname)
+	max = Math.max(...datasetname);
 	return max + (max*0.1);
 }
 
@@ -393,23 +439,23 @@ function changeLayout(e,chartname,cookiename) {
 	layout = e.value * 1;
 	if ( layout == 0 ) {
 		if ( chartname == "BarChartBlockedAds" ) {
-			charttypead = "horizontalBar"
+			charttypead = "horizontalBar";
 		}
 		else {
-			charttypedomain = "horizontalBar"
+			charttypedomain = "horizontalBar";
 		}
 	}
 	else if ( layout == 1 ) {
 		if ( chartname == "BarChartBlockedAds" ) {
-			charttypead = "bar"
+			charttypead = "bar";
 		}
 		else {
-			charttypedomain = "bar"
+			charttypedomain = "bar";
 		}
 	}
 	else if ( layout == 2 ) {
 		if ( chartname == "BarChartBlockedAds" ) {
-			charttypead = "pie"
+			charttypead = "pie";
 		}
 		else {
 			charttypedomain = "pie"
@@ -441,11 +487,11 @@ function loadDivStats() {
 <body onload="initial();">
 <div id="TopBanner"></div>
 <div id="Loading" class="popup_bg"></div>
-<iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
+<iframe name="hidden_frame" id="hidden_frame" src="about:blank" width="0" height="0" frameborder="0"></iframe>
 <form method="post" name="form" id="ruleForm" action="/start_apply.htm" target="hidden_frame">
 <input type="hidden" name="action_script" value="start_uiDivStats">
-<input type="hidden" name="current_page" value="Advanced_MultiSubnet_Content.asp">
-<input type="hidden" name="next_page" value="Advanced_MultiSubnet_Content.asp">
+<input type="hidden" name="current_page" value="">
+<input type="hidden" name="next_page" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_wait" value="60">
@@ -453,6 +499,7 @@ function loadDivStats() {
 <input type="hidden" name="SystemCmd" value="">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
+<input type="hidden" name="amng_custom" id="amng_custom" value="">
 <table class="content" align="center" cellpadding="0" cellspacing="0">
 <tr>
 <td width="17">&nbsp;</td>
@@ -502,33 +549,17 @@ function loadDivStats() {
 <td colspan="4" id="keystats">Key Stats (click to expand/collapse)</td>
 </tr>
 </thead>
-<tr class='even' style="text-align:center;">
-<td width="25%" class="keystatscell">
-Total Queries
-</td>
-<td width="25%" class="keystatscell">
-Queries Blocked
-</td>
-<td width="25%" class="keystatscell">
-Percent Blocked
-</td>
-<td width="25%" class="keystatscell">
-Domains on Blocklist
-</td>
+<tr class="even" style="text-align:center;">
+<td width="25%" class="keystatscell">Total Queries</td>
+<td width="25%" class="keystatscell">Queries Blocked</td>
+<td width="25%" class="keystatscell">Percent Blocked</td>
+<td width="25%" class="keystatscell">Domains on Blocklist</td>
 </tr>
-<tr class='even' style="text-align:center;">
-<td width="25%" class="keystatscell keystatsnumber" id="keystatstotal">
-Total
-</td>
-<td width="25%" class="keystatscell keystatsnumber" id="keystatsblocked">
-Blocked
-</td>
-<td width="25%" class="keystatscell keystatsnumber" id="keystatspercent">
-Percent
-</td>
-<td width="25%" class="keystatscell keystatsnumber" id="keystatsdomains">
-Domains
-</td>
+<tr class="even" style="text-align:center;">
+<td width="25%" class="keystatscell keystatsnumber" id="keystatstotal">Total</td>
+<td width="25%" class="keystatscell keystatsnumber" id="keystatsblocked">Blocked</td>
+<td width="25%" class="keystatscell keystatsnumber" id="keystatspercent">Percent</td>
+<td width="25%" class="keystatscell keystatsnumber" id="keystatsdomains">Domains</td>
 </tr>
 </table>
 <div style="line-height:10px;">&nbsp;</div>
@@ -538,28 +569,28 @@ Domains
 <td colspan="2" id="topblocked">Top X blocked domains (click to expand/collapse)</td>
 </tr>
 </thead>
-<tr class='even'>
+<tr class="even">
 <th width="40%">Style for charts</th>
 <td>
-<select style="width:100px" class="input_option" onchange='changeColour(this,BarChartBlockedAds,barDataBlockedAds,"colourads")' id='colourads'>
-<option value=0>Colour</option>
-<option value=1>Plain</option>
+<select style="width:100px" class="input_option" onchange="changeColour(this,BarChartBlockedAds,barDataBlockedAds,'colourads')" id="colourads">
+<option value="0">Colour</option>
+<option value="1">Plain</option>
 </select>
 </td>
 </tr>
-<tr class='even'>
+<tr class="even">
 <th width="40%">Layout for charts</th>
 <td>
-<select style="width:100px" class="input_option" onchange='changeLayout(this,"BarChartBlockedAds","charttypeads")' id='charttypeads'>
-<option value=0>Horizontal</option>
-<option value=1>Vertical</option>
-<option value=2>Pie</option>
+<select style="width:100px" class="input_option" onchange="changeLayout(this,'BarChartBlockedAds','charttypeads')" id="charttypeads">
+<option value="0">Horizontal</option>
+<option value="1">Vertical</option>
+<option value="2">Pie</option>
 </select>
 </td>
 </tr>
 <tr>
 <td colspan="2" style="padding: 2px;">
-<div style="background-color:#2f3e44;border-radius:10px;width:735px;padding-left:5px;"><canvas id="ChartAds" height="360"></div>
+<div style="background-color:#2f3e44;border-radius:10px;width:735px;padding-left:5px;"><canvas id="ChartAds" height="360" /></div>
 </td>
 </tr>
 </table>
@@ -570,37 +601,36 @@ Domains
 <td colspan="2" id="toprequested">Top X requested domains (click to expand/collapse)</td>
 </tr>
 </thead>
-<tr class='even'>
+<tr class="even">
 <th width="40%">Client to display</th>
 <td>
-<select style="width:300px" class="input_option" onchange='changeClient(this,BarChartReqDomains,"clientdomains")' id='clientdomains'>
-<option value=0>All Clients</option>
-<option value=1>Plain</option>
+<select style="width:300px" class="input_option" onchange="changeClient(this,BarChartReqDomains,'clientdomains')" id="clientdomains">
+<option value="0">All Clients</option>
 </select>
 </td>
 </tr>
-<tr class='even'>
+<tr class="even">
 <th width="40%">Style for charts</th>
 <td>
-<select style="width:100px" class="input_option" onchange='changeColour(this,BarChartReqDomains,window["barDataDomains"+document.getElementById("clientdomains").value],"colourdomains")' id='colourdomains'>
-<option value=0>Colour</option>
-<option value=1>Plain</option>
+<select style="width:100px" class="input_option" onchange="changeColour(this,BarChartReqDomains,window['barDataDomains'+document.getElementById('clientdomains').value],'colourdomains')" id="colourdomains">
+<option value="0">Colour</option>
+<option value="1">Plain</option>
 </select>
 </td>
 </tr>
-<tr class='even'>
+<tr class="even">
 <th width="40%">Layout for charts</th>
 <td>
-<select style="width:100px" class="input_option" onchange='changeLayout(this,"BarChartReqDomains","charttypedomains")' id='charttypedomains'>
-<option value=0>Horizontal</option>
-<option value=1>Vertical</option>
-<option value=2>Pie</option>
+<select style="width:100px" class="input_option" onchange="changeLayout(this,'BarChartReqDomains','charttypedomains')" id="charttypedomains">
+<option value="0">Horizontal</option>
+<option value="1">Vertical</option>
+<option value="2">Pie</option>
 </select>
 </td>
 </tr>
 <tr>
 <td colspan="2" style="padding: 2px;">
-<div style="background-color:#2f3e44;border-radius:10px;width:735px;padding-left:5px;"><canvas id="ChartDomains" height="360"></div>
+<div style="background-color:#2f3e44;border-radius:10px;width:735px;padding-left:5px;"><canvas id="ChartDomains" height="360" /></div>
 </td>
 </tr>
 </table>
@@ -608,39 +638,14 @@ Domains
 </td>
 </tr>
 </tbody>
+</table></td>
+</tr>
+</table>
+</td>
+</tr>
 </table>
 </form>
-</td>
-</tr>
-</table>
-</td>
-<td width="10" align="center" valign="top">&nbsp;</td>
-</tr>
-</table>
-<script>
-SetDivStatsTitle();
-SetKeyStatsReq();
-SetKeyStatsBlocked();
-SetKeyStatsPercent();
-SetKeyStatsDomains();
-SetTopBlockedTitle();
-SetTopRequestedTitle();
-SetClients();
-
-if ((s = cookie.get('clientdomains')) != null) {
-	if (s.match(/^([0-9]*[0-9])$/)) {
-		E('clientdomains').value = cookie.get('clientdomains') * 1;
-	}
-}
-</script>
 <div id="footer">
 </div>
-<script>
-$("thead").click(function(){
-	$(this).siblings().toggle("fast");
-})
-
-$(".default-collapsed").trigger("click");
-</script>
 </body>
 </html>

@@ -15,14 +15,17 @@
 
 ### Start of script variables ###
 readonly SCRIPT_NAME="uiDivStats"
-readonly SCRIPT_VERSION="v1.2.3"
+readonly SCRIPT_VERSION="v1.3.2"
 readonly SCRIPT_BRANCH="master"
 readonly SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/""$SCRIPT_NAME""/""$SCRIPT_BRANCH"
-readonly SCRIPT_CONF="/jffs/configs/$SCRIPT_NAME.config"
-readonly SCRIPT_DIR="/jffs/scripts/$SCRIPT_NAME.d"
-readonly SCRIPT_WEB_DIR="$(readlink /www/ext)/$SCRIPT_NAME"
-readonly SHARED_DIR="/jffs/scripts/shared-jy"
+readonly OLD_SCRIPT_DIR="/jffs/scripts/$SCRIPT_NAME.d"
+readonly SCRIPT_DIR="/jffs/addons/$SCRIPT_NAME.d"
+readonly SCRIPT_WEBPAGE_DIR="$(readlink /www/user)"
+readonly SCRIPT_WEB_DIR="$SCRIPT_WEBPAGE_DIR/$SCRIPT_NAME"
+readonly OLD_SHARED_DIR="/jffs/scripts/shared-jy"
+readonly SHARED_DIR="/jffs/addons/shared-jy"
 readonly SHARED_REPO="https://raw.githubusercontent.com/jackyaz/shared-jy/master"
+readonly SHARED_WEB_DIR="$SCRIPT_WEBPAGE_DIR/shared-jy"
 [ -z "$(nvram get odmpid)" ] && ROUTER_MODEL=$(nvram get productid) || ROUTER_MODEL=$(nvram get odmpid)
 ### End of script variables ###
 
@@ -43,11 +46,21 @@ Print_Output(){
 	fi
 }
 
-### Code for this function courtesy of https://github.com/decoderman - credit to @thelonelycoder ###
 Firmware_Version_Check(){
-	echo "$1" | awk -F. '{ printf("%d%03d%03d%03d\n", $1,$2,$3,$4); }'
+	if [ "$1" = "install" ]; then
+		if [ "$(uname -o)" = "ASUSWRT-Merlin" ] && [ "$(nvram get buildno | cut -f1 -d'.')" -ge "384" ]; then
+			return 0
+		else
+			return 1
+		fi
+	elif [ "$1" = "webui" ]; then
+		if nvram get rc_support | grep -qF "am_addons"; then
+			return 0
+		else
+			return 1
+		fi
+	fi
 }
-############################################################################
 
 ### Code for these functions inspired by https://github.com/Adamm00 - credit to @Adamm ###
 Check_Lock(){
@@ -101,9 +114,7 @@ Update_Version(){
 		fi
 		
 		Update_File "uidivstats_www.asp"
-		Update_File "chartjs-plugin-zoom.js"
-		Update_File "hammerjs.js"
-		Modify_WebUI_File
+		Update_File "shared-jy.tar.gz"
 		
 		if [ "$doupdate" != "false" ]; then
 			/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME.sh" -o "/jffs/scripts/$SCRIPT_NAME" && Print_Output "true" "$SCRIPT_NAME successfully updated"
@@ -121,9 +132,7 @@ Update_Version(){
 			serverver=$(/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME.sh" | grep "SCRIPT_VERSION=" | grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})')
 			Print_Output "true" "Downloading latest version ($serverver) of $SCRIPT_NAME" "$PASS"
 			Update_File "uidivstats_www.asp"
-			Update_File "chartjs-plugin-zoom.js"
-			Update_File "hammerjs.js"
-			Modify_WebUI_File
+			Update_File "shared-jy.tar.gz"
 			/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME.sh" -o "/jffs/scripts/$SCRIPT_NAME" && Print_Output "true" "$SCRIPT_NAME successfully updated"
 			chmod 0755 /jffs/scripts/"$SCRIPT_NAME"
 			Clear_Lock
@@ -138,29 +147,34 @@ Update_File(){
 		tmpfile="/tmp/$1"
 		Download_File "$SCRIPT_REPO/$1" "$tmpfile"
 		if ! diff -q "$tmpfile" "$SCRIPT_DIR/$1" >/dev/null 2>&1; then
+			if [ -f "$SCRIPT_DIR/$1" ]; then
+				Get_WebUI_Page "$SCRIPT_DIR/$1"
+				sed -i "\\~$MyPage~d" /tmp/menuTree.js
+				rm -f "$SCRIPT_WEBPAGE_DIR/$MyPage" 2>/dev/null
+			fi
+			Download_File "$SCRIPT_REPO/$1" "$SCRIPT_DIR/$1"
 			Print_Output "true" "New version of $1 downloaded" "$PASS"
-			rm -f "$SCRIPT_DIR/$1"
 			Mount_WebUI
 		fi
 		rm -f "$tmpfile"
-	elif [ "$1" = "chartjs-plugin-zoom.js" ]; then
-		tmpfile="/tmp/$1"
-		Download_File "$SHARED_REPO/$1" "$tmpfile"
-		if ! diff -q "$tmpfile" "$SHARED_DIR/$1" >/dev/null 2>&1; then
-			Print_Output "true" "New version of $1 downloaded" "$PASS"
+	elif [ "$1" = "shared-jy.tar.gz" ]; then
+		if [ ! -f "$SHARED_DIR/$1.md5" ]; then
+			Download_File "$SHARED_REPO/$1" "$SHARED_DIR/$1"
+			Download_File "$SHARED_REPO/$1.md5" "$SHARED_DIR/$1.md5"
+			tar -xzf "$SHARED_DIR/$1" -C "$SHARED_DIR"
 			rm -f "$SHARED_DIR/$1"
-			Mount_WebUI
-		fi
-		rm -f "$tmpfile"
-	elif [ "$1" = "hammerjs.js" ]; then
-		tmpfile="/tmp/$1"
-		Download_File "$SHARED_REPO/$1" "$tmpfile"
-		if ! diff -q "$tmpfile" "$SHARED_DIR/$1" >/dev/null 2>&1; then
 			Print_Output "true" "New version of $1 downloaded" "$PASS"
-			rm -f "$SHARED_DIR/$1"
-			Mount_WebUI
+		else
+			localmd5="$(cat "$SHARED_DIR/$1.md5")"
+			remotemd5="$(curl -fsL --retry 3 "$SHARED_REPO/$1.md5")"
+			if [ "$localmd5" != "$remotemd5" ]; then
+				Download_File "$SHARED_REPO/$1" "$SHARED_DIR/$1"
+				Download_File "$SHARED_REPO/$1.md5" "$SHARED_DIR/$1.md5"
+				tar -xzf "$SHARED_DIR/$1" -C "$SHARED_DIR"
+				rm -f "$SHARED_DIR/$1"
+				Print_Output "true" "New version of $1 downloaded" "$PASS"
+			fi
 		fi
-		rm -f "$tmpfile"
 	else
 		return 1
 	fi
@@ -175,6 +189,10 @@ Create_Dirs(){
 		mkdir -p "$SHARED_DIR"
 	fi
 	
+	if [ ! -d "$SCRIPT_WEBPAGE_DIR" ]; then
+		mkdir -p "$SCRIPT_WEBPAGE_DIR"
+	fi
+	
 	if [ ! -d "$SCRIPT_WEB_DIR" ]; then
 		mkdir -p "$SCRIPT_WEB_DIR"
 	fi
@@ -184,12 +202,15 @@ Create_Symlinks(){
 	rm -f "$SCRIPT_WEB_DIR/"* 2>/dev/null
 	
 	ln -s "$SCRIPT_DIR/uidivstats.js" "$SCRIPT_WEB_DIR/uidivstats.js" 2>/dev/null
+	ln -s "$SCRIPT_DIR/uidivstatsclients.js" "$SCRIPT_WEB_DIR/uidivstatsclients.js" 2>/dev/null
+	
 	ln -s "$SCRIPT_DIR/uidivstatstext.js" "$SCRIPT_WEB_DIR/uidivstatstext.js" 2>/dev/null
 	ln -s "$SCRIPT_DIR/uidivstats.txt" "$SCRIPT_WEB_DIR/uidivstatstext.htm" 2>/dev/null
-	
-	ln -s "$SHARED_DIR/chartjs-plugin-zoom.js" "$SCRIPT_WEB_DIR/chartjs-plugin-zoom.js" 2>/dev/null
-	ln -s "$SHARED_DIR/hammerjs.js" "$SCRIPT_WEB_DIR/hammerjs.js" 2>/dev/null
 	ln -s "$SCRIPT_DIR/psstats.htm" "$SCRIPT_WEB_DIR/psstats.htm" 2>/dev/null
+	
+	if [ ! -d "$SHARED_WEB_DIR" ]; then
+		ln -s "$SHARED_DIR" "$SHARED_WEB_DIR" 2>/dev/null
+	fi
 }
 
 Auto_ServiceEvent(){
@@ -292,26 +313,66 @@ Get_spdMerlin_UI(){
 	fi
 }
 
+Get_WebUI_Page () {
+	for i in 1 2 3 4 5 6 7 8 9 10; do
+		page="$SCRIPT_WEBPAGE_DIR/user$i.asp"
+		if [ ! -f "$page" ] || [ "$(md5sum < "$1")" = "$(md5sum < "$page")" ]; then
+			MyPage="user$i.asp"
+			return
+		fi
+	done
+	MyPage="none"
+}
+
 Mount_WebUI(){
+	if Firmware_Version_Check "webui" ; then
+		Get_WebUI_Page "$SCRIPT_DIR/uidivstats_www.asp"
+		if [ "$MyPage" = "none" ]; then
+			Print_Output "true" "Unable to mount $SCRIPT_NAME WebUI page, exiting" "$CRIT"
+			exit 1
+		fi
+		Print_Output "true" "Mounting $SCRIPT_NAME WebUI page as $MyPage" "$PASS"
+		cp -f "$SCRIPT_DIR/uidivstats_www.asp" "$SCRIPT_WEBPAGE_DIR/$MyPage"
+		
+		if [ ! -f "/tmp/index_style.css" ]; then
+			cp -f "/www/index_style.css" "/tmp/"
+		fi
+		
+		if ! grep -q '.menu_Addons' /tmp/index_style.css ; then
+			echo ".menu_Addons { background: url(ext/shared-jy/addons.png); }" >> /tmp/index_style.css
+		fi
+		
+		umount /www/index_style.css 2>/dev/null
+		mount -o bind /tmp/index_style.css /www/index_style.css
+		
+		if [ ! -f "/tmp/menuTree.js" ]; then
+			cp -f "/www/require/modules/menuTree.js" "/tmp/"
+		fi
+		
+		sed -i "\\~$MyPage~d" /tmp/menuTree.js
+		
+		if ! grep -q 'menuName: "Addons"' /tmp/menuTree.js ; then
+			lineinsbefore="$(( $(grep -n "exclude:" /tmp/menuTree.js | cut -f1 -d':') - 1))"
+			sed -i "$lineinsbefore"'i,\n{\nmenuName: "Addons",\nindex: "menu_Addons",\ntab: [\n{url: "ext/shared-jy/redirect.htm", tabName: "Help & Support"},\n{url: "NULL", tabName: "__INHERIT__"}\n]\n}' /tmp/menuTree.js
+		fi
+		
+		if ! grep -q "javascript:window.open('/ext/shared-jy/redirect.htm'" /tmp/menuTree.js ; then
+			sed -i "s~ext/shared-jy/redirect.htm~javascript:window.open('/ext/shared-jy/redirect.htm','_blank')~" /tmp/menuTree.js
+		fi
+		sed -i "/url: \"javascript:window.open('\/ext\/shared-jy\/redirect.htm'/i {url: \"$MyPage\", tabName: \"Diversion Stats\"}," /tmp/menuTree.js
+		
+		umount /www/require/modules/menuTree.js 2>/dev/null
+		mount -o bind /tmp/menuTree.js /www/require/modules/menuTree.js
+	else
+		Mount_WebUI_Old
+		Modify_WebUI_File
+	fi
+}
+
+Mount_WebUI_Old(){
 	umount /www/Advanced_MultiSubnet_Content.asp 2>/dev/null
 	
-	if [ -f "/jffs/scripts/uidivstats_www.asp" ]; then
-		mv "/jffs/scripts/uidivstats_www.asp" "$SCRIPT_DIR/uidivstats_www.asp"
-	fi
-	
-	if [ ! -f "$SCRIPT_DIR/uidivstats_www.asp" ]; then
-		Download_File "$SCRIPT_REPO/uidivstats_www.asp" "$SCRIPT_DIR/uidivstats_www.asp"
-	fi
-	
 	mount -o bind "$SCRIPT_DIR/uidivstats_www.asp" "/www/Advanced_MultiSubnet_Content.asp"
-	
-	if [ ! -f "$SHARED_DIR/hammerjs.js" ]; then
-		Download_File "$SHARED_REPO/hammerjs.js" "$SHARED_DIR/hammerjs.js"
-	fi
-	
-	if [ ! -f "$SHARED_DIR/chartjs-plugin-zoom.js" ]; then
-		Download_File "$SHARED_REPO/chartjs-plugin-zoom.js" "$SHARED_DIR/chartjs-plugin-zoom.js"
-	fi
 }
 
 Modify_WebUI_File(){
@@ -363,18 +424,18 @@ Modify_WebUI_File(){
 	cp "/www/start_apply.htm" "$tmpfile"
 	
 	if [ -f /jffs/scripts/spdmerlin ]; then
-		sed -i -e '/else if(current_page.indexOf("Feedback") != -1){/i else if(current_page.indexOf("Advanced_Feedback.asp") != -1){'"\\r\\n"'parent.showLoading(restart_time, "waiting");'"\\r\\n"'setTimeout(function(){ getXMLAndRedirect();}, restart_time*1000);'"\\r\\n"'}' "$tmpfile"
+		sed -i -e '/else if(current_page.indexOf("Feedback") != -1){/i else if(current_page.indexOf("Advanced_Feedback.asp") != -1){'"\\r\\n"'setTimeout(getXMLAndRedirect, restart_time*1000);'"\\r\\n"'}' "$tmpfile"
 	fi
 	
 	if [ -f /jffs/scripts/ntpmerlin ]; then
-		sed -i -e '/else if(current_page.indexOf("Feedback") != -1){/i else if(current_page.indexOf("Feedback_Info.asp") != -1){'"\\r\\n"'parent.showLoading(restart_time, "waiting");'"\\r\\n"'setTimeout(function(){ getXMLAndRedirect();}, restart_time*1000);'"\\r\\n"'}' "$tmpfile"
+		sed -i -e '/else if(current_page.indexOf("Feedback") != -1){/i else if(current_page.indexOf("Feedback_Info.asp") != -1){'"\\r\\n"'setTimeout(getXMLAndRedirect, restart_time*1000);'"\\r\\n"'}' "$tmpfile"
 	fi
 	
 	if [ -f /jffs/scripts/connmon ]; then
-		sed -i -e '/else if(current_page.indexOf("Feedback") != -1){/i else if(current_page.indexOf("'"$(Get_spdMerlin_UI)"'") != -1){'"\\r\\n"'parent.showLoading(restart_time, "waiting");'"\\r\\n"'setTimeout(function(){ getXMLAndRedirect();}, restart_time*1000);'"\\r\\n"'}' "$tmpfile"
+		sed -i -e '/else if(current_page.indexOf("Feedback") != -1){/i else if(current_page.indexOf("'"$(Get_spdMerlin_UI)"'") != -1){'"\\r\\n"'setTimeout(getXMLAndRedirect, restart_time*1000);'"\\r\\n"'}' "$tmpfile"
 	fi
 	
-	sed -i -e '/else if(current_page.indexOf("Feedback") != -1){/i else if(current_page.indexOf("Advanced_MultiSubnet_Content.asp") != -1){'"\\r\\n"'parent.showLoading(restart_time, "waiting");'"\\r\\n"'setTimeout(function(){ getXMLAndRedirect();}, restart_time*1000);'"\\r\\n"'}' "$tmpfile"
+	sed -i -e '/else if(current_page.indexOf("Feedback") != -1){/i else if(current_page.indexOf("Advanced_MultiSubnet_Content.asp") != -1){'"\\r\\n"'setTimeout(getXMLAndRedirect, restart_time*1000);'"\\r\\n"'}' "$tmpfile"
 	
 	if [ -f /jffs/scripts/custom_start_apply.htm ]; then
 		mv /jffs/scripts/custom_start_apply.htm "$SHARED_DIR/custom_start_apply.htm"
@@ -397,7 +458,7 @@ Modify_WebUI_File(){
 WriteOptions_ToJS(){
 	{
 	echo "var clients;"
-	echo "clients = [];"; } >> "$2"
+	echo "clients = [];"; } > "$2"
 	contents=""
 	contents="$contents""clients.unshift("
 	while IFS='' read -r line || [ -n "$line" ]; do
@@ -429,42 +490,17 @@ WriteStats_ToJS(){
 }
 
 WriteData_ToJS(){
-	{
-	echo "var $3 , $4;"
-	echo "$3 = [];"
-	echo "$4 = [];"; } >> "$2"
-	if [ -n "$5" ]; then
-		{
-		echo "var $5;"
-		echo "$5 = [];"; } >> "$2"
-	fi
-	contents=""
-	contents="$contents""$3"'.unshift('
-	while IFS='' read -r line || [ -n "$line" ]; do
-		contents="$contents""'""$(echo "$line" | awk '{$1=$1};1' | awk 'BEGIN{FS="  *"}{ print $1 }')""'"","
-	done < "$1"
-	contents=$(echo "$contents" | sed 's/.$//')
-	contents="$contents"");"
-	echo "$contents" >> "$2"
-
-	contents="$4"'.unshift('
-	while IFS='' read -r line || [ -n "$line" ]; do
-		contents="$contents""'""$(echo "$line" | awk '{$1=$1};1' | awk 'BEGIN{FS="  *"}{ print $2 }')""'"","
-	done < "$1"
-	contents=$(echo "$contents" | sed 's/.$//')
-	contents="$contents"");"
-	printf "%s\\r\\n\\r\\n" "$contents" >> "$2"
-	
-	if [ -n "$5" ]; then
-		contents="$5"'.unshift('
-		while IFS='' read -r line || [ -n "$line" ]; do
-			contents="$contents""'""$(echo "$line" | awk '{$1=$1};1' | awk 'BEGIN{FS="  *"}{ print $3 }')""'"","
-		done < "$1"
-		contents=$(echo "$contents" | sed 's/.$//')
-		contents="$contents"");"
-		printf "%s\\r\\n\\r\\n" "$contents" >> "$2"
-	fi
-	
+	inputfile="$1"
+	outputfile="$2"
+	shift;shift
+	i="0"
+	for var in "$@"; do
+		i=$((i+1))
+		{ echo "var $var;"
+			echo "$var = [];"
+			echo "${var}.unshift('$(awk -v i=$i '{printf t $i} {t=","}' "$inputfile" | sed "s~,~\\',\\'~g")');"
+			echo; } >> "$outputfile"
+	done
 }
 
 # shellcheck disable=SC1090
@@ -832,8 +868,9 @@ Generate_Stats_Diversion(){
 		WriteData_ToJS /tmp/uidivstats/div-tah "/tmp/uidivstats.js" "barDataBlockedAds" "barLabelsBlockedAds"
 		awk 'NR==FNR{a[FNR]=$0 "";next} {print a[FNR],$0}' /tmp/uidivstats/div-th /tmp/uidivstats/div-bwl >>/tmp/uidivstats/div-th-bwl
 		WriteData_ToJS /tmp/uidivstats/div-th-bwl "/tmp/uidivstats.js" "barDataDomains0" "barLabelsDomains0" "barLabelsDomainsType0"
-		WriteOptions_ToJS "$clientsFile" "/tmp/uidivstats.js"
+		WriteOptions_ToJS "$clientsFile" "/tmp/uidivstatsclients.js"
 		mv "/tmp/uidivstats.js" "$SCRIPT_DIR/uidivstats.js"
+		mv "/tmp/uidivstatsclients.js" "$SCRIPT_DIR/uidivstatsclients.js"
 		
 		printf "$(head -n 2 "$statsFile" | tail -n 1 | sed 's/^ //' | sed 's/Stats/Stats generated on/')" > /tmp/uidivtitle.txt
 		WriteStats_ToJS "/tmp/uidivtitle.txt" "/tmp/uidivstatstext.js" "SetDivStatsTitle" "statstitle"
@@ -851,9 +888,9 @@ Generate_Stats_Diversion(){
 		
 		if [ "$EDITION" = "Standard" ]; then
 			if [ "$LANblockingIP" ] && [ "$LANblockingIP" = on ]; then
-				/usr/sbin/curl -s --retry 3 "http://$lanBIP/servstats" -o "$psstatsFile"
+				/usr/sbin/curl -fs --retry 3 --connect-timeout 15 "http://$lanBIP/servstats" -o "$psstatsFile"
 			else
-				/usr/sbin/curl -s --retry 3 "http://$psIP/servstats" -o "$psstatsFile"
+				/usr/sbin/curl -fs --retry 3 --connect-timeout 15 "http://$psIP/servstats" -o "$psstatsFile"
 			fi
 		else
 			echo "Pixelserv not installed" > "$psstatsFile"
@@ -862,6 +899,7 @@ Generate_Stats_Diversion(){
 		rm -f "$statsFile"
 		rm -f "$clientsFile"
 		rm -f "/tmp/uidivstats.js"
+		rm -f "/tmp/uidivstatsclients.js"
 		rm -f "/tmp/uidivstatstext.js"
 		rm -f /tmp/uidiv*.txt
 		rm -rf /tmp/uidivstats
@@ -1021,7 +1059,14 @@ Check_Requirements(){
 		fi
 	fi
 	
+	if ! Firmware_Version_Check "install"; then
+		Print_Output "true" "Unsupported firmware version detected, 384.XX required" "$ERR"
+		CHECKSFAILED="true"
+	fi
+	
 	if [ "$CHECKSFAILED" = "false" ]; then
+		opkg update
+		opkg install grep
 		return 0
 	else
 		return 1
@@ -1042,18 +1087,16 @@ Menu_Install(){
 		exit 1
 	fi
 	
-	opkg update
-	opkg install grep
-	
 	Create_Dirs
 	Create_Symlinks
+	
+	Update_File "uidivstats_www.asp"
+	Update_File "shared-jy.tar.gz"
 	
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
 	Shortcut_script create
-	Mount_WebUI
-	Modify_WebUI_File
 	Menu_GenerateStats
 	
 	Clear_Lock
@@ -1067,7 +1110,6 @@ Menu_Startup(){
 	Create_Dirs
 	Create_Symlinks
 	Mount_WebUI
-	Modify_WebUI_File
 	Clear_Lock
 }
 
@@ -1098,16 +1140,28 @@ Menu_Uninstall(){
 	Auto_ServiceEvent delete 2>/dev/null
 	
 	Shortcut_script delete
-	umount /www/Advanced_MultiSubnet_Content.asp 2>/dev/null
-	sed -i '/{url: "Advanced_MultiSubnet_Content.asp", tabName: "Diversion Statistics"}/d' "/jffs/scripts/custom_menuTree.js"
-	umount /www/require/modules/menuTree.js 2>/dev/null
 	
-	if [ ! -f "/jffs/scripts/ntpmerlin" ] && [ ! -f "/jffs/scripts/spdmerlin" ] && [ ! -f "/jffs/scripts/connmon" ]; then
-		rm -f "$SHARED_DIR/custom_menuTree.js" 2>/dev/null
+	if Firmware_Version_Check "webui" ; then
+		Get_WebUI_Page "$SCRIPT_DIR/uidivstats_www.asp"
+		if [ -n "$MyPage" ] && [ "$MyPage" != "none" ] && [ -f "/tmp/menuTree.js" ]; then
+			sed -i "\\~$MyPage~d" /tmp/menuTree.js
+			umount /www/require/modules/menuTree.js
+			mount -o bind /tmp/menuTree.js /www/require/modules/menuTree.js
+			rm -rf "{$SCRIPT_WEBPAGE_DIR:?}/$MyPage"
+		fi
 	else
-		mount -o bind "$SHARED_DIR/custom_menuTree.js" "/www/require/modules/menuTree.js"
+		umount /www/Advanced_MultiSubnet_Content.asp 2>/dev/null
+		sed -i '/{url: "Advanced_MultiSubnet_Content.asp", tabName: "Diversion Statistics"}/d' "/jffs/scripts/custom_menuTree.js"
+		umount /www/require/modules/menuTree.js 2>/dev/null
+		
+		if [ ! -f "/jffs/scripts/ntpmerlin" ] && [ ! -f "/jffs/scripts/spdmerlin" ] && [ ! -f "/jffs/scripts/connmon" ]; then
+			rm -f "$SHARED_DIR/custom_menuTree.js" 2>/dev/null
+		else
+			mount -o bind "$SHARED_DIR/custom_menuTree.js" "/www/require/modules/menuTree.js"
+		fi
 	fi
 	rm -f "$SCRIPT_DIR/uidivstats_www.asp" 2>/dev/null
+	rm -rf "$SCRIPT_WEB_DIR" 2>/dev/null
 	rm -f "/jffs/scripts/$SCRIPT_NAME" 2>/dev/null
 	Clear_Lock
 	Print_Output "true" "Uninstall completed" "$PASS"
@@ -1120,7 +1174,6 @@ if [ -z "$1" ]; then
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
 	Shortcut_script create
-	Clear_Lock
 	ScriptHeader
 	MainMenu
 	exit 0
