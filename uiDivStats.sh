@@ -559,34 +559,28 @@ Generate_Stats_Diversion(){
 		printf "\\n Ad-Blocking stats:" >>${statsFile}
 		printf "\\n$LINE" >>${statsFile}
 		
-		if /opt/bin/grep -qm1 'devEnv' /opt/bin/diversion; then
-			BD="$(($(/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/blockinglist" | wc -w)-$(/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/blockinglist" | wc -l)))"
-			BD="$(($BD+$(/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/blacklist" "${DIVERSION_DIR}/list/wc_blacklist" | wc -l)))"
-			BL="$(($(/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/blockinglist" | wc -w)-$(/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/blockinglist" | wc -l)))"
-			[ "$bfFs" = "on" ] && BLfs="$(($(/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/blockinglist_fs" | wc -w)-$(/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/blockinglist_fs" | wc -l)))"
-		else
-			BD=$(/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/blockinglist" "${DIVERSION_DIR}/list/blacklist" "${DIVERSION_DIR}/list/wc_blacklist" | wc -l)
-			BL=$(/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/blockinglist" | wc -l)
-			[ "$bfFs" = "on" ] && BLfs=$(/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/blockinglist_fs" | wc -l)
-		fi
+		BL="$(/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/blacklist" | wc -l)"
+		[ "$(nvram get ipv6_service)" != "disabled" ] && BL="$((BL/2))"
+		WCBL="$(/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/wc_blacklist" | wc -l)"
+		BD="$((BL+WCBL+blockedDomains))"
 		
 		printf "%-13s%s\\n" " $(echo $BD | human_number)" "domains in total are blocked" >>${statsFile}
 		echo "$(echo $BD | human_number)" > /tmp/uidivstatskeystatsdomains.txt
 		WriteStats_ToJS "/tmp/uidivstatskeystatsdomains.txt" "/tmp/uidivstatstext.js" "SetKeyStatsDomains" "keystatsdomains"
 		if [ "$bfFs" = "on" ]; then
 			if [ "$bfTypeinUse" = "primary" ]; then
-				printf "%-13s%s\\n" " $(echo $BL | human_number)" "blocked by primary blocking list in use" >>${statsFile}
-				printf "%-13s%s\\n" " $(echo $BLfs | human_number)" "(blocked by secondary blocking list)" >>${statsFile}
+				printf "%-13s%s\\n" " $(echo $blockedDomains | human_number)" "blocked by primary blocking list in use" >>${statsFile}
+				printf "%-13s%s\\n" " $(echo $blockedDomainsFs | human_number)" "(blocked by secondary blocking list)" >>${statsFile}
 			else
-				printf "%-13s%s\\n" " $(echo $BLfs | human_number)" "blocked by secondary blocking list in use" >>${statsFile}
-				printf "%-13s%s\\n" " $(echo $BL | human_number)" "(blocked by primary blocking list)" >>${statsFile}
+				printf "%-13s%s\\n" " $(echo $blockedDomainsFs | human_number)" "blocked by secondary blocking list in use" >>${statsFile}
+				printf "%-13s%s\\n" " $(echo $blockedDomains | human_number)" "(blocked by primary blocking list)" >>${statsFile}
 			fi
 		else
-			printf "%-13s%s\\n" " $(echo $BL | human_number)" "blocked by blocking list" >>${statsFile}
+			printf "%-13s%s\\n" " $(echo $blockedDomains | human_number)" "blocked by blocking list" >>${statsFile}
 		fi
 		
-		printf "%-13s%s\\n" " $(/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/blacklist" | wc -l)" "blocked by blacklist" >>${statsFile}
-		printf "%-13s%s\\n" " $(/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/wc_blacklist" | wc -l)" "blocked by wildcard blacklist" >>${statsFile}
+		printf "%-13s%s\\n" " $BL" "blocked by blacklist" >>${statsFile}
+		printf "%-13s%s\\n" " $WCBL" "blocked by wildcard blacklist" >>${statsFile}
 		printf "\\n" >>${statsFile}
 		keystatsblocked=0;
 		if [ "$bfFs" = "on" ] && [ "$alternateBF" = "on" ]; then
