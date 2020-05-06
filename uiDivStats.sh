@@ -559,24 +559,28 @@ Generate_Stats_Diversion(){
 		printf "\\n Ad-Blocking stats:" >>${statsFile}
 		printf "\\n$LINE" >>${statsFile}
 		
+		BLL="$(($(/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/blockinglist" | wc -w)-$(/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/blockinglist" | wc -l)))"
+		[ "$(nvram get ipv6_service)" != "disabled" ] && BLL="$((BLL/2))"
 		BL="$(/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/blacklist" | wc -l)"
 		[ "$(nvram get ipv6_service)" != "disabled" ] && BL="$((BL/2))"
 		WCBL="$(/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/wc_blacklist" | wc -l)"
-		BD="$((BL+WCBL+blockedDomains))"
+		BD="$((BLL+BL+WCBL))"
 		
 		printf "%-13s%s\\n" " $(echo $BD | human_number)" "domains in total are blocked" >>${statsFile}
 		echo "$(echo $BD | human_number)" > /tmp/uidivstatskeystatsdomains.txt
 		WriteStats_ToJS "/tmp/uidivstatskeystatsdomains.txt" "/tmp/uidivstatstext.js" "SetKeyStatsDomains" "keystatsdomains"
 		if [ "$bfFs" = "on" ]; then
+			BLLFS="$(($(/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/blockinglist_fs" | wc -w)-$(/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/blockinglist_fs"| wc -l)))"
+			[ "$(nvram get ipv6_service)" != "disabled" ] && BLLFS="$((BLLFS/2))"
 			if [ "$bfTypeinUse" = "primary" ]; then
-				printf "%-13s%s\\n" " $(echo $blockedDomains | human_number)" "blocked by primary blocking list in use" >>${statsFile}
-				printf "%-13s%s\\n" " $(echo $blockedDomainsFs | human_number)" "(blocked by secondary blocking list)" >>${statsFile}
+				printf "%-13s%s\\n" " $(echo $BLL | human_number)" "blocked by primary blocking list in use" >>${statsFile}
+				printf "%-13s%s\\n" " $(echo $BLLFS | human_number)" "(blocked by secondary blocking list)" >>${statsFile}
 			else
-				printf "%-13s%s\\n" " $(echo $blockedDomainsFs | human_number)" "blocked by secondary blocking list in use" >>${statsFile}
-				printf "%-13s%s\\n" " $(echo $blockedDomains | human_number)" "(blocked by primary blocking list)" >>${statsFile}
+				printf "%-13s%s\\n" " $(echo $BLLFS | human_number)" "blocked by secondary blocking list in use" >>${statsFile}
+				printf "%-13s%s\\n" " $(echo $BLL | human_number)" "(blocked by primary blocking list)" >>${statsFile}
 			fi
 		else
-			printf "%-13s%s\\n" " $(echo $blockedDomains | human_number)" "blocked by blocking list" >>${statsFile}
+			printf "%-13s%s\\n" " $(echo $BLL | human_number)" "blocked by blocking list" >>${statsFile}
 		fi
 		
 		printf "%-13s%s\\n" " $BL" "blocked by blacklist" >>${statsFile}
@@ -598,10 +602,10 @@ Generate_Stats_Diversion(){
 			printf "%-13s%s\\n" " $(echo $adsWeekAlt | human_number)" "ads this week, since last $bfUpdateDay" >>${statsFile}
 			printf "%-13s%s\\n" " $(echo $adsNewAlt | human_number)" "new ads, since $adsPrevCount" >>${statsFile}
 			printf " Combined ad-blocking totals:\\n" >>${statsFile}
-			printf "%-13s%s\\n" " $(echo $(($adsBlocked+$adsBlockedAlt)) | human_number)" "ads in total blocked" >>${statsFile}
-			printf "%-13s%s\\n" " $(echo $(($adsWeek+$adsWeekAlt)) | human_number)" "ads this week, since last $bfUpdateDay" >>${statsFile}
-			printf "%-13s%s\\n" " $(echo $(($adsNew+$adsNewAlt)) | human_number)" "new ads, since $adsPrevCount" >>${statsFile}
-			echo "$(echo $(($adsWeek+$adsWeekAlt)) | human_number)" > /tmp/uidivstatskeystatsblocked.txt
+			printf "%-13s%s\\n" " $(echo $((adsBlocked+adsBlockedAlt)) | human_number)" "ads in total blocked" >>${statsFile}
+			printf "%-13s%s\\n" " $(echo $((adsWeek+adsWeekAlt)) | human_number)" "ads this week, since last $bfUpdateDay" >>${statsFile}
+			printf "%-13s%s\\n" " $(echo $((adsNew+adsNewAlt)) | human_number)" "new ads, since $adsPrevCount" >>${statsFile}
+			echo "$(echo $((adsWeek+adsWeekAlt)) | human_number)" > /tmp/uidivstatskeystatsblocked.txt
 			keystatsblocked=$(($adsWeek+$adsWeekAlt))
 		else
 			if [ "$excludeIP" = "on" ]; then
