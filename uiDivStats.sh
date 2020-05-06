@@ -563,12 +563,12 @@ Generate_KeyStats(){
 	blacklistfile="$DIVERSION_DIR/list/blacklist"
 	blacklistwcfile="$DIVERSION_DIR/list/wc_blacklist"
 	
-	if /opt/bin/grep -qm1 'devEnv' /opt/bin/diversion; then
-		blocklistdomains="$(($(/opt/bin/grep "^[^#]" "$blockinglistfile" | wc -w)-$(/opt/bin/grep "^[^#]" "$blockinglistfile" | wc -l)))"
-		blocklistdomains="$((blocklistdomains+$(/opt/bin/grep "^[^#]" "$blacklistwcfile" "$blacklistfile" | wc -l)))"
-	else
-		blocklistdomains=$(/opt/bin/grep "^[^#]" "$blockinglistfile" "$blacklistfile" "$blacklistwcfile" | wc -l)
-	fi
+	BLL="$(($(/opt/bin/grep "^[^#]" "$blockinglistfile" | wc -w)-$(/opt/bin/grep "^[^#]" "$blockinglistfile" | wc -l)))"
+	[ "$(nvram get ipv6_service)" != "disabled" ] && BLL="$((BLL/2))"
+	BL="$(/opt/bin/grep "^[^#]" "$blacklistfile" | wc -l)"
+	[ "$(nvram get ipv6_service)" != "disabled" ] && BL="$((BL/2))"
+	WCBL="$(/opt/bin/grep "^[^#]" "$blacklistwcfile" | wc -l)"
+	blocklistdomains="$((BLL+BL+WCBL))"
 	
 	rm -f "$SCRIPT_DIR/SQLData.js"
 	WritePlainData_ToJS "$SCRIPT_DIR/SQLData.js" "QueriesTotal,$totalqueries" "QueriesBlocked,$totalqueriesblocked" "BlockedPercentage,$blockedpercentage" "BlockedDomains,$blocklistdomains"
