@@ -634,10 +634,10 @@ Trim_DNS_DB(){
 	
 	{
 		echo "DELETE FROM [dnsqueries] WHERE [Timestamp] < ($timenow - (86400*14));"
-	} > /tmp/uidivstats.sql
+	} > /tmp/uidivstats-trim.sql
 	
-	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql
-	rm -f /tmp/uidivstats.sql
+	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-trim.sql
+	rm -f /tmp/uidivstats-trim.sql
 	
 	/opt/etc/init.d/S90taildns start
 }
