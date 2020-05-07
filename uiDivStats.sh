@@ -425,9 +425,9 @@ WritePlainData_ToJS(){
 Write_Temp_Table_Sql_ToFile(){
 	if [ "$6" = "create" ]; then
 		timenow="$5"
-		echo "CREATE TABLE [$1$2] AS SELECT * FROM $1 WHERE ([Timestamp] >= $timenow - (86400*$3)) AND ([Timestamp] <= $timenow);" >> "$4"
+		echo "CREATE TABLE IF NOT EXISTS [$1$2] AS SELECT * FROM $1 WHERE ([Timestamp] >= $timenow - (86400*$3)) AND ([Timestamp] <= $timenow);" >> "$4"
 	elif [ "$6" = "drop" ]; then
-		echo "DROP TABLE [$1$2];" >> "$4"
+		echo "DROP TABLE IF EXISTS [$1$2];" >> "$4"
 	fi
 }
 
