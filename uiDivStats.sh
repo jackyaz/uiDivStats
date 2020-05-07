@@ -481,9 +481,9 @@ Write_Count_Sql_ToFile(){
 	} > "$6"
 	
 	if [ "$1" = "Total" ]; then
-		echo "SELECT '$1' Fieldname, [ReqDmn] ReqDmn, Count([ReqDmn]) Count FROM $2 WHERE ([Timestamp] >= $timenow - (86400*$3)) GROUP BY [ReqDmn] ORDER BY COUNT([ReqDmn]) DESC LIMIT 30;" >> "$6"
+		echo "SELECT '$1' Fieldname, [ReqDmn] ReqDmn, Count([ReqDmn]) Count FROM $2 WHERE ([Timestamp] >= $timenow - (86400*$3)) GROUP BY [ReqDmn] ORDER BY COUNT([ReqDmn]) DESC LIMIT 20;" >> "$6"
 	elif [ "$1" = "Blocked" ]; then
-		echo "SELECT '$1' Fieldname, [ReqDmn] ReqDmn, Count([ReqDmn]) Count FROM $2 WHERE ([Timestamp] >= $timenow - (86400*$3)) AND ([Result] = 'blocked') GROUP BY [ReqDmn] ORDER BY COUNT([ReqDmn]) DESC LIMIT 30;" >> "$6"
+		echo "SELECT '$1' Fieldname, [ReqDmn] ReqDmn, Count([ReqDmn]) Count FROM $2 WHERE ([Timestamp] >= $timenow - (86400*$3)) AND ([Result] = 'blocked') GROUP BY [ReqDmn] ORDER BY COUNT([ReqDmn]) DESC LIMIT 20;" >> "$6"
 	fi
 }
 
@@ -507,11 +507,11 @@ Write_Count_PerClient_Sql_ToFile(){
 	
 	if [ "$1" = "Total" ]; then
 		for client in $clients; do
-			echo "SELECT '$1' Fieldname, [SrcIP] SrcIP, [ReqDmn] ReqDmn, Count([ReqDmn]) Count FROM $2 WHERE ([Timestamp] >= $timenow - (86400*$3)) AND ([Timestamp] <= $timenow) AND ([SrcIP] = '$client') GROUP BY [ReqDmn] ORDER BY COUNT([ReqDmn]) DESC LIMIT 30;" >> "$6"
+			echo "SELECT '$1' Fieldname, [SrcIP] SrcIP, [ReqDmn] ReqDmn, Count([ReqDmn]) Count FROM $2 WHERE ([Timestamp] >= $timenow - (86400*$3)) AND ([Timestamp] <= $timenow) AND ([SrcIP] = '$client') GROUP BY [ReqDmn] ORDER BY COUNT([ReqDmn]) DESC LIMIT 20;" >> "$6"
 		done
 	elif [ "$1" = "Blocked" ]; then
 		for client in $clients; do
-			echo "SELECT '$1' Fieldname, [SrcIP] SrcIP, [ReqDmn] ReqDmn, Count([ReqDmn]) Count FROM $2 WHERE ([Timestamp] >= $timenow - (86400*$3)) AND ([Timestamp] <= $timenow) AND ([SrcIP] = '$client') AND ([Result] = 'blocked') GROUP BY [ReqDmn] ORDER BY COUNT([ReqDmn]) DESC LIMIT 30;" >> "$6"
+			echo "SELECT '$1' Fieldname, [SrcIP] SrcIP, [ReqDmn] ReqDmn, Count([ReqDmn]) Count FROM $2 WHERE ([Timestamp] >= $timenow - (86400*$3)) AND ([Timestamp] <= $timenow) AND ([SrcIP] = '$client') AND ([Result] = 'blocked') GROUP BY [ReqDmn] ORDER BY COUNT([ReqDmn]) DESC LIMIT 20;" >> "$6"
 		done
 	fi
 }
@@ -590,7 +590,7 @@ Generate_Stats_From_SQLite(){
 		Write_Time_Sql_ToFile "$metric" "$dbtable" 1 7 "$CSV_OUTPUT_DIR/$metric" "weekly" "/tmp/uidivstats.sql" "$timenow"
 		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql
 		
-		Write_Time_Sql_ToFile "$metric" "$dbtable" 3 30 "$CSV_OUTPUT_DIR/$metric" "monthly" "/tmp/uidivstats.sql" "$timenow"
+		Write_Time_Sql_ToFile "$metric" "$dbtable" 3 14 "$CSV_OUTPUT_DIR/$metric" "monthly" "/tmp/uidivstats.sql" "$timenow"
 		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql
 		
 		Write_Count_Sql_ToFile "$metric" "$dbtable" 1 "$CSV_OUTPUT_DIR/$metric" "daily" "/tmp/uidivstats.sql" "$timenow"
@@ -599,7 +599,7 @@ Generate_Stats_From_SQLite(){
 		Write_Count_Sql_ToFile "$metric" "$dbtable" 7 "$CSV_OUTPUT_DIR/$metric" "weekly" "/tmp/uidivstats.sql" "$timenow"
 		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql
 		
-		Write_Count_Sql_ToFile "$metric" "$dbtable" 30 "$CSV_OUTPUT_DIR/$metric" "monthly" "/tmp/uidivstats.sql" "$timenow"
+		Write_Count_Sql_ToFile "$metric" "$dbtable" 14 "$CSV_OUTPUT_DIR/$metric" "monthly" "/tmp/uidivstats.sql" "$timenow"
 		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql
 		
 		Write_Count_PerClient_Sql_ToFile "$metric" "$dbtable" 1 "$CSV_OUTPUT_DIR/$metric" "daily" "/tmp/uidivstats.sql" "$timenow"
@@ -610,7 +610,7 @@ Generate_Stats_From_SQLite(){
 		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql
 		sed -i '1i Fieldname,SrcIP,ReqDmn,Count' "$CSV_OUTPUT_DIR/$metric""weeklyclients.htm"
 		
-		Write_Count_PerClient_Sql_ToFile "$metric" "$dbtable" 30 "$CSV_OUTPUT_DIR/$metric" "monthly" "/tmp/uidivstats.sql" "$timenow"
+		Write_Count_PerClient_Sql_ToFile "$metric" "$dbtable" 14 "$CSV_OUTPUT_DIR/$metric" "monthly" "/tmp/uidivstats.sql" "$timenow"
 		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql
 		sed -i '1i Fieldname,SrcIP,ReqDmn,Count' "$CSV_OUTPUT_DIR/$metric""monthlyclients.htm"
 	done
@@ -633,7 +633,7 @@ Trim_DNS_DB(){
 	/opt/etc/init.d/S90taildns stop
 	
 	{
-		echo "DELETE FROM [dnsqueries] WHERE [Timestamp] < ($timenow - (86400*30));"
+		echo "DELETE FROM [dnsqueries] WHERE [Timestamp] < ($timenow - (86400*14));"
 	} > /tmp/uidivstats.sql
 	
 	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql

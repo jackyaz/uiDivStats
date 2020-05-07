@@ -132,7 +132,7 @@ $j(document).keyup(function(e){
 var metriclist = ["Blocked","Total"];
 var chartlist = ["daily","weekly","monthly"];
 var timeunitlist = ["hour","day","day"];
-var intervallist = [24,7,30];
+var intervallist = [24,7,14];
 var bordercolourlist = ["#fc8500","#42ecf5"];
 var backgroundcolourlist = ["rgba(252,133,0,0.5)","rgba(66,236,245,0.5)"];
 
@@ -831,7 +831,7 @@ function BuildChartHtml(txttitle, txtbase, istime, perip) {
 	charthtml += '<select style="width:125px" class="input_option" onchange="changeChart(this)" id="' + txtbase + '_Period">';
 	charthtml += '<option value=0>Last 24 hours</option>';
 	charthtml += '<option value=1>Last 7 days</option>';
-	charthtml += '<option value=2>Last 30 days</option>';
+	charthtml += '<option value=2>Last 14 days</option>';
 	charthtml += '</select>';
 	charthtml += '</td>';
 	charthtml += '</tr>';
@@ -878,7 +878,7 @@ function BuildTableHtml(txttitle, txtbase) {
 		tablehtml += '<select style="width:125px" class="input_option" onchange="changeTable(this)" id="' + txtbase + '_Period">';
 		tablehtml += '<option value=0>Last 24 hours</option>';
 		tablehtml += '<option value=1>Last 7 days</option>';
-		tablehtml += '<option value=2>Last 30 days</option>';
+		tablehtml += '<option value=2>Last 14 days</option>';
 		tablehtml += '</select>';
 		tablehtml += '</td>';
 		tablehtml += '</tr>';
