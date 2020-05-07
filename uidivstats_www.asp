@@ -57,7 +57,6 @@ td.nodata {
   color: white !important;
   padding: 4px !important;
   width: 740px !important;
-  font-size: 30px !important;
   font-weight: bolder !important;
 }
 
@@ -882,6 +881,7 @@ function BuildTableHtml(txttitle, txtbase) {
 		tablehtml += '</select>';
 		tablehtml += '</td>';
 		tablehtml += '</tr>';
+		tablehtml += '<div style="line-height:10px;">&nbsp;</div>';
 		tablehtml += '<tr>';
 		tablehtml += '<td colspan="2" align="center" style="padding: 0px;">';
 		tablehtml += '<div class="collapsiblecontent">';
