@@ -492,9 +492,9 @@ Write_Count_PerClient_Sql_ToFile(){
 	timenow="$7"
 	echo ".mode list" > "$6"
 	if [ "$1" = "Total" ]; then
-		echo "SELECT DISTINCT [SrcIP] SrcIP FROM $2 WHERE ([Timestamp] >= $timenow - (86400*$3));" >> "$6"
+		echo "SELECT DISTINCT [SrcIP] SrcIP FROM $2 WHERE ([Timestamp] >= $timenow - (86400*$3)) AND ([Timestamp] <= $timenow);" >> "$6"
 	elif [ "$1" = "Blocked" ]; then
-		echo "SELECT DISTINCT [SrcIP] SrcIP FROM $2 WHERE ([Timestamp] >= $timenow - (86400*$3)) AND ([Result] = 'blocked');" >> "$6"
+		echo "SELECT DISTINCT [SrcIP] SrcIP FROM $2 WHERE ([Timestamp] >= $timenow - (86400*$3)) AND ([Timestamp] <= $timenow) AND ([Result] = 'blocked');" >> "$6"
 	fi
 	
 	clients="$("$SQLITE3_PATH" "$DNS_DB" < "$6")"
@@ -507,11 +507,11 @@ Write_Count_PerClient_Sql_ToFile(){
 	
 	if [ "$1" = "Total" ]; then
 		for client in $clients; do
-			echo "SELECT '$1' Fieldname, [SrcIP] SrcIP, [ReqDmn] ReqDmn, Count([ReqDmn]) Count FROM $2 WHERE ([Timestamp] >= $timenow - (86400*$3)) AND ([SrcIP] = '$client') GROUP BY [ReqDmn] ORDER BY COUNT([ReqDmn]) DESC LIMIT 30;" >> "$6"
+			echo "SELECT '$1' Fieldname, [SrcIP] SrcIP, [ReqDmn] ReqDmn, Count([ReqDmn]) Count FROM $2 WHERE ([Timestamp] >= $timenow - (86400*$3)) AND ([Timestamp] <= $timenow) AND ([SrcIP] = '$client') GROUP BY [ReqDmn] ORDER BY COUNT([ReqDmn]) DESC LIMIT 30;" >> "$6"
 		done
 	elif [ "$1" = "Blocked" ]; then
 		for client in $clients; do
-			echo "SELECT '$1' Fieldname, [SrcIP] SrcIP, [ReqDmn] ReqDmn, Count([ReqDmn]) Count FROM $2 WHERE ([Timestamp] >= $timenow - (86400*$3)) AND ([SrcIP] = '$client') AND ([Result] = 'blocked') GROUP BY [ReqDmn] ORDER BY COUNT([ReqDmn]) DESC LIMIT 30;" >> "$6"
+			echo "SELECT '$1' Fieldname, [SrcIP] SrcIP, [ReqDmn] ReqDmn, Count([ReqDmn]) Count FROM $2 WHERE ([Timestamp] >= $timenow - (86400*$3)) AND ([Timestamp] <= $timenow) AND ([SrcIP] = '$client') AND ([Result] = 'blocked') GROUP BY [ReqDmn] ORDER BY COUNT([ReqDmn]) DESC LIMIT 30;" >> "$6"
 		done
 	fi
 }
@@ -549,11 +549,11 @@ Generate_NG(){
 Generate_KeyStats(){
 	timenow="$1"
 	
-	echo "SELECT COUNT(QueryID) QueryCount FROM [dnsqueries] WHERE [Timestamp] >= ($timenow - (86400*7));" > /tmp/uidivstats.sql
+	echo "SELECT COUNT(QueryID) QueryCount FROM [dnsqueries] WHERE [Timestamp] >= ($timenow - (86400*7)) AND ([Timestamp] <= $timenow);" > /tmp/uidivstats.sql
 	totalqueries="$("$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql)"
 	rm -f /tmp/uidivstats.sql
 	
-	echo "SELECT COUNT(QueryID) QueryCount FROM [dnsqueries] WHERE [Timestamp] >= ($timenow - (86400*7)) AND [Result] = 'blocked';" > /tmp/uidivstats.sql
+	echo "SELECT COUNT(QueryID) QueryCount FROM [dnsqueries] WHERE [Timestamp] >= ($timenow - (86400*7)) AND ([Timestamp] <= $timenow) AND [Result] = 'blocked';" > /tmp/uidivstats.sql
 	totalqueriesblocked="$("$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql)"
 	rm -f /tmp/uidivstats.sql
 	

@@ -330,10 +330,6 @@ function Draw_Time_Chart(txtchartname,txtunitx,numunitx){
 		}
 	}
 	
-	//var chartData = dataobject.filter(function(item) {
-	//	return item.Fieldname == "Total";
-	//}).map(function(d){ return {x: d.Time, y: d.QueryCount}});
-	
 	var chartData = dataobject.map(function(d){ return {x: d.Time, y: d.QueryCount}});
 	
 	var objchartname = window["Chart" + txtchartname + "time"];;
@@ -876,6 +872,16 @@ function BuildTableHtml(txttitle, txtbase) {
 		tablehtml += '<thead class="collapsible expanded">';
 		tablehtml += '<tr><td colspan="2">' + txttitle + ' (click to expand/collapse)</td></tr>';
 		tablehtml += '</thead>';
+		tablehtml += '<tr class="even">';
+		tablehtml += '<th width="40%">Period to display</th>';
+		tablehtml += '<td>';
+		tablehtml += '<select style="width:125px" class="input_option" onchange="changeTable(this)" id="' + txtbase + '_Period">';
+		tablehtml += '<option value=0>Last 24 hours</option>';
+		tablehtml += '<option value=1>Last 7 days</option>';
+		tablehtml += '<option value=2>Last 30 days</option>';
+		tablehtml += '</select>';
+		tablehtml += '</td>';
+		tablehtml += '</tr>';
 		tablehtml += '<tr>';
 		tablehtml += '<td colspan="2" align="center" style="padding: 0px;">';
 		tablehtml += '<div class="collapsiblecontent">';
