@@ -412,54 +412,6 @@ Mount_WebUI(){
 	fi
 }
 
-WriteOptions_ToJS(){
-	{
-	echo "var clients;"
-	echo "clients = [];"; } > "$2"
-	contents=""
-	contents="$contents""clients.unshift("
-	while IFS='' read -r line || [ -n "$line" ]; do
-		contents="$contents""'""$(echo "$line" | awk '{$1=$1};1' | awk 'BEGIN{FS="  *"}{ print $2" ("$1")"}')""'"","
-	done < "$1"
-	contents=$(echo "$contents" | sed 's/.$//')
-	contents="$contents"");"
-	echo "$contents" >> "$2"
-	
-	{
-	echo "function SetClients(){"
-	echo "selectField = document.getElementById(\"clientdomains\");"
-	echo "selectField.options.length = 0;"
-	echo "for (i=0; i<clients.length; i++)"
-	echo "{"
-	echo "selectField.options[selectField.length] = new Option(clients[i], i);"
-	echo "}"
-	echo "}" ; } >> "$2"
-}
-
-WriteStats_ToJS(){
-	echo "function $3(){" >> "$2"
-	html='document.getElementById("'"$4"'").innerHTML="'
-	while IFS='' read -r line || [ -n "$line" ]; do
-		html="$html""$line""\\r\\n"
-	done < "$1"
-	html="$html"'"'
-	printf "%s\\r\\n}\\r\\n" "$html" >> "$2"
-}
-
-WriteData_ToJS(){
-	inputfile="$1"
-	outputfile="$2"
-	shift;shift
-	i="0"
-	for var in "$@"; do
-		i=$((i+1))
-		{ echo "var $var;"
-			echo "$var = [];"
-			echo "${var}.unshift('$(awk -v i=$i '{printf t $i} {t=","}' "$inputfile" | sed "s~,~\\',\\'~g")');"
-			echo; } >> "$outputfile"
-	done
-}
-
 WritePlainData_ToJS(){
 	outputfile="$1"
 	shift
