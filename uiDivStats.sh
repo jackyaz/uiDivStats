@@ -592,8 +592,8 @@ Generate_Stats_From_SQLite(){
 	/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
 	sleep 1
 	Write_Temp_Table_Sql_ToFile "dnsqueries" "daily" 1 "/tmp/uidivstats.sql" "$timenow" "drop"
-	/opt/etc/init.d/S90taildns start >/dev/null 2>&1
 	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql
+	/opt/etc/init.d/S90taildns start >/dev/null 2>&1
 	rm -f /tmp/uidivstats.sql
 	
 	cat "$CSV_OUTPUT_DIR/Totaldailytime.htm" "$CSV_OUTPUT_DIR/Blockeddailytime.htm" > "$CSV_OUTPUT_DIR/TotalBlockeddailytime.htm"
