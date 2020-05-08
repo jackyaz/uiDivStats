@@ -162,6 +162,7 @@ Update_File(){
 			tar -xzf "$SCRIPT_DIR/$1" -C "$SCRIPT_DIR"
 			if [ -f /opt/etc/init.d/S90taildns ]; then
 				/opt/etc/init.d/S90taildns stop
+				sleep 1
 			fi
 			mv "$SCRIPT_DIR/taildns.d/S90taildns" /opt/etc/init.d/S90taildns
 			/opt/etc/init.d/S90taildns start
@@ -176,6 +177,7 @@ Update_File(){
 				tar -xzf "$SCRIPT_DIR/$1" -C "$SCRIPT_DIR"
 				if [ -f /opt/etc/init.d/S90taildns ]; then
 					/opt/etc/init.d/S90taildns stop
+					sleep 1
 				fi
 				mv "$SCRIPT_DIR/taildns.d/S90taildns" /opt/etc/init.d/S90taildns
 				/opt/etc/init.d/S90taildns start
@@ -504,6 +506,7 @@ Generate_NG(){
 	
 	rm -f /tmp/uidivstats.sql
 	/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
+	sleep 1
 	Write_Temp_Table_Sql_ToFile "dnsqueries" "daily" 1 "/tmp/uidivstats.sql" "$timenow" "create"
 	Write_Temp_Table_Sql_ToFile "dnsqueries" "weekly" 7 "/tmp/uidivstats.sql" "$timenow" "create"
 	Write_Temp_Table_Sql_ToFile "dnsqueries" "monthly" 30 "/tmp/uidivstats.sql" "$timenow" "create"
@@ -587,6 +590,7 @@ Generate_Stats_From_SQLite(){
 	
 	rm -f /tmp/uidivstats.sql
 	/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
+	sleep 1
 	Write_Temp_Table_Sql_ToFile "dnsqueries" "daily" 1 "/tmp/uidivstats.sql" "$timenow" "drop"
 	/opt/etc/init.d/S90taildns start >/dev/null 2>&1
 	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql
@@ -608,6 +612,7 @@ Trim_DNS_DB(){
 	timenow=$(date +"%s")
 	
 	/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
+	sleep 1
 	
 	{
 		echo "DELETE FROM [dnsqueries] WHERE [Timestamp] < ($timenow - (86400*30));"
@@ -628,6 +633,7 @@ Trim_DNS_DB(){
 Process_Upgrade(){
 	if [ ! -f "$SCRIPT_DIR/.upgraded" ]; then
 		/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
+		sleep 1
 		{
 			echo "PRAGMA journal_mode=WAL;"
 			echo "CREATE TABLE IF NOT EXISTS [dnsqueries] ([QueryID] INTEGER PRIMARY KEY NOT NULL, [Timestamp] NUMERIC NOT NULL, [SrcIP] TEXT NOT NULL,[ReqDmn] TEXT NOT NULL,[QryType] Text NOT NULL,[Result] Text NOT NULL);"
