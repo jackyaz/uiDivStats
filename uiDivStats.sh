@@ -162,7 +162,6 @@ Update_File(){
 			tar -xzf "$SCRIPT_DIR/$1" -C "$SCRIPT_DIR"
 			if [ -f /opt/etc/init.d/S90taildns ]; then
 				/opt/etc/init.d/S90taildns stop
-				sleep 1
 			fi
 			mv "$SCRIPT_DIR/taildns.d/S90taildns" /opt/etc/init.d/S90taildns
 			/opt/etc/init.d/S90taildns start
@@ -177,7 +176,6 @@ Update_File(){
 				tar -xzf "$SCRIPT_DIR/$1" -C "$SCRIPT_DIR"
 				if [ -f /opt/etc/init.d/S90taildns ]; then
 					/opt/etc/init.d/S90taildns stop
-					sleep 1
 				fi
 				mv "$SCRIPT_DIR/taildns.d/S90taildns" /opt/etc/init.d/S90taildns
 				/opt/etc/init.d/S90taildns start
@@ -454,13 +452,18 @@ Write_Count_Sql_ToFile(){
 Write_Count_PerClient_Sql_ToFile(){
 	timenow="$7"
 	echo ".mode list" > "$6"
+	echo ".output /tmp/distinctclients" >> "$6"
 	if [ "$1" = "Total" ]; then
 		echo "SELECT DISTINCT [SrcIP] SrcIP FROM $2$5;" >> "$6"
 	elif [ "$1" = "Blocked" ]; then
 		echo "SELECT DISTINCT [SrcIP] SrcIP FROM $2$5 WHERE ([Result] = 'blocked');" >> "$6"
 	fi
 	
-	clients="$("$SQLITE3_PATH" "$DNS_DB" < "$6")"
+	while ! "$SQLITE3_PATH" "$DNS_DB" < "$6" >/dev/null 2>&1; do
+		sleep 1
+	done
+	clients="$(cat /tmp/distinctclients)"
+	rm -f /tmp/distinctclients
 	
 	{
 		echo ".mode csv"
@@ -506,11 +509,12 @@ Generate_NG(){
 	
 	rm -f /tmp/uidivstats.sql
 	/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
-	sleep 1
 	Write_Temp_Table_Sql_ToFile "dnsqueries" "daily" 1 "/tmp/uidivstats.sql" "$timenow" "create"
 	Write_Temp_Table_Sql_ToFile "dnsqueries" "weekly" 7 "/tmp/uidivstats.sql" "$timenow" "create"
 	Write_Temp_Table_Sql_ToFile "dnsqueries" "monthly" 30 "/tmp/uidivstats.sql" "$timenow" "create"
-	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql
+	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+		sleep 1
+	done
 	rm -f /tmp/uidivstats.sql
 	/opt/etc/init.d/S90taildns start >/dev/null 2>&1
 	
@@ -523,13 +527,29 @@ Generate_NG(){
 Generate_KeyStats(){
 	timenow="$1"
 	
-	echo "SELECT COUNT(QueryID) QueryCount FROM [dnsqueries] WHERE [Timestamp] >= ($timenow - (86400*7)) AND ([Timestamp] <= $timenow);" > /tmp/uidivstats.sql
-	totalqueries="$("$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql)"
+	{
+		echo ".headers off"
+		echo ".output /tmp/totalqueries"
+		echo "SELECT COUNT(QueryID) QueryCount FROM [dnsqueries] WHERE [Timestamp] >= ($timenow - (86400*7)) AND ([Timestamp] <= $timenow);"
+	} > /tmp/uidivstats.sql
+	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+		sleep 1
+	done
+	totalqueries="$(cat /tmp/totalqueries)"
 	rm -f /tmp/uidivstats.sql
+	rm -f /tmp/totalqueries
 	
-	echo "SELECT COUNT(QueryID) QueryCount FROM [dnsqueries] WHERE [Timestamp] >= ($timenow - (86400*7)) AND ([Timestamp] <= $timenow) AND [Result] = 'blocked';" > /tmp/uidivstats.sql
-	totalqueriesblocked="$("$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql)"
+	{
+		echo ".headers off"
+		echo ".output /tmp/totalqueriesblocked"
+		echo "SELECT COUNT(QueryID) QueryCount FROM [dnsqueries] WHERE [Timestamp] >= ($timenow - (86400*7)) AND ([Timestamp] <= $timenow) AND [Result] = 'blocked';"
+	} > /tmp/uidivstats.sql
+	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+		sleep 1
+	done
+	totalqueriesblocked="$(cat /tmp/totalqueriesblocked)"
 	rm -f /tmp/uidivstats.sql
+	rm -f /tmp/totalqueriesblocked
 	
 	blockedpercentage="$(echo "$totalqueriesblocked" "$totalqueries" | awk '{printf "%3.2f\n",$1/$2*100}')"
 	
@@ -558,41 +578,60 @@ Generate_Stats_From_SQLite(){
 	for metric in $metriclist; do
 		
 		Write_Time_Sql_ToFile "$metric" "dnsqueries" 0.25 1 "$CSV_OUTPUT_DIR/$metric" "daily" "/tmp/uidivstats.sql" "$timenow"
-		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql
+		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+			sleep 1
+		done
 		
 		Write_Time_Sql_ToFile "$metric" "dnsqueries" 1 7 "$CSV_OUTPUT_DIR/$metric" "weekly" "/tmp/uidivstats.sql" "$timenow"
-		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql
+		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+			sleep 1
+		done
 		
 		Write_Time_Sql_ToFile "$metric" "dnsqueries" 3 30 "$CSV_OUTPUT_DIR/$metric" "monthly" "/tmp/uidivstats.sql" "$timenow"
-		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql
+		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+			sleep 1
+		done
 		
 		Write_Count_Sql_ToFile "$metric" "dnsqueries" 1 "$CSV_OUTPUT_DIR/$metric" "daily" "/tmp/uidivstats.sql" "$timenow"
-		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql
+		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+			sleep 1
+		done
 		
 		Write_Count_Sql_ToFile "$metric" "dnsqueries" 7 "$CSV_OUTPUT_DIR/$metric" "weekly" "/tmp/uidivstats.sql" "$timenow"
-		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql
+		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+			sleep 1
+		done
 		
 		Write_Count_Sql_ToFile "$metric" "dnsqueries" 30 "$CSV_OUTPUT_DIR/$metric" "monthly" "/tmp/uidivstats.sql" "$timenow"
-		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql
+		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+			sleep 1
+		done
 		
 		Write_Count_PerClient_Sql_ToFile "$metric" "dnsqueries" 1 "$CSV_OUTPUT_DIR/$metric" "daily" "/tmp/uidivstats.sql" "$timenow"
-		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql
+		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+			sleep 1
+		done
 		sed -i '1i Fieldname,SrcIP,ReqDmn,Count' "$CSV_OUTPUT_DIR/$metric""dailyclients.htm"
 		
 		Write_Count_PerClient_Sql_ToFile "$metric" "dnsqueries" 7 "$CSV_OUTPUT_DIR/$metric" "weekly" "/tmp/uidivstats.sql" "$timenow"
-		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql
+		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+			sleep 1
+		done
 		sed -i '1i Fieldname,SrcIP,ReqDmn,Count' "$CSV_OUTPUT_DIR/$metric""weeklyclients.htm"
 		
 		Write_Count_PerClient_Sql_ToFile "$metric" "dnsqueries" 30 "$CSV_OUTPUT_DIR/$metric" "monthly" "/tmp/uidivstats.sql" "$timenow"
-		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql
+		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+			sleep 1
+		done
 		sed -i '1i Fieldname,SrcIP,ReqDmn,Count' "$CSV_OUTPUT_DIR/$metric""monthlyclients.htm"
 	done
 	
 	rm -f /tmp/uidivstats.sql
 	/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
-	sleep 1
 	Write_Temp_Table_Sql_ToFile "dnsqueries" "daily" 1 "/tmp/uidivstats.sql" "$timenow" "drop"
-	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql
+	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+		sleep 1
+	done
 	/opt/etc/init.d/S90taildns start >/dev/null 2>&1
 	rm -f /tmp/uidivstats.sql
 	
@@ -612,19 +651,21 @@ Trim_DNS_DB(){
 	timenow=$(date +"%s")
 	
 	/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
-	sleep 1
 	
 	{
 		echo "DELETE FROM [dnsqueries] WHERE [Timestamp] < ($timenow - (86400*30));"
 	} > /tmp/uidivstats-trim.sql
 	
-	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-trim.sql
+	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-trim.sql >/dev/null 2>&1; do
+		sleep 1
+	done
 	rm -f /tmp/uidivstats-trim.sql
 	
-	rm -f /tmp/uidivstats.sql
-	Write_Temp_Table_Sql_ToFile "dnsqueries" "weekly" 7 "/tmp/uidivstats.sql" "$timenow" "drop"
-	Write_Temp_Table_Sql_ToFile "dnsqueries" "monthly" 30 "/tmp/uidivstats.sql" "$timenow" "drop"
-	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql
+	Write_Temp_Table_Sql_ToFile "dnsqueries" "weekly" 7 "/tmp/uidivstats-trim.sql" "$timenow" "drop"
+	Write_Temp_Table_Sql_ToFile "dnsqueries" "monthly" 30 "/tmp/uidivstats-trim.sql" "$timenow" "drop"
+	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-trim.sql >/dev/null 2>&1; do
+		sleep 1
+	done
 	rm -f /tmp/uidivstats.sql
 	
 	/opt/etc/init.d/S90taildns start >/dev/null 2>&1
@@ -633,14 +674,15 @@ Trim_DNS_DB(){
 Process_Upgrade(){
 	if [ ! -f "$SCRIPT_DIR/.upgraded" ]; then
 		/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
-		sleep 1
 		{
 			echo "PRAGMA journal_mode=WAL;"
 			echo "CREATE TABLE IF NOT EXISTS [dnsqueries] ([QueryID] INTEGER PRIMARY KEY NOT NULL, [Timestamp] NUMERIC NOT NULL, [SrcIP] TEXT NOT NULL,[ReqDmn] TEXT NOT NULL,[QryType] Text NOT NULL,[Result] Text NOT NULL);"
 			echo "create index idx_dns on dnsqueries (Timestamp,ReqDmn,Result);"
 			echo "create index idx_dns_clients on dnsqueries (Timestamp,ReqDmn,SrcIP,Result);"
 		}  > /tmp/uidivstats.sql
-		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql
+		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+			sleep 1
+		done
 		rm -f /tmp/uidivstats.sql
 		/opt/etc/init.d/S90taildns start >/dev/null 2>&1
 		touch "$SCRIPT_DIR/.upgraded"
