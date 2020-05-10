@@ -627,7 +627,7 @@ Generate_Stats_From_SQLite(){
 		{
 			echo ".headers off"
 			echo ".output /tmp/dnsmonthlyexists"
-			echo "SELECT name FROM sqlite_master WHERE type='table' AND name='dnsmonthly';"
+			echo "SELECT name FROM sqlite_master WHERE type='table' AND name='dnsqueriesmonthly';"
 		} > /tmp/uidivstats.sql
 		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 			sleep 1
