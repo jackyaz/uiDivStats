@@ -109,14 +109,15 @@ Update_Version(){
 			Print_Output "true" "MD5 hash of $SCRIPT_NAME does not match - downloading updated $serverver" "$PASS"
 		fi
 		
-		Update_File "uidivstats_www.asp"
 		Update_File "shared-jy.tar.gz"
-		Update_File "taildns.tar.gz"
 		
 		if [ "$doupdate" != "false" ]; then
+			Update_File "uidivstats_www.asp"
+			Update_File "taildns.tar.gz"
 			/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME.sh" -o "/jffs/scripts/$SCRIPT_NAME" && Print_Output "true" "$SCRIPT_NAME successfully updated"
 			chmod 0755 /jffs/scripts/"$SCRIPT_NAME"
 			Clear_Lock
+			exec "$0"
 			exit 0
 		else
 			Print_Output "true" "No new version - latest is $localver" "$WARN"
@@ -134,6 +135,7 @@ Update_Version(){
 			/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME.sh" -o "/jffs/scripts/$SCRIPT_NAME" && Print_Output "true" "$SCRIPT_NAME successfully updated"
 			chmod 0755 /jffs/scripts/"$SCRIPT_NAME"
 			Clear_Lock
+			exec "$0"
 			exit 0
 		;;
 	esac
