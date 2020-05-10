@@ -482,9 +482,10 @@ function initial(){
 		$j("#TotalBlockedtime_Period").val(GetCookie("TotalBlockedtime_Period"));
 		d3.csv('/ext/uiDivStats/csv/TotalBlocked'+chartlist[i]+'time.htm').then(SetGlobalDataset.bind(null,"TotalBlocked"+chartlist[i]+"time"));
 	}
-	Assign_EventHandlers();
 	
-	//SetDivStatsTitle();
+	$j("#keystats_Period").val(GetCookie("keystats_Period")).change();
+	
+	Assign_EventHandlers();
 }
 
 function SetGlobalDataset(txtchartname,dataobject){
@@ -818,6 +819,18 @@ function changeChart(e) {
 	}
 }
 
+function changeTable(e) {
+	value = e.value * 1;
+	name = e.id.substring(0, e.id.indexOf("_"));
+	SetCookie(e.id,value);
+	
+	var tableperiod = getChartPeriod(value);
+	
+	$j("#keystatstotal").text(window["QueriesTotal"+tableperiod]);
+	$j("#keystatsblocked").text(window["QueriesBlocked"+tableperiod]);
+	$j("#keystatspercent").text(window["BlockedPercentage"+tableperiod]);
+}
+
 function BuildChartHtml(txttitle, txtbase, istime, perip) {
 	var charthtml = '<div style="line-height:10px;">&nbsp;</div>';
 	charthtml += '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" id="uidivstats_chart_' + txtbase + '">';
@@ -905,12 +918,15 @@ function BuildTableHtml(txttitle, txtbase) {
 		tablehtml += '</tr>';
 		tablehtml += '</thead>';
 		tablehtml += '<tr class="even" style="text-align:center;">';
-		tablehtml += '<td id="keystatstotal">'+QueriesTotal+'</td>';
-		tablehtml += '<td id="keystatsblocked">'+QueriesBlocked+'</td>';
-		tablehtml += '<td id="keystatspercent">'+BlockedPercentage+'</td>';
+		tablehtml += '<td id="keystatstotal"></td>';
+		tablehtml += '<td id="keystatsblocked"></td>';
+		tablehtml += '<td id="keystatspercent"></td>';
 		tablehtml += '</tr>';
 		tablehtml += '</table>';
 		tablehtml += '</td>';
+		tablehtml += '</tr>';
+		tablehtml += '<tr style="line-height:5px;">';
+		tablehtml += '<td colspan="2">&nbsp;</td>';
 		tablehtml += '</tr>';
 		tablehtml += '</div>';
 		tablehtml += '</table>';
