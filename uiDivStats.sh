@@ -621,6 +621,7 @@ Generate_Stats_From_SQLite(){
 			done
 			sed -i '1i Fieldname,SrcIP,ReqDmn,Count' "$CSV_OUTPUT_DIR/$metric""weeklyclients.htm"
 		fi
+		rm -f  /tmp/dnsweeklyexists
 		
 		#monthly
 		{
@@ -649,6 +650,7 @@ Generate_Stats_From_SQLite(){
 			done
 			sed -i '1i Fieldname,SrcIP,ReqDmn,Count' "$CSV_OUTPUT_DIR/$metric""monthlyclients.htm"
 		fi
+		 rm -f /tmp/dnsmonthlyexists
 		
 	done
 	
