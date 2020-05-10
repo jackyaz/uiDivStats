@@ -577,32 +577,13 @@ Generate_Stats_From_SQLite(){
 	
 	for metric in $metriclist; do
 		
+		#daily
 		Write_Time_Sql_ToFile "$metric" "dnsqueries" 0.25 1 "$CSV_OUTPUT_DIR/$metric" "daily" "/tmp/uidivstats.sql" "$timenow"
 		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 			sleep 1
 		done
 		
-		Write_Time_Sql_ToFile "$metric" "dnsqueries" 1 7 "$CSV_OUTPUT_DIR/$metric" "weekly" "/tmp/uidivstats.sql" "$timenow"
-		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
-			sleep 1
-		done
-		
-		Write_Time_Sql_ToFile "$metric" "dnsqueries" 3 30 "$CSV_OUTPUT_DIR/$metric" "monthly" "/tmp/uidivstats.sql" "$timenow"
-		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
-			sleep 1
-		done
-		
 		Write_Count_Sql_ToFile "$metric" "dnsqueries" 1 "$CSV_OUTPUT_DIR/$metric" "daily" "/tmp/uidivstats.sql" "$timenow"
-		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
-			sleep 1
-		done
-		
-		Write_Count_Sql_ToFile "$metric" "dnsqueries" 7 "$CSV_OUTPUT_DIR/$metric" "weekly" "/tmp/uidivstats.sql" "$timenow"
-		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
-			sleep 1
-		done
-		
-		Write_Count_Sql_ToFile "$metric" "dnsqueries" 30 "$CSV_OUTPUT_DIR/$metric" "monthly" "/tmp/uidivstats.sql" "$timenow"
 		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 			sleep 1
 		done
@@ -613,17 +594,62 @@ Generate_Stats_From_SQLite(){
 		done
 		sed -i '1i Fieldname,SrcIP,ReqDmn,Count' "$CSV_OUTPUT_DIR/$metric""dailyclients.htm"
 		
-		Write_Count_PerClient_Sql_ToFile "$metric" "dnsqueries" 7 "$CSV_OUTPUT_DIR/$metric" "weekly" "/tmp/uidivstats.sql" "$timenow"
+		#weekly
+		{
+			echo ".headers off"
+			echo ".output /tmp/dnsweeklyexists"
+			echo "SELECT name FROM sqlite_master WHERE type='table' AND name='dnsqueriesweekly';"
+		} > /tmp/uidivstats.sql
 		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 			sleep 1
 		done
-		sed -i '1i Fieldname,SrcIP,ReqDmn,Count' "$CSV_OUTPUT_DIR/$metric""weeklyclients.htm"
+		dnsweeklyexists="$(cat /tmp/dnsweeklyexists)"
+		if [ "$dnsweeklyexists" != "dnsqueriesweekly" ]; then
+			Write_Time_Sql_ToFile "$metric" "dnsqueries" 1 7 "$CSV_OUTPUT_DIR/$metric" "weekly" "/tmp/uidivstats.sql" "$timenow"
+			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+				sleep 1
+			done
+			
+			Write_Count_Sql_ToFile "$metric" "dnsqueries" 7 "$CSV_OUTPUT_DIR/$metric" "weekly" "/tmp/uidivstats.sql" "$timenow"
+			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+				sleep 1
+			done
+			
+			Write_Count_PerClient_Sql_ToFile "$metric" "dnsqueries" 7 "$CSV_OUTPUT_DIR/$metric" "weekly" "/tmp/uidivstats.sql" "$timenow"
+			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+				sleep 1
+			done
+			sed -i '1i Fieldname,SrcIP,ReqDmn,Count' "$CSV_OUTPUT_DIR/$metric""weeklyclients.htm"
+		fi
 		
-		Write_Count_PerClient_Sql_ToFile "$metric" "dnsqueries" 30 "$CSV_OUTPUT_DIR/$metric" "monthly" "/tmp/uidivstats.sql" "$timenow"
+		#monthly
+		{
+			echo ".headers off"
+			echo ".output /tmp/dnsmonthlyexists"
+			echo "SELECT name FROM sqlite_master WHERE type='table' AND name='dnsmonthly';"
+		} > /tmp/uidivstats.sql
 		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 			sleep 1
 		done
-		sed -i '1i Fieldname,SrcIP,ReqDmn,Count' "$CSV_OUTPUT_DIR/$metric""monthlyclients.htm"
+		dnsmonthlyexists="$(cat /tmp/dnsmonthlyexists)"
+		if [ "$dnsmonthlyexists" != "dnsmonthly" ]; then
+			Write_Time_Sql_ToFile "$metric" "dnsqueries" 3 30 "$CSV_OUTPUT_DIR/$metric" "monthly" "/tmp/uidivstats.sql" "$timenow"
+			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+				sleep 1
+			done
+					
+			Write_Count_Sql_ToFile "$metric" "dnsqueries" 30 "$CSV_OUTPUT_DIR/$metric" "monthly" "/tmp/uidivstats.sql" "$timenow"
+			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+				sleep 1
+			done
+			
+			Write_Count_PerClient_Sql_ToFile "$metric" "dnsqueries" 30 "$CSV_OUTPUT_DIR/$metric" "monthly" "/tmp/uidivstats.sql" "$timenow"
+			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+				sleep 1
+			done
+			sed -i '1i Fieldname,SrcIP,ReqDmn,Count' "$CSV_OUTPUT_DIR/$metric""monthlyclients.htm"
+		fi
+		
 	done
 	
 	rm -f /tmp/uidivstats.sql
