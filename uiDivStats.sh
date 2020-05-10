@@ -727,7 +727,7 @@ Trim_DNS_DB(){
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-trim.sql >/dev/null 2>&1; do
 		sleep 1
 	done
-	rm -f /tmp/uidivstats.sql
+	rm -f /tmp/uidivstats-trim.sql
 	
 	/opt/etc/init.d/S90taildns start >/dev/null 2>&1
 }
