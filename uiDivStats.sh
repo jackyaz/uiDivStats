@@ -321,12 +321,16 @@ Auto_Cron(){
 			
 			STARTUPLINECOUNTGENERATE=$(cru l | grep -c "$SCRIPT_NAME""_generate")
 			STARTUPLINECOUNTTRIM=$(cru l | grep -c "$SCRIPT_NAME""_trim")
+			STARTUPLINECOUNTQUERYLOG=$(cru l | grep -c "$SCRIPT_NAME""_querylog")
 			
 			if [ "$STARTUPLINECOUNTGENERATE" -eq 0 ]; then
 				cru a "$SCRIPT_NAME""_generate" "0 * * * * /jffs/scripts/$SCRIPT_NAME generate"
 			fi
 			if [ "$STARTUPLINECOUNTTRIM" -eq 0 ]; then
 				cru a "$SCRIPT_NAME""_trim" "3 0 * * * /jffs/scripts/$SCRIPT_NAME trimdb"
+			fi
+			if [ "$STARTUPLINECOUNTQUERYLOG" -eq 0 ]; then
+				cru a "$SCRIPT_NAME""_querylog" "* * * * * /jffs/scripts/$SCRIPT_NAME querylog"
 			fi
 		;;
 		delete)
@@ -337,12 +341,16 @@ Auto_Cron(){
 			
 			STARTUPLINECOUNTGENERATE=$(cru l | grep -c "$SCRIPT_NAME""_generate")
 			STARTUPLINECOUNTTRIM=$(cru l | grep -c "$SCRIPT_NAME""_trim")
+			STARTUPLINECOUNTQUERYLOG=$(cru l | grep -c "$SCRIPT_NAME""_querylog")
 			
 			if [ "$STARTUPLINECOUNTGENERATE" -gt 0 ]; then
 				cru d "$SCRIPT_NAME""_generate"
 			fi
 			if [ "$STARTUPLINECOUNTTRIM" -gt 0 ]; then
 				cru d "$SCRIPT_NAME""_trim"
+			fi
+			if [ "$STARTUPLINECOUNTQUERYLOG" -gt 0 ]; then
+				cru d "$SCRIPT_NAME""_querylog"
 			fi
 		;;
 	esac
@@ -544,6 +552,19 @@ Generate_NG(){
 		Generate_KeyStats "$timenow"
 		Generate_Stats_From_SQLite "$timenow"
 	fi
+}
+
+Generate_Query_Log(){
+	{
+		echo ".mode csv"
+		echo ".headers off"
+		echo ".output $CSV_OUTPUT_DIR/SQLQueryLog.csv"
+		echo "SELECT [Timestamp] Time, [SrcIP] SrcIP, [ReqDmn] ReqDmn, [QryType[ QryType, [Result] Result FROM [dnsqueries] ORDER BY [Timestamp] DESC LIMIT 500;"
+	} > /tmp/uidivstats-query.sql
+	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-query.sql >/dev/null 2>&1; do
+		sleep 1
+	done
+	rm -f /tmp/uidivstats-query.sql
 }
 
 Generate_KeyStats(){
@@ -1113,10 +1134,12 @@ case "$1" in
 		Menu_GenerateStats "fullrefresh"
 		exit 0
 	;;
+	querylog)
+		Generate_Query_Log
+		exit 0
+	;;
 	trimdb)
-		Check_Lock
 		Trim_DNS_DB
-		Clear_Lock
 		exit 0
 	;;
 	develop)
