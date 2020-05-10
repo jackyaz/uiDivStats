@@ -500,6 +500,21 @@ Write_Time_Sql_ToFile(){
 	fi
 }
 
+Write_KeyStats_Sql_ToFile(){
+	timenow="$6"
+	
+	{
+		echo ".headers off"
+		echo ".output /tmp/queries$1$3"
+	} > "$5"
+	
+	if [ "$1" = "Total" ]; then
+		echo "SELECT COUNT(QueryID) QueryCount FROM [$2$3] WHERE [Timestamp] >= ($timenow - (86400*$4)) AND ([Timestamp] <= $timenow);" >> "$5"
+	elif [ "$1" = "Blocked" ]; then
+		echo "SELECT COUNT(QueryID) QueryCount FROM [$2$3] WHERE [Timestamp] >= ($timenow - (86400*$4)) AND ([Timestamp] <= $timenow) AND [Result] = 'blocked';" >> "$5"
+	fi
+}
+
 Generate_NG(){
 	TZ=$(cat /etc/TZ)
 	export TZ
@@ -540,33 +555,56 @@ Generate_NG(){
 Generate_KeyStats(){
 	timenow="$1"
 	
-	{
-		echo ".headers off"
-		echo ".output /tmp/totalqueries"
-		echo "SELECT COUNT(QueryID) QueryCount FROM [dnsqueries] WHERE [Timestamp] >= ($timenow - (86400*7)) AND ([Timestamp] <= $timenow);"
-	} > /tmp/uidivstats.sql
+	#daily
+	Write_KeyStats_Sql_ToFile "Total" "dnsqueries" "daily" 1 "/tmp/uidivstats.sql" "$timenow"
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 		sleep 1
 	done
-	totalqueries="$(cat /tmp/totalqueries)"
-	rm -f /tmp/uidivstats.sql
-	rm -f /tmp/totalqueries
 	
-	{
-		echo ".headers off"
-		echo ".output /tmp/totalqueriesblocked"
-		echo "SELECT COUNT(QueryID) QueryCount FROM [dnsqueries] WHERE [Timestamp] >= ($timenow - (86400*7)) AND ([Timestamp] <= $timenow) AND [Result] = 'blocked';"
-	} > /tmp/uidivstats.sql
+	Write_KeyStats_Sql_ToFile "BlockedDomains" "dnsqueries" "daily" 1 "/tmp/uidivstats.sql" "$timenow"
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 		sleep 1
 	done
-	totalqueriesblocked="$(cat /tmp/totalqueriesblocked)"
-	rm -f /tmp/uidivstats.sql
-	rm -f /tmp/totalqueriesblocked
 	
-	blockedpercentage="$(echo "$totalqueriesblocked" "$totalqueries" | awk '{printf "%3.2f\n",$1/$2*100}')"
+	queriesTotaldaily="$(cat "/tmp/queriesTotaldaily")"
+	queriesBlockeddaily="$(cat "/tmp/queriesBlockeddaily")"
+	queriesPercentagedaily="$(echo "$queriesBlockeddaily" "$queriesTotaldaily" | awk '{printf "%3.2f\n",$1/$2*100}')"
 	
-	WritePlainData_ToJS "$SCRIPT_DIR/SQLData.js" "QueriesTotal,$totalqueries" "QueriesBlocked,$totalqueriesblocked" "BlockedPercentage,$blockedpercentage" "BlockedDomains,$blocklistdomains"
+	WritePlainData_ToJS "$SCRIPT_DIR/SQLData.js" "QueriesTotaldaily,$queriesTotaldaily" "QueriesBlockeddaily,$queriesBlockeddaily" "BlockedPercentagedaily,$queriesPercentagedaily"
+	
+	#weekly
+	Write_KeyStats_Sql_ToFile "Total" "dnsqueries" "weekly" 7 "/tmp/uidivstats.sql" "$timenow"
+	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+		sleep 1
+	done
+	
+	Write_KeyStats_Sql_ToFile "BlockedDomains" "dnsqueries" "weekly" 7 "/tmp/uidivstats.sql" "$timenow"
+	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+		sleep 1
+	done
+	
+	queriesTotalweekly="$(cat "/tmp/queriesTotalweekly")"
+	queriesBlockedweekly="$(cat "/tmp/queriesBlockedweekly")"
+	queriesPercentageweekly="$(echo "$queriesBlockedweekly" "$queriesTotalweekly" | awk '{printf "%3.2f\n",$1/$2*100}')"
+	
+	WritePlainData_ToJS "$SCRIPT_DIR/SQLData.js" "QueriesTotalweekly,$queriesTotalweekly" "QueriesBlockedweekly,$queriesBlockedweekly" "BlockedPercentageweekly,$queriesPercentageweekly"
+	
+	#monthly
+	Write_KeyStats_Sql_ToFile "Total" "dnsqueries" "monthly" 30 "/tmp/uidivstats.sql" "$timenow"
+	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+		sleep 1
+	done
+	
+	Write_KeyStats_Sql_ToFile "BlockedDomains" "dnsqueries" "monthly" 30 "/tmp/uidivstats.sql" "$timenow"
+	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+		sleep 1
+	done
+	
+	queriesTotalmonthly="$(cat "/tmp/queriesTotalmonthly")"
+	queriesBlockedmonthly="$(cat "/tmp/queriesBlockedmonthly")"
+	queriesPercentagemonthly="$(echo "$queriesBlockedmonthly" "$queriesTotalmonthly" | awk '{printf "%3.2f\n",$1/$2*100}')"
+	
+	WritePlainData_ToJS "$SCRIPT_DIR/SQLData.js" "QueriesTotalmonthly,$queriesTotalmonthly" "QueriesBlockedmonthly,$queriesBlockedmonthly" "BlockedPercentagemonthly,$queriesPercentagemonthly"
 }
 
 Generate_Count_Blocklist_Domains(){
