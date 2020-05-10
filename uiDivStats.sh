@@ -632,7 +632,7 @@ Generate_Stats_From_SQLite(){
 			sleep 1
 		done
 		dnsmonthlyexists="$(cat /tmp/dnsmonthlyexists)"
-		if [ "$dnsmonthlyexists" != "dnsmonthly" ]; then
+		if [ "$dnsmonthlyexists" != "dnsqueriesmonthly" ]; then
 			Write_Time_Sql_ToFile "$metric" "dnsqueries" 3 30 "$CSV_OUTPUT_DIR/$metric" "monthly" "/tmp/uidivstats.sql" "$timenow"
 			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 				sleep 1
