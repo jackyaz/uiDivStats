@@ -509,6 +509,13 @@ Generate_NG(){
 	
 	rm -f /tmp/uidivstats.sql
 	/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
+	
+	if [ -n "$1" ] && [ "$1" = "fullrefresh" ]; then
+		Write_Temp_Table_Sql_ToFile "dnsqueries" "daily" 1 "/tmp/uidivstats.sql" "$timenow" "drop"
+		Write_Temp_Table_Sql_ToFile "dnsqueries" "weekly" 7 "/tmp/uidivstats.sql" "$timenow" "drop"
+		Write_Temp_Table_Sql_ToFile "dnsqueries" "monthly" 30 "/tmp/uidivstats.sql" "$timenow" "drop"
+	fi
+	
 	Write_Temp_Table_Sql_ToFile "dnsqueries" "daily" 1 "/tmp/uidivstats.sql" "$timenow" "create"
 	Write_Temp_Table_Sql_ToFile "dnsqueries" "weekly" 7 "/tmp/uidivstats.sql" "$timenow" "create"
 	Write_Temp_Table_Sql_ToFile "dnsqueries" "monthly" 30 "/tmp/uidivstats.sql" "$timenow" "create"
@@ -520,8 +527,14 @@ Generate_NG(){
 	
 	rm -f "$SCRIPT_DIR/SQLData.js"
 	Generate_Count_Blocklist_Domains
-	Generate_KeyStats "$timenow"
-	Generate_Stats_From_SQLite "$timenow"
+	
+	if [ -n "$1" ] && [ "$1" = "fullrefresh" ]; then
+		Generate_KeyStats "$timenow" "fullrefresh"
+		Generate_Stats_From_SQLite "$timenow" "fullrefresh"
+	else
+		Generate_KeyStats "$timenow"
+		Generate_Stats_From_SQLite "$timenow"
+	fi
 }
 
 Generate_KeyStats(){
@@ -594,17 +607,11 @@ Generate_Stats_From_SQLite(){
 		done
 		sed -i '1i Fieldname,SrcIP,ReqDmn,Count' "$CSV_OUTPUT_DIR/$metric""dailyclients.htm"
 		
+		cat "$CSV_OUTPUT_DIR/Totaldailytime.htm" "$CSV_OUTPUT_DIR/Blockeddailytime.htm" > "$CSV_OUTPUT_DIR/TotalBlockeddailytime.htm"
+		sed -i '1i Fieldname,Time,QueryCount' "$CSV_OUTPUT_DIR/TotalBlockeddailytime.htm"
+		
 		#weekly
-		{
-			echo ".headers off"
-			echo ".output /tmp/dnsweeklyexists"
-			echo "SELECT name FROM sqlite_master WHERE type='table' AND name='dnsqueriesweekly';"
-		} > /tmp/uidivstats.sql
-		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
-			sleep 1
-		done
-		dnsweeklyexists="$(cat /tmp/dnsweeklyexists)"
-		if [ "$dnsweeklyexists" != "dnsqueriesweekly" ]; then
+		if [ -n "$2" ] && [ "$2" = "fullrefresh" ]; then
 			Write_Time_Sql_ToFile "$metric" "dnsqueries" 1 7 "$CSV_OUTPUT_DIR/$metric" "weekly" "/tmp/uidivstats.sql" "$timenow"
 			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 				sleep 1
@@ -620,20 +627,13 @@ Generate_Stats_From_SQLite(){
 				sleep 1
 			done
 			sed -i '1i Fieldname,SrcIP,ReqDmn,Count' "$CSV_OUTPUT_DIR/$metric""weeklyclients.htm"
+			
+			cat "$CSV_OUTPUT_DIR/Totalweeklytime.htm" "$CSV_OUTPUT_DIR/Blockedweeklytime.htm" > "$CSV_OUTPUT_DIR/TotalBlockedweeklytime.htm"
+			sed -i '1i Fieldname,Time,QueryCount' "$CSV_OUTPUT_DIR/TotalBlockedweeklytime.htm"
 		fi
-		rm -f  /tmp/dnsweeklyexists
 		
 		#monthly
-		{
-			echo ".headers off"
-			echo ".output /tmp/dnsmonthlyexists"
-			echo "SELECT name FROM sqlite_master WHERE type='table' AND name='dnsqueriesmonthly';"
-		} > /tmp/uidivstats.sql
-		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
-			sleep 1
-		done
-		dnsmonthlyexists="$(cat /tmp/dnsmonthlyexists)"
-		if [ "$dnsmonthlyexists" != "dnsqueriesmonthly" ]; then
+		if [ -n "$2" ] && [ "$2" = "fullrefresh" ]; then
 			Write_Time_Sql_ToFile "$metric" "dnsqueries" 3 30 "$CSV_OUTPUT_DIR/$metric" "monthly" "/tmp/uidivstats.sql" "$timenow"
 			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 				sleep 1
@@ -649,9 +649,10 @@ Generate_Stats_From_SQLite(){
 				sleep 1
 			done
 			sed -i '1i Fieldname,SrcIP,ReqDmn,Count' "$CSV_OUTPUT_DIR/$metric""monthlyclients.htm"
+			
+			cat "$CSV_OUTPUT_DIR/Totalmonthlytime.htm" "$CSV_OUTPUT_DIR/Blockedmonthlytime.htm" > "$CSV_OUTPUT_DIR/TotalBlockedmonthlytime.htm"
+			sed -i '1i Fieldname,Time,QueryCount' "$CSV_OUTPUT_DIR/TotalBlockedmonthlytime.htm"
 		fi
-		rm -f /tmp/dnsmonthlyexists
-		
 	done
 	
 	rm -f /tmp/uidivstats.sql
@@ -662,15 +663,6 @@ Generate_Stats_From_SQLite(){
 	done
 	/opt/etc/init.d/S90taildns start >/dev/null 2>&1
 	rm -f /tmp/uidivstats.sql
-	
-	cat "$CSV_OUTPUT_DIR/Totaldailytime.htm" "$CSV_OUTPUT_DIR/Blockeddailytime.htm" > "$CSV_OUTPUT_DIR/TotalBlockeddailytime.htm"
-	sed -i '1i Fieldname,Time,QueryCount' "$CSV_OUTPUT_DIR/TotalBlockeddailytime.htm"
-	
-	cat "$CSV_OUTPUT_DIR/Totalweeklytime.htm" "$CSV_OUTPUT_DIR/Blockedweeklytime.htm" > "$CSV_OUTPUT_DIR/TotalBlockedweeklytime.htm"
-	sed -i '1i Fieldname,Time,QueryCount' "$CSV_OUTPUT_DIR/TotalBlockedweeklytime.htm"
-	
-	cat "$CSV_OUTPUT_DIR/Totalmonthlytime.htm" "$CSV_OUTPUT_DIR/Blockedmonthlytime.htm" > "$CSV_OUTPUT_DIR/TotalBlockedmonthlytime.htm"
-	sed -i '1i Fieldname,Time,QueryCount' "$CSV_OUTPUT_DIR/TotalBlockedmonthlytime.htm"
 }
 
 Trim_DNS_DB(){
@@ -767,7 +759,9 @@ ScriptHeader(){
 }
 
 MainMenu(){
-	printf "1.    Generate Diversion Statistics now\\n\\n"
+	printf "1.    Update Diversion Statistics now (daily only)\\n\\n"
+	printf "2.    Update Diversion Statistics now (daily, weekly and monthly)\\n"
+	printf "      WARNING: THIS WILL TAKE A WHILE\\n\\n"
 	printf "u.    Check for updates\\n"
 	printf "uf.   Update %s with latest version (force update)\\n\\n" "$SCRIPT_NAME"
 	printf "e.    Exit %s\\n\\n" "$SCRIPT_NAME"
@@ -784,6 +778,14 @@ MainMenu(){
 				printf "\\n"
 				if Check_Lock "menu"; then
 					Menu_GenerateStats
+				fi
+				PressEnter
+				break
+			;;
+			2)
+				printf "\\n"
+				if Check_Lock "menu"; then
+					Menu_GenerateStats "fullrefresh"
 				fi
 				PressEnter
 				break
@@ -927,7 +929,7 @@ Menu_Startup(){
 
 Menu_GenerateStats(){
 	if /opt/bin/grep -q 'log-facility=/opt/var/log/dnsmasq.log' /etc/dnsmasq.conf; then
-		Generate_NG
+		Generate_NG "$1"
 	else
 		Print_Output "true" "Diversion logging not enabled!" "$ERR"
 		Print_Output "true" "Open Diversion and use option l to enable logging" ""
@@ -1013,10 +1015,9 @@ case "$1" in
 		fi
 		exit 0
 	;;
-	sql)
+	fullrefresh)
 		Check_Lock
-		Generate_NG
-		Clear_Lock
+		Menu_GenerateStats "fullrefresh"
 		exit 0
 	;;
 	trimdb)
