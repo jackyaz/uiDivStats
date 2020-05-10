@@ -796,8 +796,8 @@ ScriptHeader(){
 }
 
 MainMenu(){
-	printf "1.    Update Diversion Statistics now (daily only)\\n\\n"
-	printf "2.    Update Diversion Statistics now (daily, weekly and monthly)\\n"
+	printf "1.    Update Diversion Statistics (daily only)\\n\\n"
+	printf "2.    Update Diversion Statistics (daily, weekly and monthly)\\n"
 	printf "      WARNING: THIS WILL TAKE A WHILE\\n\\n"
 	printf "u.    Check for updates\\n"
 	printf "uf.   Update %s with latest version (force update)\\n\\n" "$SCRIPT_NAME"
