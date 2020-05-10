@@ -440,7 +440,7 @@ Write_Count_Sql_ToFile(){
 	if [ "$1" = "Total" ]; then
 		echo "SELECT '$1' Fieldname, [ReqDmn] ReqDmn, Count([ReqDmn]) Count FROM $2$5 GROUP BY [ReqDmn] ORDER BY COUNT([ReqDmn]) DESC LIMIT 20;" >> "$6"
 	elif [ "$1" = "Blocked" ]; then
-		echo "SELECT '$1' Fieldname, [ReqDmn] ReqDmn, Count([ReqDmn]) Count FROM $2$5 WHERE ([Result] = 'blocked') GROUP BY [ReqDmn] ORDER BY COUNT([ReqDmn]) DESC LIMIT 20;" >> "$6"
+		echo "SELECT '$1' Fieldname, [ReqDmn] ReqDmn, Count([ReqDmn]) Count FROM $2$5 WHERE ([Result] LIKE 'blocked%') GROUP BY [ReqDmn] ORDER BY COUNT([ReqDmn]) DESC LIMIT 20;" >> "$6"
 	fi
 }
 
@@ -452,7 +452,7 @@ Write_Count_PerClient_Sql_ToFile(){
 	if [ "$1" = "Total" ]; then
 		echo "SELECT DISTINCT [SrcIP] SrcIP FROM $2$5;" >> "$6"
 	elif [ "$1" = "Blocked" ]; then
-		echo "SELECT DISTINCT [SrcIP] SrcIP FROM $2$5 WHERE ([Result] = 'blocked');" >> "$6"
+		echo "SELECT DISTINCT [SrcIP] SrcIP FROM $2$5 WHERE ([Result] LIKE 'blocked%');" >> "$6"
 	fi
 	
 	while ! "$SQLITE3_PATH" "$DNS_DB" < "$6" >/dev/null 2>&1; do
@@ -473,7 +473,7 @@ Write_Count_PerClient_Sql_ToFile(){
 		done
 	elif [ "$1" = "Blocked" ]; then
 		for client in $clients; do
-			echo "SELECT '$1' Fieldname, [SrcIP] SrcIP, [ReqDmn] ReqDmn, Count([ReqDmn]) Count FROM $2$5 WHERE ([SrcIP] = '$client') AND ([Result] = 'blocked') GROUP BY [ReqDmn] ORDER BY COUNT([ReqDmn]) DESC LIMIT 20;" >> "$6"
+			echo "SELECT '$1' Fieldname, [SrcIP] SrcIP, [ReqDmn] ReqDmn, Count([ReqDmn]) Count FROM $2$5 WHERE ([SrcIP] = '$client') AND ([Result] LIKE 'blocked%') GROUP BY [ReqDmn] ORDER BY COUNT([ReqDmn]) DESC LIMIT 20;" >> "$6"
 		done
 	fi
 }
@@ -492,7 +492,7 @@ Write_Time_Sql_ToFile(){
 	if [ "$1" = "Total" ]; then
 		echo "SELECT '$1' Fieldname, [Timestamp] Time, COUNT([QueryID]) QueryCount FROM $2$6 GROUP BY ([Timestamp]/($multiplier));" >> "$7"
 	elif [ "$1" = "Blocked" ]; then
-		echo "SELECT '$1' Fieldname, [Timestamp] Time, COUNT([QueryID]) QueryCount FROM $2$6 WHERE ([Result] = 'blocked') GROUP BY ([Timestamp]/($multiplier));" >> "$7"
+		echo "SELECT '$1' Fieldname, [Timestamp] Time, COUNT([QueryID]) QueryCount FROM $2$6 WHERE ([Result] LIKE 'blocked%') GROUP BY ([Timestamp]/($multiplier));" >> "$7"
 	fi
 }
 
@@ -507,7 +507,7 @@ Write_KeyStats_Sql_ToFile(){
 	if [ "$1" = "Total" ]; then
 		echo "SELECT COUNT(QueryID) QueryCount FROM [$2$3] WHERE [Timestamp] >= ($timenow - (86400*$4)) AND ([Timestamp] <= $timenow);" >> "$5"
 	elif [ "$1" = "Blocked" ]; then
-		echo "SELECT COUNT(QueryID) QueryCount FROM [$2$3] WHERE [Timestamp] >= ($timenow - (86400*$4)) AND ([Timestamp] <= $timenow) AND [Result] = 'blocked';" >> "$5"
+		echo "SELECT COUNT(QueryID) QueryCount FROM [$2$3] WHERE [Timestamp] >= ($timenow - (86400*$4)) AND ([Timestamp] <= $timenow) AND [Result] LIKE 'blocked%';" >> "$5"
 	fi
 }
 
