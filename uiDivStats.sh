@@ -617,7 +617,7 @@ Generate_Count_Blocklist_Domains(){
 	[ "$(nvram get ipv6_service)" != "disabled" ] && BL="$((BL/2))"
 	WCBL="$(/opt/bin/grep "^[^#]" "$blacklistwcfile" | wc -l)"
 	blocklistdomains="$((BLL+BL+WCBL))"
-	WritePlainData_ToJS "BlockedDomains,$blocklistdomains"
+	WritePlainData_ToJS "$SCRIPT_DIR/SQLData.js" "BlockedDomains,$blocklistdomains"
 }
 
 Generate_Stats_From_SQLite(){
