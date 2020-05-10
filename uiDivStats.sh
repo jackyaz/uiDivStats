@@ -561,7 +561,7 @@ Generate_KeyStats(){
 		sleep 1
 	done
 	
-	Write_KeyStats_Sql_ToFile "BlockedDomains" "dnsqueries" "daily" 1 "/tmp/uidivstats.sql" "$timenow"
+	Write_KeyStats_Sql_ToFile "Blocked" "dnsqueries" "daily" 1 "/tmp/uidivstats.sql" "$timenow"
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 		sleep 1
 	done
@@ -605,6 +605,9 @@ Generate_KeyStats(){
 	queriesPercentagemonthly="$(echo "$queriesBlockedmonthly" "$queriesTotalmonthly" | awk '{printf "%3.2f\n",$1/$2*100}')"
 	
 	WritePlainData_ToJS "$SCRIPT_DIR/SQLData.js" "QueriesTotalmonthly,$queriesTotalmonthly" "QueriesBlockedmonthly,$queriesBlockedmonthly" "BlockedPercentagemonthly,$queriesPercentagemonthly"
+	
+	rm -f /tmp/queriesTotal*
+	rm -f /tmp/queriesBlocked*
 }
 
 Generate_Count_Blocklist_Domains(){
