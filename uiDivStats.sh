@@ -578,7 +578,7 @@ Generate_KeyStats(){
 		sleep 1
 	done
 	
-	Write_KeyStats_Sql_ToFile "BlockedDomains" "dnsqueries" "weekly" 7 "/tmp/uidivstats.sql" "$timenow"
+	Write_KeyStats_Sql_ToFile "Blocked" "dnsqueries" "weekly" 7 "/tmp/uidivstats.sql" "$timenow"
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 		sleep 1
 	done
@@ -595,7 +595,7 @@ Generate_KeyStats(){
 		sleep 1
 	done
 	
-	Write_KeyStats_Sql_ToFile "BlockedDomains" "dnsqueries" "monthly" 30 "/tmp/uidivstats.sql" "$timenow"
+	Write_KeyStats_Sql_ToFile "Blocked" "dnsqueries" "monthly" 30 "/tmp/uidivstats.sql" "$timenow"
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 		sleep 1
 	done
