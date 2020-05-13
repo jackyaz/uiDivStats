@@ -424,12 +424,12 @@ WritePlainData_ToJS(){
 	done
 }
 
-Write_View_Sql_ToFile(){
+Write_Temp_Table_Sql_ToFile(){
 	if [ "$6" = "create" ]; then
 		timenow="$5"
-		echo "CREATE VIEW IF NOT EXISTS [$1$2] AS SELECT * FROM $1 WHERE ([Timestamp] >= $timenow - (86400*$3)) AND ([Timestamp] <= $timenow);" >> "$4"
+		echo "CREATE TABLE IF NOT EXISTS [$1$2] AS SELECT * FROM $1 WHERE ([Timestamp] >= $timenow - (86400*$3)) AND ([Timestamp] <= $timenow);" >> "$4"
 	elif [ "$6" = "drop" ]; then
-		echo "DROP VIEW IF EXISTS [$1$2];" >> "$4"
+		echo "DROP TABLE IF EXISTS [$1$2];" >> "$4"
 	fi
 }
 
@@ -528,14 +528,14 @@ Generate_NG(){
 	/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
 	
 	if [ -n "$1" ] && [ "$1" = "fullrefresh" ]; then
-		Write_View_Sql_ToFile "dnsqueries" "daily" 1 "/tmp/uidivstats.sql" "$timenow" "drop"
-		Write_View_Sql_ToFile "dnsqueries" "weekly" 7 "/tmp/uidivstats.sql" "$timenow" "drop"
-		Write_View_Sql_ToFile "dnsqueries" "monthly" 30 "/tmp/uidivstats.sql" "$timenow" "drop"
+		Write_Temp_Table_Sql_ToFile "dnsqueries" "daily" 1 "/tmp/uidivstats.sql" "$timenow" "drop"
+		Write_Temp_Table_Sql_ToFile "dnsqueries" "weekly" 7 "/tmp/uidivstats.sql" "$timenow" "drop"
+		Write_Temp_Table_Sql_ToFile "dnsqueries" "monthly" 30 "/tmp/uidivstats.sql" "$timenow" "drop"
 	fi
 	
-	Write_View_Sql_ToFile "dnsqueries" "daily" 1 "/tmp/uidivstats.sql" "$timenow" "create"
-	Write_View_Sql_ToFile "dnsqueries" "weekly" 7 "/tmp/uidivstats.sql" "$timenow" "create"
-	Write_View_Sql_ToFile "dnsqueries" "monthly" 30 "/tmp/uidivstats.sql" "$timenow" "create"
+	Write_Temp_Table_Sql_ToFile "dnsqueries" "daily" 1 "/tmp/uidivstats.sql" "$timenow" "create"
+	Write_Temp_Table_Sql_ToFile "dnsqueries" "weekly" 7 "/tmp/uidivstats.sql" "$timenow" "create"
+	Write_Temp_Table_Sql_ToFile "dnsqueries" "monthly" 30 "/tmp/uidivstats.sql" "$timenow" "create"
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 		sleep 1
 	done
@@ -713,7 +713,7 @@ Generate_Stats_From_SQLite(){
 	
 	rm -f /tmp/uidivstats.sql
 	/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
-	Write_View_Sql_ToFile "dnsqueries" "daily" 1 "/tmp/uidivstats.sql" "$timenow" "drop"
+	Write_Temp_Table_Sql_ToFile "dnsqueries" "daily" 1 "/tmp/uidivstats.sql" "$timenow" "drop"
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 		sleep 1
 	done
@@ -737,8 +737,8 @@ Trim_DNS_DB(){
 	done
 	rm -f /tmp/uidivstats-trim.sql
 	
-	Write_View_Sql_ToFile "dnsqueries" "weekly" 7 "/tmp/uidivstats-trim.sql" "$timenow" "drop"
-	Write_View_Sql_ToFile "dnsqueries" "monthly" 30 "/tmp/uidivstats-trim.sql" "$timenow" "drop"
+	Write_Temp_Table_Sql_ToFile "dnsqueries" "weekly" 7 "/tmp/uidivstats-trim.sql" "$timenow" "drop"
+	Write_Temp_Table_Sql_ToFile "dnsqueries" "monthly" 30 "/tmp/uidivstats-trim.sql" "$timenow" "drop"
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-trim.sql >/dev/null 2>&1; do
 		sleep 1
 	done
