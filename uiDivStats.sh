@@ -525,12 +525,15 @@ Generate_NG(){
 	#timenowfriendly=$(date +"%c")
 	
 	rm -f /tmp/uidivstats.sql
-	/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
 	
 	if [ -n "$1" ] && [ "$1" = "fullrefresh" ]; then
 		Write_View_Sql_ToFile "dnsqueries" "daily" 1 "/tmp/uidivstats.sql" "$timenow" "drop"
 		Write_View_Sql_ToFile "dnsqueries" "weekly" 7 "/tmp/uidivstats.sql" "$timenow" "drop"
 		Write_View_Sql_ToFile "dnsqueries" "monthly" 30 "/tmp/uidivstats.sql" "$timenow" "drop"
+		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+			sleep 1
+		done
+		rm -f /tmp/uidivstats.sql
 	fi
 	
 	Write_View_Sql_ToFile "dnsqueries" "daily" 1 "/tmp/uidivstats.sql" "$timenow" "create"
@@ -540,7 +543,6 @@ Generate_NG(){
 		sleep 1
 	done
 	rm -f /tmp/uidivstats.sql
-	/opt/etc/init.d/S90taildns start >/dev/null 2>&1
 	
 	rm -f "$SCRIPT_DIR/SQLData.js"
 	Generate_Count_Blocklist_Domains
@@ -712,12 +714,10 @@ Generate_Stats_From_SQLite(){
 	done
 	
 	rm -f /tmp/uidivstats.sql
-	/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
 	Write_View_Sql_ToFile "dnsqueries" "daily" 1 "/tmp/uidivstats.sql" "$timenow" "drop"
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 		sleep 1
 	done
-	/opt/etc/init.d/S90taildns start >/dev/null 2>&1
 	rm -f /tmp/uidivstats.sql
 }
 
@@ -725,8 +725,6 @@ Trim_DNS_DB(){
 	TZ=$(cat /etc/TZ)
 	export TZ
 	timenow=$(date +"%s")
-	
-	/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
 	
 	{
 		echo "DELETE FROM [dnsqueries] WHERE [Timestamp] < ($timenow - (86400*30));"
@@ -743,8 +741,6 @@ Trim_DNS_DB(){
 		sleep 1
 	done
 	rm -f /tmp/uidivstats-trim.sql
-	
-	/opt/etc/init.d/S90taildns start >/dev/null 2>&1
 }
 
 Process_Upgrade(){
