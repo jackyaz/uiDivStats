@@ -539,7 +539,7 @@ function initial(){
 	
 	$j("#keystats_Period").val(GetCookie("keystats_Period")).change();
 	
-	stripedTable();
+	get_querylog_file();
 	
 	Assign_EventHandlers();
 }
@@ -989,61 +989,65 @@ function BuildKeyStatsTableHtml(txttitle, txtbase) {
 	return tablehtml;
 }
 
-function BuildQueryLogTableHtml(txttitle, txtbase) {
-	var tablehtml = '<div style="line-height:10px;">&nbsp;</div>';
-	tablehtml += '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" id="uidivstats_table_' + txtbase + '">';
-	tablehtml += '<col style="width:40%;">';
-	tablehtml += '<col style="width:60%;">';
-	tablehtml += '<thead class="collapsible expanded">';
-	tablehtml += '<tr><td>' + txttitle + ' (click to expand/collapse)</td></tr>';
-	tablehtml += '</thead>';
-	tablehtml += '<div class="collapsiblecontent">';
-	/*tablehtml += '<tr class="even">';
-	tablehtml += '<th>Domains currently on blocklist</th>';
-	tablehtml += '<td id="keystatsdomains" style="font-size: 16px; font-weight: bolder;">'+BlockedDomains+'</td>';
-	tablehtml += '</tr>';*/
-	/*tablehtml += '<tr class="even">';
-	tablehtml += '<th>Period to display</th>';
-	tablehtml += '<td colspan="2">';
-	tablehtml += '<select style="width:125px" class="input_option" onchange="changeTable(this)" id="' + txtbase + '_Period">';
-	tablehtml += '<option value=0>Last 24 hours</option>';
-	tablehtml += '<option value=1>Last 7 days</option>';
-	tablehtml += '<option value=2>Last 30 days</option>';
-	tablehtml += '</select>';
-	tablehtml += '</td>';
-	tablehtml += '</tr>';*/
-	//tablehtml += '<tr style="line-height:5px;">';
-	//tablehtml += '<td colspan="2">&nbsp;</td>';
-	//tablehtml += '</tr>';
+function BuildQueryLogTableHtml(arrayloglines) {
+	var tablehtml = '<table border="0" cellpadding="0" cellspacing="0" width="100%" class="queryTable" style="table-layout:fixed;">';
+	tablehtml += '<col style="width:110px;">';
+	tablehtml += '<col style="width:320px;">';
+	tablehtml += '<col style="width:110px;">';
+	tablehtml += '<col style="width:50px;">';
+	tablehtml += '<col style="width:140px;">';
+	tablehtml += '<thead class="queryTableHeader">';
 	tablehtml += '<tr>';
-	tablehtml += '<td align="center" style="padding: 0px;">';
-	tablehtml += '<div class="logtablecontainer">';
-	tablehtml += '<table border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable StatsTable">';
-	tablehtml += '<col style="width:250px;">';
-	tablehtml += '<col style="width:250px;">';
-	tablehtml += '<col style="width:250px;">';
-	tablehtml += '<thead>';
-	tablehtml += '<tr>';
-	tablehtml += '<th>Total Queries</th>';
-	tablehtml += '<th>Queries Blocked</th>';
-	tablehtml += '<th>Percent Blocked</th>';
+	tablehtml += '<th>Time</th>';
+	tablehtml += '<th>Domain</th>';
+	tablehtml += '<th>Client</th>';
+	tablehtml += '<th>Type</th>';
+	tablehtml += '<th>Result</th>';
 	tablehtml += '</tr>';
 	tablehtml += '</thead>';
-	tablehtml += '<tr class="even" style="text-align:center;">';
-	tablehtml += '<td id="keystatstotal"></td>';
-	tablehtml += '<td id="keystatsblocked"></td>';
-	tablehtml += '<td id="keystatspercent"></td>';
-	tablehtml += '</tr>';
+	tablehtml += '<tbody class="queryTableContent">';
+	
+	for(var i = 0; i < arrayloglines.length; i++){
+		tablehtml += '<tr>';
+		var logfields = arrayloglines[i].split(",");
+		for(var i2 = 0; i2 < logfields.length; i2++){
+			if(i2 == 0){
+				tablehtml += '<td>'+moment.unix(logfields[i2]).format('YYYY-MM-DD HH:mm')+'</td>';
+			}
+			else if (i2 == (logfields.length - 1)){
+				tablehtml += '<td>'+logfields[i2].replace(/"/g,'')+'</td>';
+			}
+			else {
+				tablehtml += '<td>'+logfields[i2]+'</td>';
+			}
+		}
+		tablehtml += '</tr>';
+	}
+	
+	tablehtml += '</tbody>';
 	tablehtml += '</table>';
-	tablehtml += '</div>';
-	tablehtml += '</td>';
-	tablehtml += '</tr>';
-	tablehtml += '<tr style="line-height:5px;">';
-	tablehtml += '<td>&nbsp;</td>';
-	tablehtml += '</tr>';
-	tablehtml += '</div>';
-	tablehtml += '</table>';
+	
 	return tablehtml;
+}
+
+function get_querylog_file(){
+	$j.ajax({
+		url: '/ext/uiDivStats/csv/SQLQueryLog.htm',
+		dataType: 'text',
+		error: function(xhr){
+			setTimeout(get_querylog_file, 1000);
+		},
+		success: function(data){
+			var loglines=data.split("\n");
+			loglines=loglines.filter(Boolean);
+			$j("#queryTableContainer").empty();
+			$j("#queryTableContainer").append(BuildQueryLogTableHtml(loglines));
+			stripedTable();
+			if(document.getElementById("auto_refresh").checked){
+				setTimeout("get_querylog_file();",60000);
+			}
+		}
+	});
 }
 
 function Assign_EventHandlers(){
@@ -1117,169 +1121,34 @@ function stripedTable() {
 
 <!-- Requested Ads -->
 
+<!-- Start Query Log -->
 <div style="line-height:10px;">&nbsp;</div>
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" id="uidivstats_table_querylog">
+<col style="width:40%;">
+<col style="width:60%;">
 <thead class="collapsible expanded">
-<tr><td>Query Log (click to expand/collapse)</td></tr>
+<tr><td colspan="2">Query Log (click to expand/collapse)</td></tr>
 </thead>
 <div class="collapsiblecontent">
+<tr class="even">
+<th>Update automatically?</th>
+<td>
+<label style="color:#FFCC00;display:block;">
+<input type="checkbox" checked="" id="auto_refresh" style="padding:0;margin:0;vertical-align:middle;position:relative;top:-1px;" />&nbsp;&nbsp;Table will refresh every 60s</label>
+</td>
+</tr>
+<tr style="line-height:5px;">
+<td colspan="2">&nbsp;</td>
+</tr>
 <tr>
-<td align="center" style="padding: 0px;">
+<td colspan="2" align="center" style="padding: 0px;">
 <div id="queryTableContainer" class="queryTableContainer">
-<table border="0" cellpadding="0" cellspacing="0" width="100%" class="queryTable" style="table-layout:fixed;">
-<col style="width:110px;">
-<col style="width:365px;">
-<col style="width:115px;">
-<col style="width:50px;">
-<col style="width:95px;">
-<thead class="queryTableHeader">
-	<tr>
-		<th>Time</th>
-		<th>Domain</th>
-		<th>Client</th>
-        <th>Type</th>
-        <th>Result</th>
-	</tr>
-</thead>
-<tbody class="queryTableContent">
-	<tr>
-		<td>2020-05-11 09:37</td>
-		<td>www.google.com</td>
-		<td>10.14.16.42</td>
-        <td>A</td>
-        <td>allowed</td>
-	</tr>
-    <tr>
-		<td>2020-05-11 09:37</td>
-		<td>www.google.com</td>
-		<td>10.14.16.42</td>
-        <td>A</td>
-        <td>blocking list fs</td>
-	</tr><tr>
-		<td>2020-05-11 09:37</td>
-		<td>www.google.com</td>
-		<td>10.14.16.42</td>
-        <td>A</td>
-        <td>allowed</td>
-	</tr><tr>
-		<td>2020-05-11 09:37</td>
-		<td>www.google.com</td>
-		<td>10.14.16.42</td>
-        <td>A</td>
-        <td>allowed</td>
-	</tr><tr>
-		<td>2020-05-11 09:37</td>
-		<td>www.google.com</td>
-		<td>10.14.16.42</td>
-        <td>A</td>
-        <td>allowed</td>
-	</tr><tr>
-		<td>2020-05-11 09:37</td>
-		<td>www.google.com</td>
-		<td>10.14.16.42</td>
-        <td>A</td>
-        <td>allowed</td>
-	</tr><tr>
-		<td>2020-05-11 09:37</td>
-		<td>www.google.com</td>
-		<td>10.14.16.42</td>
-        <td>A</td>
-        <td>allowed</td>
-	</tr><tr>
-		<td>2020-05-11 09:37</td>
-		<td>www.google.com</td>
-		<td>10.14.16.42</td>
-        <td>A</td>
-        <td>allowed</td>
-	</tr><tr>
-		<td>2020-05-11 09:37</td>
-		<td>www.google.com</td>
-		<td>255.255.255.255</td>
-        <td>AAAA</td>
-        <td>allowed</td>
-	</tr><tr>
-		<td>2020-05-11 09:37</td>
-		<td>www.ggle.com</td>
-		<td>10.14.16.42</td>
-        <td>A</td>
-        <td>allowed</td>
-	</tr><tr>
-		<td>2020-05-11 09:37</td>
-		<td>www.google.com</td>
-		<td>10.14.16.42</td>
-        <td>A</td>
-        <td>allowed</td>
-	</tr><tr>
-		<td>2020-05-11 09:37</td>
-		<td>www.google.com</td>
-		<td>10.14.16.42</td>
-        <td>A</td>
-        <td>allowed</td>
-	</tr><tr>
-		<td>2020-05-11 09:37</td>
-		<td>www.google.com</td>
-		<td>10.14.16.42</td>
-        <td>A</td>
-        <td>allowed</td>
-	</tr><tr>
-		<td>2020-05-11 09:37</td>
-		<td>www.google.com</td>
-		<td>10.14.16.42</td>
-        <td>A</td>
-        <td>allowed</td>
-	</tr><tr>
-		<td>2020-05-11 09:37</td>
-		<td>www.google.com</td>
-		<td>10.14.16.42</td>
-        <td>A</td>
-        <td>allowed</td>
-	</tr><tr>
-		<td>2020-05-11 09:37</td>
-		<td>www.google.com</td>
-		<td>10.14.16.42</td>
-        <td>A</td>
-        <td>allowed</td>
-	</tr><tr>
-		<td>2020-05-11 09:37</td>
-		<td>www.google.com</td>
-		<td>10.14.16.42</td>
-        <td>A</td>
-        <td>allowed</td>
-	</tr><tr>
-		<td>2020-05-11 09:37</td>
-		<td>www.google.com</td>
-		<td>10.14.16.42</td>
-        <td>A</td>
-        <td>allowed</td>
-	</tr><tr>
-		<td>2020-05-11 09:37</td>
-		<td>www.google.com</td>
-		<td>10.14.16.42</td>
-        <td>A</td>
-        <td>allowed</td>
-	</tr><tr>
-		<td>2020-05-11 09:37</td>
-		<td>www.google.com</td>
-		<td>10.14.16.42</td>
-        <td>A</td>
-        <td>allowed</td>
-	</tr><tr>
-		<td>2020-05-11 09:37</td>
-		<td>www.google.com</td>
-		<td>10.14.16.42</td>
-        <td>A</td>
-        <td>allowed</td>
-	</tr>
-</tbody>
-</table>
 </div>
 </td>
 </tr>
 </div>
 </table>
-
-
-
+<!-- End Query Log -->
 
 </td>
 </tr>
