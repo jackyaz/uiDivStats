@@ -82,6 +82,43 @@ td.nodata {
 .StatsTable td:last-child {
   border-right: none !important;
 }
+
+div.queryTableContainer {
+  height: 500px;
+  overflow: auto;
+  width: 750px;
+  border: 1px solid #000;
+}
+
+thead.queryTableHeader th {
+  background-image: linear-gradient(rgb(146, 160, 165) 0%, rgb(102, 117, 124) 100%);
+  font-weight: bolder;
+  padding: 2px;
+  text-align: center;
+  color: #fff;
+}
+
+tbody.queryTableContent td, tbody.queryTableContent tr.queryNormalRow td {
+  background-color: #2F3A3E !important;
+  border-bottom: none !important;
+  border-left: none !important;
+  border-right: 1px solid #000 !important;
+  border-top: 1px solid #000 !important;
+  padding: 2px;
+  overflow: hidden !important;
+  white-space: nowrap !important;
+}
+
+tbody.queryTableContent tr.queryAlternateRow td {
+  background-color: #475A5F !important;
+  border-bottom: none !important;
+  border-left: none !important;
+  border-right: 1px solid #000 !important;
+  border-top: 1px solid #000 !important;
+  padding: 2px;
+  overflow: hidden !important;
+  white-space: nowrap !important;
+}
 </style>
 <script language="JavaScript" type="text/javascript" src="/ext/shared-jy/jquery.js"></script>
 <script language="JavaScript" type="text/javascript" src="/ext/shared-jy/moment.js"></script>
@@ -466,7 +503,7 @@ function initial(){
 	
 	show_menu();
 	
-	$j("#uidivstats_title").after(BuildTableHtml("Key Stats", "keystats"));
+	$j("#uidivstats_title").after(BuildKeyStatsTableHtml("Key Stats", "keystats"));
 	$j("#uidivstats_table_keystats").after(BuildChartHtml("Top requested domains", "Total", "false", "true"));
 	$j("#uidivstats_table_keystats").after(BuildChartHtml("Top blocked domains", "Blocked", "false", "true"));
 	$j("#uidivstats_table_keystats").after(BuildChartHtml("DNS Queries", "TotalBlockedtime", "true", "false"));
@@ -484,6 +521,8 @@ function initial(){
 	}
 	
 	$j("#keystats_Period").val(GetCookie("keystats_Period")).change();
+	
+	stripedTable();
 	
 	Assign_EventHandlers();
 }
@@ -878,59 +917,116 @@ function BuildChartHtml(txttitle, txtbase, istime, perip) {
 	return charthtml;
 }
 
-function BuildTableHtml(txttitle, txtbase) {
-		var tablehtml = '<div style="line-height:10px;">&nbsp;</div>';
-		tablehtml += '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" id="uidivstats_table_' + txtbase + '">';
-		tablehtml += '<col style="width:40%;">';
-		tablehtml += '<col style="width:60%;">';
-		tablehtml += '<thead class="collapsible expanded">';
-		tablehtml += '<tr><td colspan="2">' + txttitle + ' (click to expand/collapse)</td></tr>';
-		tablehtml += '</thead>';
-		tablehtml += '<div class="collapsiblecontent">';
-		tablehtml += '<tr class="even">';
-		tablehtml += '<th>Domains currently on blocklist</th>';
-		tablehtml += '<td id="keystatsdomains" style="font-size: 16px; font-weight: bolder;">'+BlockedDomains+'</td>';
-		tablehtml += '</tr>';
-		tablehtml += '<tr class="even">';
-		tablehtml += '<th>Period to display</th>';
-		tablehtml += '<td colspan="2">';
-		tablehtml += '<select style="width:125px" class="input_option" onchange="changeTable(this)" id="' + txtbase + '_Period">';
-		tablehtml += '<option value=0>Last 24 hours</option>';
-		tablehtml += '<option value=1>Last 7 days</option>';
-		tablehtml += '<option value=2>Last 30 days</option>';
-		tablehtml += '</select>';
-		tablehtml += '</td>';
-		tablehtml += '</tr>';
-		tablehtml += '<tr style="line-height:5px;">';
-		tablehtml += '<td colspan="2">&nbsp;</td>';
-		tablehtml += '</tr>';
-		tablehtml += '<tr>';
-		tablehtml += '<td colspan="2" align="center" style="padding: 0px;">';
-		tablehtml += '<table border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable StatsTable">';
-		tablehtml += '<col style="width:250px;">';
-		tablehtml += '<col style="width:250px;">';
-		tablehtml += '<col style="width:250px;">';
-		tablehtml += '<thead>';
-		tablehtml += '<tr>';
-		tablehtml += '<th>Total Queries</th>';
-		tablehtml += '<th>Queries Blocked</th>';
-		tablehtml += '<th>Percent Blocked</th>';
-		tablehtml += '</tr>';
-		tablehtml += '</thead>';
-		tablehtml += '<tr class="even" style="text-align:center;">';
-		tablehtml += '<td id="keystatstotal"></td>';
-		tablehtml += '<td id="keystatsblocked"></td>';
-		tablehtml += '<td id="keystatspercent"></td>';
-		tablehtml += '</tr>';
-		tablehtml += '</table>';
-		tablehtml += '</td>';
-		tablehtml += '</tr>';
-		tablehtml += '<tr style="line-height:5px;">';
-		tablehtml += '<td colspan="2">&nbsp;</td>';
-		tablehtml += '</tr>';
-		tablehtml += '</div>';
-		tablehtml += '</table>';
-		return tablehtml;
+function BuildKeyStatsTableHtml(txttitle, txtbase) {
+	var tablehtml = '<div style="line-height:10px;">&nbsp;</div>';
+	tablehtml += '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" id="uidivstats_table_' + txtbase + '">';
+	tablehtml += '<col style="width:40%;">';
+	tablehtml += '<col style="width:60%;">';
+	tablehtml += '<thead class="collapsible expanded">';
+	tablehtml += '<tr><td colspan="2">' + txttitle + ' (click to expand/collapse)</td></tr>';
+	tablehtml += '</thead>';
+	tablehtml += '<div class="collapsiblecontent">';
+	tablehtml += '<tr class="even">';
+	tablehtml += '<th>Domains currently on blocklist</th>';
+	tablehtml += '<td id="keystatsdomains" style="font-size: 16px; font-weight: bolder;">'+BlockedDomains+'</td>';
+	tablehtml += '</tr>';
+	tablehtml += '<tr class="even">';
+	tablehtml += '<th>Period to display</th>';
+	tablehtml += '<td colspan="2">';
+	tablehtml += '<select style="width:125px" class="input_option" onchange="changeTable(this)" id="' + txtbase + '_Period">';
+	tablehtml += '<option value=0>Last 24 hours</option>';
+	tablehtml += '<option value=1>Last 7 days</option>';
+	tablehtml += '<option value=2>Last 30 days</option>';
+	tablehtml += '</select>';
+	tablehtml += '</td>';
+	tablehtml += '</tr>';
+	tablehtml += '<tr style="line-height:5px;">';
+	tablehtml += '<td colspan="2">&nbsp;</td>';
+	tablehtml += '</tr>';
+	tablehtml += '<tr>';
+	tablehtml += '<td colspan="2" align="center" style="padding: 0px;">';
+	tablehtml += '<table border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable StatsTable">';
+	tablehtml += '<col style="width:250px;">';
+	tablehtml += '<col style="width:250px;">';
+	tablehtml += '<col style="width:250px;">';
+	tablehtml += '<thead>';
+	tablehtml += '<tr>';
+	tablehtml += '<th>Total Queries</th>';
+	tablehtml += '<th>Queries Blocked</th>';
+	tablehtml += '<th>Percent Blocked</th>';
+	tablehtml += '</tr>';
+	tablehtml += '</thead>';
+	tablehtml += '<tr class="even" style="text-align:center;">';
+	tablehtml += '<td id="keystatstotal"></td>';
+	tablehtml += '<td id="keystatsblocked"></td>';
+	tablehtml += '<td id="keystatspercent"></td>';
+	tablehtml += '</tr>';
+	tablehtml += '</table>';
+	tablehtml += '</td>';
+	tablehtml += '</tr>';
+	tablehtml += '<tr style="line-height:5px;">';
+	tablehtml += '<td colspan="2">&nbsp;</td>';
+	tablehtml += '</tr>';
+	tablehtml += '</div>';
+	tablehtml += '</table>';
+	return tablehtml;
+}
+
+function BuildQueryLogTableHtml(txttitle, txtbase) {
+	var tablehtml = '<div style="line-height:10px;">&nbsp;</div>';
+	tablehtml += '<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" id="uidivstats_table_' + txtbase + '">';
+	tablehtml += '<col style="width:40%;">';
+	tablehtml += '<col style="width:60%;">';
+	tablehtml += '<thead class="collapsible expanded">';
+	tablehtml += '<tr><td>' + txttitle + ' (click to expand/collapse)</td></tr>';
+	tablehtml += '</thead>';
+	tablehtml += '<div class="collapsiblecontent">';
+	/*tablehtml += '<tr class="even">';
+	tablehtml += '<th>Domains currently on blocklist</th>';
+	tablehtml += '<td id="keystatsdomains" style="font-size: 16px; font-weight: bolder;">'+BlockedDomains+'</td>';
+	tablehtml += '</tr>';*/
+	/*tablehtml += '<tr class="even">';
+	tablehtml += '<th>Period to display</th>';
+	tablehtml += '<td colspan="2">';
+	tablehtml += '<select style="width:125px" class="input_option" onchange="changeTable(this)" id="' + txtbase + '_Period">';
+	tablehtml += '<option value=0>Last 24 hours</option>';
+	tablehtml += '<option value=1>Last 7 days</option>';
+	tablehtml += '<option value=2>Last 30 days</option>';
+	tablehtml += '</select>';
+	tablehtml += '</td>';
+	tablehtml += '</tr>';*/
+	//tablehtml += '<tr style="line-height:5px;">';
+	//tablehtml += '<td colspan="2">&nbsp;</td>';
+	//tablehtml += '</tr>';
+	tablehtml += '<tr>';
+	tablehtml += '<td align="center" style="padding: 0px;">';
+	tablehtml += '<div class="logtablecontainer">';
+	tablehtml += '<table border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable StatsTable">';
+	tablehtml += '<col style="width:250px;">';
+	tablehtml += '<col style="width:250px;">';
+	tablehtml += '<col style="width:250px;">';
+	tablehtml += '<thead>';
+	tablehtml += '<tr>';
+	tablehtml += '<th>Total Queries</th>';
+	tablehtml += '<th>Queries Blocked</th>';
+	tablehtml += '<th>Percent Blocked</th>';
+	tablehtml += '</tr>';
+	tablehtml += '</thead>';
+	tablehtml += '<tr class="even" style="text-align:center;">';
+	tablehtml += '<td id="keystatstotal"></td>';
+	tablehtml += '<td id="keystatsblocked"></td>';
+	tablehtml += '<td id="keystatspercent"></td>';
+	tablehtml += '</tr>';
+	tablehtml += '</table>';
+	tablehtml += '</div>';
+	tablehtml += '</td>';
+	tablehtml += '</tr>';
+	tablehtml += '<tr style="line-height:5px;">';
+	tablehtml += '<td>&nbsp;</td>';
+	tablehtml += '</tr>';
+	tablehtml += '</div>';
+	tablehtml += '</table>';
+	return tablehtml;
 }
 
 function Assign_EventHandlers(){
@@ -940,6 +1036,27 @@ function Assign_EventHandlers(){
 	
 	$j(".default-collapsed").trigger("click");
 }
+
+/* http://www.alistapart.com/articles/zebratables/ */
+function stripedTable() {
+	if (document.getElementById && document.getElementsByTagName) {
+		var allTables = document.getElementsByClassName('queryTable');
+		if (!allTables) { return; }
+		
+		for (var i = 0; i < allTables.length; i++) {
+			var trs = allTables[i].getElementsByTagName("tr");
+			for (var j = 0; j < trs.length; j++) {
+				$j(trs[j]).removeClass('queryAlternateRow');
+				$j(trs[j]).addClass('queryNormalRow');
+			}
+			for (var k = 0; k < trs.length; k += 2) {
+				$j(trs[k]).removeClass('queryNormalRow');
+				$j(trs[k]).addClass('queryAlternateRow');
+			}
+		}
+	}
+}
+
 </script>
 </head>
 <body onload="initial();">
@@ -984,6 +1101,164 @@ function Assign_EventHandlers(){
 <!-- Requested Ads -->
 
 <div style="line-height:10px;">&nbsp;</div>
+<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" id="uidivstats_table_querylog">
+<thead class="collapsible expanded">
+<tr><td>Query Log (click to expand/collapse)</td></tr>
+</thead>
+<div class="collapsiblecontent">
+<tr>
+<td align="center" style="padding: 0px;">
+<div id="queryTableContainer" class="queryTableContainer">
+<table border="0" cellpadding="0" cellspacing="0" width="100%" class="queryTable" style="table-layout:fixed;">
+<thead class="queryTableHeader">
+	<tr>
+		<th>Time</th>
+		<th>Domain</th>
+		<th>Client</th>
+        <th>Type</th>
+        <th>Result</th>
+	</tr>
+</thead>
+<tbody class="queryTableContent">
+	<tr>
+		<td>2020-05-11 09:37</td>
+		<td>www.google.com</td>
+		<td>10.14.16.42</td>
+        <td>A</td>
+        <td>allowed</td>
+	</tr>
+    <tr>
+		<td>2020-05-11 09:37</td>
+		<td>www.google.com</td>
+		<td>10.14.16.42</td>
+        <td>A</td>
+        <td>blocking list fs</td>
+	</tr><tr>
+		<td>2020-05-11 09:37</td>
+		<td>www.google.com</td>
+		<td>10.14.16.42</td>
+        <td>A</td>
+        <td>allowed</td>
+	</tr><tr>
+		<td>2020-05-11 09:37</td>
+		<td>www.google.com</td>
+		<td>10.14.16.42</td>
+        <td>A</td>
+        <td>allowed</td>
+	</tr><tr>
+		<td>2020-05-11 09:37</td>
+		<td>www.google.com</td>
+		<td>10.14.16.42</td>
+        <td>A</td>
+        <td>allowed</td>
+	</tr><tr>
+		<td>2020-05-11 09:37</td>
+		<td>www.google.com</td>
+		<td>10.14.16.42</td>
+        <td>A</td>
+        <td>allowed</td>
+	</tr><tr>
+		<td>2020-05-11 09:37</td>
+		<td>www.google.com</td>
+		<td>10.14.16.42</td>
+        <td>A</td>
+        <td>allowed</td>
+	</tr><tr>
+		<td>2020-05-11 09:37</td>
+		<td>www.google.com</td>
+		<td>10.14.16.42</td>
+        <td>A</td>
+        <td>allowed</td>
+	</tr><tr>
+		<td>2020-05-11 09:37</td>
+		<td>www.google.com</td>
+		<td>255.255.255.255</td>
+        <td>AAAA</td>
+        <td>allowed</td>
+	</tr><tr>
+		<td>2020-05-11 09:37</td>
+		<td>www.ggle.com</td>
+		<td>10.14.16.42</td>
+        <td>A</td>
+        <td>allowed</td>
+	</tr><tr>
+		<td>2020-05-11 09:37</td>
+		<td>www.google.com</td>
+		<td>10.14.16.42</td>
+        <td>A</td>
+        <td>allowed</td>
+	</tr><tr>
+		<td>2020-05-11 09:37</td>
+		<td>www.google.com</td>
+		<td>10.14.16.42</td>
+        <td>A</td>
+        <td>allowed</td>
+	</tr><tr>
+		<td>2020-05-11 09:37</td>
+		<td>www.google.com</td>
+		<td>10.14.16.42</td>
+        <td>A</td>
+        <td>allowed</td>
+	</tr><tr>
+		<td>2020-05-11 09:37</td>
+		<td>www.google.com</td>
+		<td>10.14.16.42</td>
+        <td>A</td>
+        <td>allowed</td>
+	</tr><tr>
+		<td>2020-05-11 09:37</td>
+		<td>www.google.com</td>
+		<td>10.14.16.42</td>
+        <td>A</td>
+        <td>allowed</td>
+	</tr><tr>
+		<td>2020-05-11 09:37</td>
+		<td>www.google.com</td>
+		<td>10.14.16.42</td>
+        <td>A</td>
+        <td>allowed</td>
+	</tr><tr>
+		<td>2020-05-11 09:37</td>
+		<td>www.google.com</td>
+		<td>10.14.16.42</td>
+        <td>A</td>
+        <td>allowed</td>
+	</tr><tr>
+		<td>2020-05-11 09:37</td>
+		<td>www.google.com</td>
+		<td>10.14.16.42</td>
+        <td>A</td>
+        <td>allowed</td>
+	</tr><tr>
+		<td>2020-05-11 09:37</td>
+		<td>www.google.com</td>
+		<td>10.14.16.42</td>
+        <td>A</td>
+        <td>allowed</td>
+	</tr><tr>
+		<td>2020-05-11 09:37</td>
+		<td>www.google.com</td>
+		<td>10.14.16.42</td>
+        <td>A</td>
+        <td>allowed</td>
+	</tr><tr>
+		<td>2020-05-11 09:37</td>
+		<td>www.google.com</td>
+		<td>10.14.16.42</td>
+        <td>A</td>
+        <td>allowed</td>
+	</tr>
+</tbody>
+</table>
+</div>
+</td>
+</tr>
+</div>
+</table>
+
+
+
+
 </td>
 </tr>
 </tbody>
