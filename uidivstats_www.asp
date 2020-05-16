@@ -102,7 +102,10 @@ div.queryTableContainer {
 
 thead.queryTableHeader th {
   background-image: linear-gradient(rgb(146, 160, 165) 0%, rgb(102, 117, 124) 100%);
-  border: none !important;
+  border-top: none !important;
+	border-left: none !important;
+	border-right: none !important;
+	border-bottom: 1px solid #000 !important;
   font-weight: bolder;
   padding: 2px;
   text-align: center;
@@ -119,13 +122,12 @@ thead.queryTableHeader td:first-child {
   border-left: none !important;
 }
 
-
 tbody.queryTableContent td, tbody.queryTableContent tr.queryNormalRow td {
   background-color: #2F3A3E !important;
-  border-bottom: none !important;
+  border-bottom: 1px solid #000 !important;
   border-left: none !important;
   border-right: 1px solid #000 !important;
-  border-top: 1px solid #000 !important;
+  border-top: none !important;
   padding: 2px;
   text-align: center;
   overflow: hidden !important;
@@ -134,10 +136,10 @@ tbody.queryTableContent td, tbody.queryTableContent tr.queryNormalRow td {
 
 tbody.queryTableContent tr.queryAlternateRow td {
   background-color: #475A5F !important;
-  border-bottom: none !important;
+  border-bottom: 1px solid #000 !important;
   border-left: none !important;
   border-right: 1px solid #000 !important;
-  border-top: 1px solid #000 !important;
+  border-top: none !important;
   padding: 2px;
   overflow: hidden !important;
   white-space: nowrap !important;
@@ -169,6 +171,9 @@ var maxNoChartsTotal = 6;
 var currentNoChartsTotal = 0;
 var maxNoChartsTotalBlocked = 3;
 var currentNoChartsTotalBlocked = 0;
+var arrayqueryloglines = [];
+var originalarrayqueryloglines = [];
+
 Chart.defaults.global.defaultFontColor = "#CCC";
 Chart.Tooltip.positioners.cursor = function(chartElements, coordinates) {
 	return coordinates;
@@ -995,7 +1000,7 @@ function BuildKeyStatsTableHtml(txttitle, txtbase) {
 	return tablehtml;
 }
 
-function BuildQueryLogTableHtml(arrayloglines) {
+function BuildQueryLogTableHtml() {
 	var tablehtml = '<table border="0" cellpadding="0" cellspacing="0" width="100%" class="queryTable" style="table-layout:fixed;">';
 	tablehtml += '<col style="width:110px;">';
 	tablehtml += '<col style="width:320px;">';
@@ -1013,21 +1018,13 @@ function BuildQueryLogTableHtml(arrayloglines) {
 	tablehtml += '</thead>';
 	tablehtml += '<tbody class="queryTableContent">';
 	
-	for(var i = 0; i < arrayloglines.length; i++){
+	for(var i = 0; i < arrayqueryloglines.length; i++){
 		tablehtml += '<tr>';
-		var logfields = arrayloglines[i].split(",");
-		for(var i2 = 0; i2 < logfields.length; i2++){
-			if(i2 == 0){
-				tablehtml += '<td>'+moment.unix(logfields[i2]).format('YYYY-MM-DD HH:mm')+'</td>';
-			}
-			else if (i2 == (logfields.length - 1)){
-				var parsedresult = logfields[i2].replace(/"/g,'')
-				tablehtml += '<td>'+parsedresult.charAt(0).toUpperCase() + parsedresult.slice(1)+'</td>';
-			}
-			else {
-				tablehtml += '<td>'+logfields[i2]+'</td>';
-			}
-		}
+		tablehtml += '<td>'+arrayqueryloglines[i].Time+'</td>';
+		tablehtml += '<td>'+arrayqueryloglines[i].ReqDmn+'</td>';
+		tablehtml += '<td>'+arrayqueryloglines[i].SrcIP+'</td>';
+		tablehtml += '<td>'+arrayqueryloglines[i].QryType+'</td>';
+		tablehtml += '<td>'+arrayqueryloglines[i].Result+'</td>';
 		tablehtml += '</tr>';
 	}
 	
@@ -1045,16 +1042,49 @@ function get_querylog_file(){
 			setTimeout(get_querylog_file, 1000);
 		},
 		success: function(data){
-			var loglines=data.split("\n");
-			loglines=loglines.filter(Boolean);
-			$j("#queryTableContainer").empty();
-			$j("#queryTableContainer").append(BuildQueryLogTableHtml(loglines));
-			stripedTable();
+			ParseQueryLog(data);
 			if(document.getElementById("auto_refresh").checked){
 				setTimeout("get_querylog_file();",60000);
 			}
 		}
 	});
+}
+
+function ParseQueryLog(data){
+	var arrayloglines = data.split("\n");
+	arrayloglines = arrayloglines.filter(Boolean);
+	arrayqueryloglines = [];
+	for(var i = 0; i < arrayloglines.length; i++){
+		var logfields = arrayloglines[i].split("|");
+		var parsedlogline = new Object();
+		parsedlogline.Time = moment.unix(logfields[0]).format('YYYY-MM-DD HH:mm').trim();
+		parsedlogline.ReqDmn = logfields[1].trim();
+		parsedlogline.SrcIP = logfields[2].trim();
+		parsedlogline.QryType = logfields[3].trim();
+		var parsedresult = logfields[4].replace(/"/g,'').trim();
+		parsedlogline.Result = parsedresult.charAt(0).toUpperCase() + parsedresult.slice(1);
+		arrayqueryloglines.push(parsedlogline);
+	}
+	FilterQueryLog();
+}
+
+function FilterQueryLog(){
+	
+	if(typeof originalarrayqueryloglines === 'undefined' || originalarrayqueryloglines === null) { originalarrayqueryloglines = arrayqueryloglines; }
+	if (originalarrayqueryloglines.length == 0) { originalarrayqueryloglines = arrayqueryloglines; }
+	
+	if($j("#filter_result option:selected").val() != 0){
+		arrayqueryloglines = originalarrayqueryloglines.filter(function(item){
+			return item.Result == $j("#filter_result option:selected").text();
+		});
+	}
+	else {
+		arrayqueryloglines = originalarrayqueryloglines;
+	}
+	
+	$j("#queryTableContainer").empty();
+	$j("#queryTableContainer").append(BuildQueryLogTableHtml());
+	stripedTable();
 }
 
 function Assign_EventHandlers(){
@@ -1183,13 +1213,14 @@ function stripedTable() {
 </select>
 </td>
 <td>
-<select style="width:125px" class="input_option" onchange="" id="filter_result">
-<option value="0">Allowed</option>
-<option value="1">Blocked (blacklist)</option>
-<option value="2">Blocked (blocking list)</option>
-<option value="3">Blocked (blocking list fs)</option>
-<option value="4">Blocked (wildcard blacklist)</option>
-<option value="5">Blocked (youtube blacklist)</option>
+<select style="width:125px" class="input_option" onchange="FilterQueryLog();" id="filter_result">
+<option value="0">All</option>
+<option value="1">Allowed</option>
+<option value="2">Blocked (blacklist)</option>
+<option value="3">Blocked (blocking list)</option>
+<option value="4">Blocked (blocking list fs)</option>
+<option value="5">Blocked (wildcard blacklist)</option>
+<option value="6">Blocked (youtube blacklist)</option>
 </select>
 </td>
 </tr>
