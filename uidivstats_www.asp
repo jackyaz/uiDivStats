@@ -92,10 +92,26 @@ div.queryTableContainer {
 
 thead.queryTableHeader th {
   background-image: linear-gradient(rgb(146, 160, 165) 0%, rgb(102, 117, 124) 100%);
+  border: none !important;
   font-weight: bolder;
   padding: 2px;
   text-align: center;
   color: #fff;
+}
+
+thead.queryTableHeader th:first-child,
+thead.queryTableHeader th:last-child {
+  border-right: none !important;
+}
+
+thead.queryTableHeader th:first-child,
+thead.queryTableHeader td:first-child {
+  border-left: none !important;
+}
+
+thead.queryTableHeader th:last-child,
+thead.queryTableHeader td:last-child {
+  border-right: none !important;
 }
 
 tbody.queryTableContent td, tbody.queryTableContent tr.queryNormalRow td {
@@ -105,6 +121,7 @@ tbody.queryTableContent td, tbody.queryTableContent tr.queryNormalRow td {
   border-right: 1px solid #000 !important;
   border-top: 1px solid #000 !important;
   padding: 2px;
+  text-align: center;
   overflow: hidden !important;
   white-space: nowrap !important;
 }
@@ -1110,6 +1127,11 @@ function stripedTable() {
 <td align="center" style="padding: 0px;">
 <div id="queryTableContainer" class="queryTableContainer">
 <table border="0" cellpadding="0" cellspacing="0" width="100%" class="queryTable" style="table-layout:fixed;">
+<col style="width:110px;">
+<col style="width:365px;">
+<col style="width:115px;">
+<col style="width:50px;">
+<col style="width:95px;">
 <thead class="queryTableHeader">
 	<tr>
 		<th>Time</th>
