@@ -83,6 +83,16 @@ td.nodata {
   border-right: none !important;
 }
 
+.QueryFilter th {
+  padding:2px !important;
+  text-align:center !important;
+}
+
+.QueryFilter td {
+  padding:2px !important;
+  text-align:center !important;
+}
+
 div.queryTableContainer {
   height: 500px;
   overflow: auto;
@@ -109,10 +119,6 @@ thead.queryTableHeader td:first-child {
   border-left: none !important;
 }
 
-thead.queryTableHeader th:last-child,
-thead.queryTableHeader td:last-child {
-  border-right: none !important;
-}
 
 tbody.queryTableContent td, tbody.queryTableContent tr.queryNormalRow td {
   background-color: #2F3A3E !important;
@@ -1015,7 +1021,8 @@ function BuildQueryLogTableHtml(arrayloglines) {
 				tablehtml += '<td>'+moment.unix(logfields[i2]).format('YYYY-MM-DD HH:mm')+'</td>';
 			}
 			else if (i2 == (logfields.length - 1)){
-				tablehtml += '<td>'+logfields[i2].replace(/"/g,'')+'</td>';
+				var parsedresult = logfields[i2].replace(/"/g,'')
+				tablehtml += '<td>'+parsedresult.charAt(0).toUpperCase() + parsedresult.slice(1)+'</td>';
 			}
 			else {
 				tablehtml += '<td>'+logfields[i2]+'</td>';
@@ -1135,6 +1142,58 @@ function stripedTable() {
 <td>
 <label style="color:#FFCC00;display:block;">
 <input type="checkbox" checked="" id="auto_refresh" style="padding:0;margin:0;vertical-align:middle;position:relative;top:-1px;" />&nbsp;&nbsp;Table will refresh every 60s</label>
+</td>
+</tr>
+<tr style="line-height:5px;">
+<td colspan="2">&nbsp;</td>
+</tr>
+<tr>
+<td colspan="2" style="padding: 0px;">
+<table style="table-layout:fixed;" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable QueryFilter" id="uidivstats_table_filters_querylog">
+<col style="width:110px;">
+<col style="width:320px;">
+<col style="width:110px;">
+<col style="width:50px;">
+<col style="width:156px;">
+<thead>
+<tr><td colspan="5">Filters</td></tr>
+</thead>
+
+<tr class="even">
+<th>&nbsp;</th>
+<th>Domain</th>
+<th>Client</th>
+<th>Type</th>
+<th>Result</th>
+</tr>
+<tr>
+<td>&nbsp;</td>
+<td><input autocomplete="off" autocapitalize="off" type="text" class="input_30_table" name="filter_reqdmn" value="" data-lpignore="true" style="padding-left:0px;width:310px;text-align:center;"/></td>
+<td><input autocomplete="off" autocapitalize="off" type="text" maxlength="15" class="input_20_table" name="filter_srcip" value="" onkeypress="return validator.isIPAddr(this, event)" data-lpignore="true" style="padding-left:0px;width:100px;text-align:center;"/></td>
+<td>
+<select style="width:45px" class="input_option" onchange="" id="filter_qrytype">
+<option value="0">All</option>
+<option value="1">A</option>
+<option value="2">AAAA</option>
+<option value="3">ANY</option>
+<option value="4">SRV</option>
+<option value="5">SOA</option>
+<option value="6">PTR</option>
+<option value="7">TXT</option>
+</select>
+</td>
+<td>
+<select style="width:125px" class="input_option" onchange="" id="filter_result">
+<option value="0">Allowed</option>
+<option value="1">Blocked (blacklist)</option>
+<option value="2">Blocked (blocking list)</option>
+<option value="3">Blocked (blocking list fs)</option>
+<option value="4">Blocked (wildcard blacklist)</option>
+<option value="5">Blocked (youtube blacklist)</option>
+</select>
+</td>
+</tr>
+</table>
 </td>
 </tr>
 <tr style="line-height:5px;">
