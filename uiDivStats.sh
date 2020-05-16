@@ -560,6 +560,7 @@ Generate_Query_Log(){
 	{
 		echo ".mode csv"
 		echo ".headers off"
+		echo ".separator '|'"
 		echo ".output $CSV_OUTPUT_DIR/SQLQueryLog.htm"
 		echo "SELECT [Timestamp] Time, [ReqDmn] ReqDmn, [SrcIP] SrcIP, [QryType] QryType, [Result] Result FROM [dnsqueries] ORDER BY [Timestamp] DESC LIMIT 500;"
 	} > /tmp/uidivstats-query.sql
