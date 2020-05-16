@@ -95,7 +95,7 @@ td.nodata {
 
 div.queryTableContainer {
   height: 500px;
-  overflow: auto;
+  overflow-y: scroll;
   width: 750px;
   border: 1px solid #000;
 }
