@@ -1075,34 +1075,32 @@ function FilterQueryLog(){
 		arrayqueryloglines = originalarrayqueryloglines;
 	}
 	else {
-		var temparrayqueryloglines = originalarrayqueryloglines;
+		arrayqueryloglines = originalarrayqueryloglines;
 		
 		if( $j("#filter_reqdmn").val() != "" ) {
-			temparrayqueryloglines = temparrayqueryloglines.filter(function(item){
-				return item.ReqDmn.indexOf($j("#filter_reqdmn").val()) != -1;
+			arrayqueryloglines = arrayqueryloglines.filter(function(item){
+				return item.ReqDmn.toLowerCase().indexOf($j("#filter_reqdmn").val().toLowerCase()) != -1;
 			});
 		}
 		
 		if( $j("#filter_srcip").val() != "" ) {
-			temparrayqueryloglines = temparrayqueryloglines.filter(function(item){
+			arrayqueryloglines = arrayqueryloglines.filter(function(item){
 				return item.SrcIP.indexOf($j("#filter_srcip").val()) != -1;
 			});
 		}
 		
 		if( $j("#filter_qrytype option:selected").val() != 0 ) {
-			temparrayqueryloglines = temparrayqueryloglines.filter(function(item){
+			arrayqueryloglines = arrayqueryloglines.filter(function(item){
 				return item.QryType == $j("#filter_qrytype option:selected").text();
 			});
 		}
 		
 		if( $j("#filter_result option:selected").val() != 0 ) {
-			temparrayqueryloglines = temparrayqueryloglines.filter(function(item){
+			arrayqueryloglines = arrayqueryloglines.filter(function(item){
 				return item.Result == $j("#filter_result option:selected").text();
 			});
 		}
 		
-		arrayqueryloglines = temparrayqueryloglines;
-		temparrayqueryloglines = [];
 	}
 	
 	$j("#queryTableContainer").empty();
