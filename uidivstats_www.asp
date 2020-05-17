@@ -1065,13 +1065,11 @@ function ParseQueryLog(data){
 		parsedlogline.Result = parsedresult.charAt(0).toUpperCase() + parsedresult.slice(1);
 		arrayqueryloglines.push(parsedlogline);
 	}
+	originalarrayqueryloglines = arrayqueryloglines;
 	FilterQueryLog();
 }
 
 function FilterQueryLog(){
-	
-	if(typeof originalarrayqueryloglines === 'undefined' || originalarrayqueryloglines === null) { originalarrayqueryloglines = arrayqueryloglines; }
-	if (originalarrayqueryloglines.length == 0) { originalarrayqueryloglines = arrayqueryloglines; }
 	
 	if($j("#filter_result option:selected").val() != 0){
 		arrayqueryloglines = originalarrayqueryloglines.filter(function(item){
