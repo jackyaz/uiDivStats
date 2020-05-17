@@ -1071,13 +1071,32 @@ function ParseQueryLog(data){
 
 function FilterQueryLog(){
 	
-	if($j("#filter_result option:selected").val() != 0){
-		arrayqueryloglines = originalarrayqueryloglines.filter(function(item){
-			return item.Result == $j("#filter_result option:selected").text();
-		});
+	if( $j("#filter_srcip").val() == "" && $j("#filter_qrytype option:selected").val() == 0 && $j("#filter_result option:selected").val() == 0 ){
+		arrayqueryloglines = originalarrayqueryloglines;
 	}
 	else {
-		arrayqueryloglines = originalarrayqueryloglines;
+		var temparrayqueryloglines = originalarrayqueryloglines;
+		
+		if( $j("#filter_srcip").val() != "" ) {
+			temparrayqueryloglines = temparrayqueryloglines.filter(function(item){
+				return item.SrcIP.indexOf($j("#filter_srcip").val()) != -1;
+			});
+		}
+		
+		if( $j("#filter_qrytype option:selected").val() != 0 ) {
+			temparrayqueryloglines = temparrayqueryloglines.filter(function(item){
+				return item.QryType == $j("#filter_qrytype option:selected").text();
+			});
+		}
+		
+		if( $j("#filter_result option:selected").val() != 0 ) {
+			temparrayqueryloglines = temparrayqueryloglines.filter(function(item){
+				return item.Result == $j("#filter_result option:selected").text();
+			});
+		}
+		
+		arrayqueryloglines = temparrayqueryloglines;
+		temparrayqueryloglines = [];
 	}
 	
 	$j("#queryTableContainer").empty();
@@ -1196,10 +1215,10 @@ function stripedTable() {
 </tr>
 <tr>
 <td>&nbsp;</td>
-<td><input autocomplete="off" autocapitalize="off" type="text" class="input_30_table" name="filter_reqdmn" value="" data-lpignore="true" style="padding-left:0px;width:310px;text-align:center;"/></td>
-<td><input autocomplete="off" autocapitalize="off" type="text" maxlength="15" class="input_20_table" name="filter_srcip" value="" onkeypress="return validator.isIPAddr(this, event)" data-lpignore="true" style="padding-left:0px;width:100px;text-align:center;"/></td>
+<td><input autocomplete="off" autocapitalize="off" type="text" class="input_30_table" id="filter_reqdmn" name="filter_reqdmn" value="" data-lpignore="true" style="padding-left:0px;width:310px;text-align:center;"/></td>
+<td><input autocomplete="off" autocapitalize="off" type="text" maxlength="15" class="input_20_table" id="filter_srcip" name="filter_srcip" value="" onkeypress="return validator.isIPAddr(this, event);" onkeyup="FilterQueryLog();" data-lpignore="true" style="margin:0px;padding-left:0px;width:100px;text-align:center;"/></td>
 <td>
-<select style="width:45px" class="input_option" onchange="" id="filter_qrytype">
+<select style="width:45px" class="input_option" onchange="FilterQueryLog();" id="filter_qrytype">
 <option value="0">All</option>
 <option value="1">A</option>
 <option value="2">AAAA</option>
