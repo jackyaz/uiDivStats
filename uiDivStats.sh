@@ -1198,6 +1198,20 @@ case "$1" in
 		fi
 		exit 0
 	;;
+	develop)
+		Check_Lock
+		sed -i 's/^readonly SCRIPT_BRANCH.*$/readonly SCRIPT_BRANCH="develop"/' "/jffs/scripts/$SCRIPT_NAME"
+		Clear_Lock
+		exec "$0" "update"
+		exit 0
+	;;
+	stable)
+		Check_Lock
+		sed -i 's/^readonly SCRIPT_BRANCH.*$/readonly SCRIPT_BRANCH="master"/' "/jffs/scripts/$SCRIPT_NAME"
+		Clear_Lock
+		exec "$0" "update"
+		exit 0
+	;;
 	update)
 		Check_Lock
 		Menu_Update
