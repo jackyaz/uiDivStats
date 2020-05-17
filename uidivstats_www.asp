@@ -1071,11 +1071,17 @@ function ParseQueryLog(data){
 
 function FilterQueryLog(){
 	
-	if( $j("#filter_srcip").val() == "" && $j("#filter_qrytype option:selected").val() == 0 && $j("#filter_result option:selected").val() == 0 ){
+	if( $j("#filter_reqdmn").val() == "" && $j("#filter_srcip").val() == "" && $j("#filter_qrytype option:selected").val() == 0 && $j("#filter_result option:selected").val() == 0 ){
 		arrayqueryloglines = originalarrayqueryloglines;
 	}
 	else {
 		var temparrayqueryloglines = originalarrayqueryloglines;
+		
+		if( $j("#filter_reqdmn").val() != "" ) {
+			temparrayqueryloglines = temparrayqueryloglines.filter(function(item){
+				return item.ReqDmn.indexOf($j("#filter_reqdmn").val()) != -1;
+			});
+		}
 		
 		if( $j("#filter_srcip").val() != "" ) {
 			temparrayqueryloglines = temparrayqueryloglines.filter(function(item){
@@ -1215,7 +1221,7 @@ function stripedTable() {
 </tr>
 <tr>
 <td>&nbsp;</td>
-<td><input autocomplete="off" autocapitalize="off" type="text" class="input_30_table" id="filter_reqdmn" name="filter_reqdmn" value="" data-lpignore="true" style="padding-left:0px;width:310px;text-align:center;"/></td>
+<td><input autocomplete="off" autocapitalize="off" type="text" class="input_30_table" id="filter_reqdmn" name="filter_reqdmn" value="" onkeyup="FilterQueryLog();" data-lpignore="true" style="margin:0px;padding-left:0px;width:310px;text-align:center;"/></td>
 <td><input autocomplete="off" autocapitalize="off" type="text" maxlength="15" class="input_20_table" id="filter_srcip" name="filter_srcip" value="" onkeypress="return validator.isIPAddr(this, event);" onkeyup="FilterQueryLog();" data-lpignore="true" style="margin:0px;padding-left:0px;width:100px;text-align:center;"/></td>
 <td>
 <select style="width:45px" class="input_option" onchange="FilterQueryLog();" id="filter_qrytype">
