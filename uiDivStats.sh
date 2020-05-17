@@ -746,6 +746,11 @@ Trim_DNS_DB(){
 
 Process_Upgrade(){
 	if [ ! -f "$SCRIPT_DIR/.upgraded" ]; then
+		opkg update
+		opkg install grep
+		opkg install sqlite3-cli
+		opkg install procps-ng-pkill
+		Update_File "taildns.tar.gz"
 		/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
 		{
 			echo "PRAGMA journal_mode=WAL;"
