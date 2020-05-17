@@ -562,7 +562,7 @@ Generate_Query_Log(){
 		echo ".headers off"
 		echo ".separator '|'"
 		echo ".output $CSV_OUTPUT_DIR/SQLQueryLog.htm"
-		echo "SELECT [Timestamp] Time, [ReqDmn] ReqDmn, [SrcIP] SrcIP, [QryType] QryType, [Result] Result FROM [dnsqueries] ORDER BY [Timestamp] DESC LIMIT 500;"
+		echo "SELECT [Timestamp] Time, [ReqDmn] ReqDmn, [SrcIP] SrcIP, [QryType] QryType, [Result] Result FROM [dnsqueries] ORDER BY [Timestamp] DESC LIMIT 5000;"
 	} > /tmp/uidivstats-query.sql
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-query.sql >/dev/null 2>&1; do
 		sleep 1
