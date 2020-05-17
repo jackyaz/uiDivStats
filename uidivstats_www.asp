@@ -1114,6 +1114,23 @@ function Assign_EventHandlers(){
 	})
 	
 	$j(".default-collapsed").trigger("click");
+	
+	let timeoutreqdmn = null;
+	let timeoutsrcip = null;
+	
+	$j("#filter_reqdmn").on("keyup touchend", function (e) {
+		clearTimeout(timeoutreqdmn);
+		timeoutreqdmn = setTimeout(function () {
+			FilterQueryLog();
+		}, 1000);
+	});
+	
+	$j("#filter_srcip").on("keyup touchend", function (e) {
+		clearTimeout(timeoutsrcip);
+		timeoutsrcip = setTimeout(function () {
+			FilterQueryLog();
+		}, 1000);
+	});
 }
 
 /* http://www.alistapart.com/articles/zebratables/ */
@@ -1219,8 +1236,8 @@ function stripedTable() {
 </tr>
 <tr>
 <td>&nbsp;</td>
-<td><input autocomplete="off" autocapitalize="off" type="text" class="input_30_table" id="filter_reqdmn" name="filter_reqdmn" value="" onkeyup="FilterQueryLog();" data-lpignore="true" style="margin:0px;padding-left:0px;width:310px;text-align:center;"/></td>
-<td><input autocomplete="off" autocapitalize="off" type="text" maxlength="15" class="input_20_table" id="filter_srcip" name="filter_srcip" value="" onkeypress="return validator.isIPAddr(this, event);" onkeyup="FilterQueryLog();" data-lpignore="true" style="margin:0px;padding-left:0px;width:100px;text-align:center;"/></td>
+<td><input autocomplete="off" autocapitalize="off" type="text" class="input_30_table" id="filter_reqdmn" name="filter_reqdmn" value="" data-lpignore="true" style="margin:0px;padding-left:0px;width:310px;text-align:center;"/></td>
+<td><input autocomplete="off" autocapitalize="off" type="text" maxlength="15" class="input_20_table" id="filter_srcip" name="filter_srcip" value="" onkeypress="return validator.isIPAddr(this, event);" data-lpignore="true" style="margin:0px;padding-left:0px;width:100px;text-align:center;"/></td>
 <td>
 <select style="width:45px" class="input_option" onchange="FilterQueryLog();" id="filter_qrytype">
 <option value="0">All</option>
