@@ -382,16 +382,6 @@ Mount_WebUI(){
 	echo "uiDivStats" > "$SCRIPT_WEBPAGE_DIR/$(echo $MyPage | cut -f1 -d'.').title"
 	
 	if [ "$(uname -o)" = "ASUSWRT-Merlin" ]; then
-		if [ ! -f "/tmp/index_style.css" ]; then
-			cp -f "/www/index_style.css" "/tmp/"
-		fi
-		
-		if ! grep -q '.menu_Addons' /tmp/index_style.css ; then
-			echo ".menu_Addons { background: url(ext/shared-jy/addons.png); }" >> /tmp/index_style.css
-		fi
-		
-		umount /www/index_style.css 2>/dev/null
-		mount -o bind /tmp/index_style.css /www/index_style.css
 		
 		if [ ! -f "/tmp/menuTree.js" ]; then
 			cp -f "/www/require/modules/menuTree.js" "/tmp/"
@@ -399,15 +389,11 @@ Mount_WebUI(){
 		
 		sed -i "\\~$MyPage~d" /tmp/menuTree.js
 		
-		if ! grep -q 'menuName: "Addons"' /tmp/menuTree.js ; then
-			lineinsbefore="$(( $(grep -n "exclude:" /tmp/menuTree.js | cut -f1 -d':') - 1))"
-			sed -i "$lineinsbefore"'i,\n{\nmenuName: "Addons",\nindex: "menu_Addons",\ntab: [\n{url: "ext/shared-jy/redirect.htm", tabName: "Help & Support"},\n{url: "NULL", tabName: "__INHERIT__"}\n]\n}' /tmp/menuTree.js
+		if /bin/grep 'tabName: \"Diversion\"},' /tmp/menuTree.js >/dev/null 2>&1; then
+			sed -i "/tabName: \"Diversion\"/a {url: \"$MyPage\", tabName: \"uiDivStats\"}," /tmp/menuTree.js
+		else
+			sed -i "/url: \"Advanced_SwitchCtrl_Content.asp\", tabName:/a {url: \"$MyPage\", tabName: \"uiDivStats\"}," /tmp/menuTree.js
 		fi
-		
-		if ! grep -q "javascript:window.open('/ext/shared-jy/redirect.htm'" /tmp/menuTree.js ; then
-			sed -i "s~ext/shared-jy/redirect.htm~javascript:window.open('/ext/shared-jy/redirect.htm','_blank')~" /tmp/menuTree.js
-		fi
-		sed -i "/url: \"javascript:window.open('\/ext\/shared-jy\/redirect.htm'/i {url: \"$MyPage\", tabName: \"uiDivStats\"}," /tmp/menuTree.js
 		
 		umount /www/require/modules/menuTree.js 2>/dev/null
 		mount -o bind /tmp/menuTree.js /www/require/modules/menuTree.js
