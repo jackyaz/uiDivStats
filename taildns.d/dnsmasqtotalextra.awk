@@ -14,26 +14,26 @@ BEGIN {
 				gensub(":", " ", "g", $3) \
 			) \
 			);
-		gsub("query|\\[|\\]", "", $6);
-		recordtype = $6;
-		query = $7;
-		host = $9;
+		gsub("query|\\[|\\]", "", $7);
+		recordtype = $7;
+		query = $8;
+		host = $10;
 		getline;
-		if ($6 ~ "diversion") {
+		if ($7 ~ "diversion") {
 			result = "blocked";
-			if ($6 ~ "blockinglist_fs") {
+			if ($7 ~ "blockinglist_fs") {
 				result = "blocked (blocking list fs)";
 			}
-			else if ($6 ~ "blockinglist") {
+			else if ($7 ~ "blockinglist") {
 				result = "blocked (blocking list)";
 			}
-			else if ($6 ~ "yt_blacklist") {
+			else if ($7 ~ "yt_blacklist") {
 				result = "blocked (youtube blacklist)";
 			}
-			else if ($6 ~ "wc_blacklist") {
+			else if ($7 ~ "wc_blacklist") {
 				result = "blocked (wildcard blacklist)";
 			}
-			else if ($6 ~ "blacklist") {
+			else if ($7 ~ "blacklist") {
 				result = "blocked (blacklist)";
 			}
 		}
