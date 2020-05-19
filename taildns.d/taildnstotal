@@ -2,7 +2,14 @@
 #shellcheck disable=SC2039
 trap '' SIGHUP
 
-tail -F /opt/var/log/dnsmasq.log /opt/var/log/dnsmasq.log3 | /jffs/addons/uiDivStats.d/taildns.d/dnsmasqtotal.awk | \
+tailfile=""
+if grep -q "log-queries=extra" /etc/dnsmasq.conf ; then
+	tailfile="/jffs/addons/uiDivStats.d/taildns.d/dnsmasqtotalextra.awk"
+else
+	tailfile="/jffs/addons/uiDivStats.d/taildns.d/dnsmasqtotal.awk"
+fi
+
+tail -F /opt/var/log/dnsmasq.log /opt/var/log/dnsmasq.log3 | "$tailfile" | \
 
 while read line; do \
 timestamp="$(echo $line | cut -f1 -d',')" \
