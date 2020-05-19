@@ -271,7 +271,7 @@ var $j=jQuery.noConflict(),maxNoChartsBlocked=6,currentNoChartsBlocked=0,maxNoCh
 <option value="4">Blocked (blocking list)</option>
 <option value="5">Blocked (blocking list fs)</option>
 <option value="6">Blocked (wildcard blacklist)</option>
-<option value="6">Blocked (youtube blacklist)</option>
+<option value="7">Blocked (youtube blacklist)</option>
 </select>
 </td>
 </tr>
