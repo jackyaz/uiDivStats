@@ -999,27 +999,20 @@ Menu_Uninstall(){
 	
 	Shortcut_script delete
 	
-	if Firmware_Version_Check "webui" ; then
-		Get_WebUI_Page "$SCRIPT_DIR/uidivstats_www.asp"
-		if [ -n "$MyPage" ] && [ "$MyPage" != "none" ] && [ -f "/tmp/menuTree.js" ]; then
-			sed -i "\\~$MyPage~d" /tmp/menuTree.js
-			umount /www/require/modules/menuTree.js
-			mount -o bind /tmp/menuTree.js /www/require/modules/menuTree.js
-			rm -rf "{$SCRIPT_WEBPAGE_DIR:?}/$MyPage"
-		fi
-	else
-		umount /www/Advanced_MultiSubnet_Content.asp 2>/dev/null
-		sed -i '/{url: "Advanced_MultiSubnet_Content.asp", tabName: "Diversion Statistics"}/d' "/jffs/scripts/custom_menuTree.js"
-		umount /www/require/modules/menuTree.js 2>/dev/null
-		
-		if [ ! -f "/jffs/scripts/ntpmerlin" ] && [ ! -f "/jffs/scripts/spdmerlin" ] && [ ! -f "/jffs/scripts/connmon" ]; then
-			rm -f "$SHARED_DIR/custom_menuTree.js" 2>/dev/null
-		else
-			mount -o bind "$SHARED_DIR/custom_menuTree.js" "/www/require/modules/menuTree.js"
-		fi
+	Get_WebUI_Page "$SCRIPT_DIR/uidivstats_www.asp"
+	if [ -n "$MyPage" ] && [ "$MyPage" != "none" ] && [ -f "/tmp/menuTree.js" ]; then
+		sed -i "\\~$MyPage~d" /tmp/menuTree.js
+		umount /www/require/modules/menuTree.js
+		mount -o bind /tmp/menuTree.js /www/require/modules/menuTree.js
+		rm -rf "{$SCRIPT_WEBPAGE_DIR:?}/$MyPage"
 	fi
 	rm -f "$SCRIPT_DIR/uidivstats_www.asp" 2>/dev/null
 	rm -rf "$SCRIPT_WEB_DIR" 2>/dev/null
+	
+	/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
+	rm -f "/opt/etc/init.d/S90taildns" 2>/dev/null
+	rm -rf "$SCRIPT_DIR/taildns.d" 2>/dev/null
+	
 	rm -f "/jffs/scripts/$SCRIPT_NAME" 2>/dev/null
 	Clear_Lock
 	Print_Output "true" "Uninstall completed" "$PASS"
