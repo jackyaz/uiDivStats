@@ -161,10 +161,10 @@ Update_File(){
 			Download_File "$SCRIPT_REPO/$1.md5" "$SCRIPT_DIR/$1.md5"
 			tar -xzf "$SCRIPT_DIR/$1" -C "$SCRIPT_DIR"
 			if [ -f /opt/etc/init.d/S90taildns ]; then
-				/opt/etc/init.d/S90taildns stop
+				/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
 			fi
 			mv "$SCRIPT_DIR/taildns.d/S90taildns" /opt/etc/init.d/S90taildns
-			/opt/etc/init.d/S90taildns start
+			/opt/etc/init.d/S90taildns start >/dev/null 2>&1
 			rm -f "$SCRIPT_DIR/$1"
 			Print_Output "true" "New version of $1 downloaded" "$PASS"
 		else
@@ -175,10 +175,10 @@ Update_File(){
 				Download_File "$SCRIPT_REPO/$1.md5" "$SCRIPT_DIR/$1.md5"
 				tar -xzf "$SCRIPT_DIR/$1" -C "$SCRIPT_DIR"
 				if [ -f /opt/etc/init.d/S90taildns ]; then
-					/opt/etc/init.d/S90taildns stop
+					/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
 				fi
 				mv "$SCRIPT_DIR/taildns.d/S90taildns" /opt/etc/init.d/S90taildns
-				/opt/etc/init.d/S90taildns start
+				/opt/etc/init.d/S90taildns start >/dev/null 2>&1
 				rm -f "$SCRIPT_DIR/$1"
 				Print_Output "true" "New version of $1 downloaded" "$PASS"
 			fi
@@ -955,7 +955,7 @@ Menu_Install(){
 	Shortcut_script create
 	
 	Process_Upgrade
-	/opt/etc/init.d/S90taildns start
+	/opt/etc/init.d/S90taildns start >/dev/null 2>&1
 	
 	Clear_Lock
 }
