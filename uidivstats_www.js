@@ -365,7 +365,7 @@ function initial(){
 	
 	show_menu();
 	
-	$j("#uidivstats_title").after(BuildKeyStatsTableHtml("Key Stats", "keystats"));
+	$j("#formfontdesc").after(BuildKeyStatsTableHtml("Key Stats", "keystats"));
 	$j("#uidivstats_table_keystats").after(BuildChartHtml("Top requested domains", "Total", "false", "true"));
 	$j("#uidivstats_table_keystats").after(BuildChartHtml("Top blocked domains", "Blocked", "false", "true"));
 	$j("#uidivstats_table_keystats").after(BuildChartHtml("DNS Queries", "TotalBlockedtime", "true", "false"));
