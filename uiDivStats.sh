@@ -1237,8 +1237,8 @@ case "$1" in
 		if [ -z "$2" ]; then
 			exec "$0"
 		fi
-		exit 0
 		Clear_Lock
+		exit 0
 	;;
 	checkupdate)
 		Check_Lock
