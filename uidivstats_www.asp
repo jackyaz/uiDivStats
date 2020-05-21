@@ -198,9 +198,11 @@ var $j=jQuery.noConflict(),maxNoChartsBlocked=6,currentNoChartsBlocked=0,maxNoCh
 <tbody>
 <tr bgcolor="#4D595D">
 <td valign="top">
-<div style="line-height:10px;">&nbsp;</div>
-<div class="formfonttitle" style="margin-bottom:0px;" id="uidivstats_title">Diversion Statistics</div>
-<div style="line-height:10px;">&nbsp;</div>
+<div>&nbsp;</div>
+<div class="formfonttitle" id="scripttitle" style="text-align:center;">uiDivStats</div>
+<div id="statstitle" style="text-align:center;">Stats last updated:</div>
+<div style="margin:10px 0 10px 5px;" class="splitLine"></div>
+<div class="formfontdesc">uiDivStats is a graphical representation of domain blocking performed by Diversion.</div>
 
 <!-- Keystats table -->
 

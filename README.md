@@ -5,7 +5,7 @@
 ## v2.0.0
 ### Updated on 2020-05-17
 ## About
-See statistics and graphs for Diversion Ad-blocking on your router.
+A graphical representation of domain blocking performed by Diversion.
 
 uiDivStats is free to use under the [GNU General Public License version 3](https://opensource.org/licenses/GPL-3.0) (GPL 3.0).
 
