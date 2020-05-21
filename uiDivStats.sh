@@ -466,6 +466,7 @@ WritePlainData_ToJS(){
 	for var in "$@"; do
 		varname="$(echo "$var" | cut -f1 -d',')"
 		varvalue="$(echo "$var" | cut -f2 -d',')"
+		sed -i -e '/'"$varname"'/d' "$outputfile"
 		echo "var $varname = $varvalue;" >> "$outputfile"
 	done
 }
@@ -590,7 +591,6 @@ Generate_NG(){
 	done
 	rm -f /tmp/uidivstats.sql
 	
-	rm -f "$SCRIPT_DIR/SQLData.js"
 	Generate_Count_Blocklist_Domains
 	
 	if [ -n "$1" ] && [ "$1" = "fullrefresh" ]; then
@@ -642,38 +642,42 @@ Generate_KeyStats(){
 	WritePlainData_ToJS "$SCRIPT_DIR/SQLData.js" "QueriesTotaldaily,$queriesTotaldaily" "QueriesBlockeddaily,$queriesBlockeddaily" "BlockedPercentagedaily,$queriesPercentagedaily"
 	
 	#weekly
-	Write_KeyStats_Sql_ToFile "Total" "dnsqueries" "weekly" 7 "/tmp/uidivstats.sql" "$timenow"
-	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
-		sleep 1
-	done
-	
-	Write_KeyStats_Sql_ToFile "Blocked" "dnsqueries" "weekly" 7 "/tmp/uidivstats.sql" "$timenow"
-	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
-		sleep 1
-	done
-	
-	queriesTotalweekly="$(cat "/tmp/queriesTotalweekly")"
-	queriesBlockedweekly="$(cat "/tmp/queriesBlockedweekly")"
-	queriesPercentageweekly="$(echo "$queriesBlockedweekly" "$queriesTotalweekly" | awk '{printf "%3.2f\n",$1/$2*100}')"
-	
-	WritePlainData_ToJS "$SCRIPT_DIR/SQLData.js" "QueriesTotalweekly,$queriesTotalweekly" "QueriesBlockedweekly,$queriesBlockedweekly" "BlockedPercentageweekly,$queriesPercentageweekly"
-	
+	if [ -n "$2" ] && [ "$2" = "fullrefresh" ]; then
+		Write_KeyStats_Sql_ToFile "Total" "dnsqueries" "weekly" 7 "/tmp/uidivstats.sql" "$timenow"
+		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+			sleep 1
+		done
+		
+		Write_KeyStats_Sql_ToFile "Blocked" "dnsqueries" "weekly" 7 "/tmp/uidivstats.sql" "$timenow"
+		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+			sleep 1
+		done
+		
+		queriesTotalweekly="$(cat "/tmp/queriesTotalweekly")"
+		queriesBlockedweekly="$(cat "/tmp/queriesBlockedweekly")"
+		queriesPercentageweekly="$(echo "$queriesBlockedweekly" "$queriesTotalweekly" | awk '{printf "%3.2f\n",$1/$2*100}')"
+		
+		WritePlainData_ToJS "$SCRIPT_DIR/SQLData.js" "QueriesTotalweekly,$queriesTotalweekly" "QueriesBlockedweekly,$queriesBlockedweekly" "BlockedPercentageweekly,$queriesPercentageweekly"
+	fi
+
 	#monthly
-	Write_KeyStats_Sql_ToFile "Total" "dnsqueries" "monthly" 30 "/tmp/uidivstats.sql" "$timenow"
-	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
-		sleep 1
-	done
-	
-	Write_KeyStats_Sql_ToFile "Blocked" "dnsqueries" "monthly" 30 "/tmp/uidivstats.sql" "$timenow"
-	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
-		sleep 1
-	done
-	
-	queriesTotalmonthly="$(cat "/tmp/queriesTotalmonthly")"
-	queriesBlockedmonthly="$(cat "/tmp/queriesBlockedmonthly")"
-	queriesPercentagemonthly="$(echo "$queriesBlockedmonthly" "$queriesTotalmonthly" | awk '{printf "%3.2f\n",$1/$2*100}')"
-	
-	WritePlainData_ToJS "$SCRIPT_DIR/SQLData.js" "QueriesTotalmonthly,$queriesTotalmonthly" "QueriesBlockedmonthly,$queriesBlockedmonthly" "BlockedPercentagemonthly,$queriesPercentagemonthly"
+	if [ -n "$2" ] && [ "$2" = "fullrefresh" ]; then
+		Write_KeyStats_Sql_ToFile "Total" "dnsqueries" "monthly" 30 "/tmp/uidivstats.sql" "$timenow"
+		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+			sleep 1
+		done
+		
+		Write_KeyStats_Sql_ToFile "Blocked" "dnsqueries" "monthly" 30 "/tmp/uidivstats.sql" "$timenow"
+		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+			sleep 1
+		done
+		
+		queriesTotalmonthly="$(cat "/tmp/queriesTotalmonthly")"
+		queriesBlockedmonthly="$(cat "/tmp/queriesBlockedmonthly")"
+		queriesPercentagemonthly="$(echo "$queriesBlockedmonthly" "$queriesTotalmonthly" | awk '{printf "%3.2f\n",$1/$2*100}')"
+		
+		WritePlainData_ToJS "$SCRIPT_DIR/SQLData.js" "QueriesTotalmonthly,$queriesTotalmonthly" "QueriesBlockedmonthly,$queriesBlockedmonthly" "BlockedPercentagemonthly,$queriesPercentagemonthly"
+	fi
 	
 	rm -f /tmp/queriesTotal*
 	rm -f /tmp/queriesBlocked*
