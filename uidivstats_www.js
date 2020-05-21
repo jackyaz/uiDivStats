@@ -387,6 +387,8 @@ function initial(){
 	get_querylog_file();
 	
 	Assign_EventHandlers();
+	
+	SetuiDivStatsTitle();
 }
 
 function SetGlobalDataset(txtchartname,dataobject){

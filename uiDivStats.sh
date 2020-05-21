@@ -450,6 +450,16 @@ Mount_WebUI(){
 	fi
 }
 
+WriteStats_ToJS(){
+	{ echo ""; echo "function $3(){"; } >> "$2"
+	html='document.getElementById("'"$4"'").innerHTML="'
+	while IFS='' read -r line || [ -n "$line" ]; do
+		html="$html""$line""\\r\\n"
+	done < "$1"
+	html="$html"'"'
+	printf "%s\\r\\n}\\r\\n" "$html" >> "$2"
+}
+
 WritePlainData_ToJS(){
 	outputfile="$1"
 	shift
@@ -558,7 +568,7 @@ Generate_NG(){
 	export TZ
 	
 	timenow=$(date +"%s")
-	#timenowfriendly=$(date +"%c")
+	timenowfriendly=$(date +"%c")
 	
 	rm -f /tmp/uidivstats.sql
 	
@@ -590,6 +600,11 @@ Generate_NG(){
 		Generate_KeyStats "$timenow"
 		Generate_Stats_From_SQLite "$timenow"
 	fi
+	
+	echo "Stats last updated: $timenowfriendly" > "/tmp/uidivstatstitle.txt"
+	WriteStats_ToJS "/tmp/uidivstatstitle.txt" "$SCRIPT_STORAGE_DIR/SQLData.js" "SetuiDivStatsTitle" "statstitle"
+	Print_Output "false" "Stats updated successfully" "$PASS"
+	rm -f "/tmpuidivstatstitle.txt"
 }
 
 Generate_Query_Log(){
