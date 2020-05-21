@@ -1234,10 +1234,10 @@ case "$1" in
 		Check_Lock
 		Set_Version_Custom_Settings "local"
 		Set_Version_Custom_Settings "server" "$SCRIPT_VERSION"
+		Clear_Lock
 		if [ -z "$2" ]; then
 			exec "$0"
 		fi
-		Clear_Lock
 		exit 0
 	;;
 	checkupdate)
