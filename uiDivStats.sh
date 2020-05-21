@@ -602,7 +602,7 @@ Generate_NG(){
 	fi
 	
 	echo "Stats last updated: $timenowfriendly" > "/tmp/uidivstatstitle.txt"
-	WriteStats_ToJS "/tmp/uidivstatstitle.txt" "$SCRIPT_STORAGE_DIR/SQLData.js" "SetuiDivStatsTitle" "statstitle"
+	WriteStats_ToJS "/tmp/uidivstatstitle.txt" "$SCRIPT_DIR/SQLData.js" "SetuiDivStatsTitle" "statstitle"
 	Print_Output "false" "Stats updated successfully" "$PASS"
 	rm -f "/tmpuidivstatstitle.txt"
 }
