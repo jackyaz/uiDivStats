@@ -209,7 +209,7 @@ function Draw_Chart(txtchartname){
 	window["Chart" + txtchartname] = objchartname;
 }
 
-function Draw_Time_Chart(txtchartname,txtunitx,numunitx){
+function Draw_Time_Chart(txtchartname){
 	var chartperiod = getChartPeriod($j("#" + txtchartname + "time_Period option:selected").val());
 	var txttitle = "DNS Queries";
 	var txtunitx = timeunitlist[$j("#" + txtchartname + "time_Period option:selected").val()];

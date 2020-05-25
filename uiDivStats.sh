@@ -48,6 +48,18 @@ Print_Output(){
 	fi
 }
 
+Validate_Number(){
+	if [ "$2" -eq "$2" ] 2>/dev/null; then
+		return 0
+	else
+		formatted="$(echo "$1" | sed -e 's/|/ /g')"
+		if [ -z "$3" ]; then
+			Print_Output "false" "$formatted - $2 is not a number" "$ERR"
+		fi
+		return 1
+	fi
+}
+
 Firmware_Version_Check(){
 	if nvram get rc_support | grep -qF "am_addons"; then
 		return 0
@@ -637,6 +649,7 @@ Generate_KeyStats(){
 	
 	queriesTotaldaily="$(cat "/tmp/queriesTotaldaily")"
 	queriesBlockeddaily="$(cat "/tmp/queriesBlockeddaily")"
+	if ! Validate_Number "" "$queriesBlockeddaily" "silent"; then queriesBlockeddaily=0; fi
 	queriesPercentagedaily="$(echo "$queriesBlockeddaily" "$queriesTotaldaily" | awk '{printf "%3.2f\n",$1/$2*100}')"
 	
 	WritePlainData_ToJS "$SCRIPT_DIR/SQLData.js" "QueriesTotaldaily,$queriesTotaldaily" "QueriesBlockeddaily,$queriesBlockeddaily" "BlockedPercentagedaily,$queriesPercentagedaily"
@@ -655,6 +668,7 @@ Generate_KeyStats(){
 		
 		queriesTotalweekly="$(cat "/tmp/queriesTotalweekly")"
 		queriesBlockedweekly="$(cat "/tmp/queriesBlockedweekly")"
+		if ! Validate_Number "" "$queriesBlockedweekly" "silent"; then queriesBlockedweekly=0; fi
 		queriesPercentageweekly="$(echo "$queriesBlockedweekly" "$queriesTotalweekly" | awk '{printf "%3.2f\n",$1/$2*100}')"
 		
 		WritePlainData_ToJS "$SCRIPT_DIR/SQLData.js" "QueriesTotalweekly,$queriesTotalweekly" "QueriesBlockedweekly,$queriesBlockedweekly" "BlockedPercentageweekly,$queriesPercentageweekly"
@@ -674,6 +688,7 @@ Generate_KeyStats(){
 		
 		queriesTotalmonthly="$(cat "/tmp/queriesTotalmonthly")"
 		queriesBlockedmonthly="$(cat "/tmp/queriesBlockedmonthly")"
+		if ! Validate_Number "" "$queriesBlockedmonthly" "silent"; then queriesBlockedmonthly=0; fi
 		queriesPercentagemonthly="$(echo "$queriesBlockedmonthly" "$queriesTotalmonthly" | awk '{printf "%3.2f\n",$1/$2*100}')"
 		
 		WritePlainData_ToJS "$SCRIPT_DIR/SQLData.js" "QueriesTotalmonthly,$queriesTotalmonthly" "QueriesBlockedmonthly,$queriesBlockedmonthly" "BlockedPercentagemonthly,$queriesPercentagemonthly"
@@ -694,6 +709,7 @@ Generate_Count_Blocklist_Domains(){
 	[ "$(nvram get ipv6_service)" != "disabled" ] && BL="$((BL/2))"
 	WCBL="$(/opt/bin/grep "^[^#]" "$blacklistwcfile" | wc -l)"
 	blocklistdomains="$((BLL+BL+WCBL))"
+	if ! Validate_Number "" "$blocklistdomains" "silent"; then blocklistdomains=0; fi
 	WritePlainData_ToJS "$SCRIPT_DIR/SQLData.js" "BlockedDomains,$blocklistdomains"
 }
 
