@@ -827,7 +827,7 @@ Process_Upgrade(){
 			echo "PRAGMA journal_mode=WAL;"
 			echo "CREATE TABLE IF NOT EXISTS [dnsqueries] ([QueryID] INTEGER PRIMARY KEY NOT NULL, [Timestamp] NUMERIC NOT NULL, [SrcIP] TEXT NOT NULL,[ReqDmn] TEXT NOT NULL,[QryType] Text NOT NULL,[Result] Text NOT NULL);"
 			echo "create index idx_dns on dnsqueries (Timestamp,ReqDmn,Result);"
-			echo "create index idx_dns_clients on dnsqueries (Timestamp,ReqDmn,SrcIP,Result);"
+			echo "create index idx_dns_clients on dnsqueries (SrcIP,Timestamp,ReqDmn,Result);"
 		}  > /tmp/uidivstats.sql
 		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 			sleep 1
