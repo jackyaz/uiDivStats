@@ -823,6 +823,7 @@ Process_Upgrade(){
 		opkg install procps-ng-pkill
 		Update_File "taildns.tar.gz"
 		/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
+		Auto_Cron delete 2>/dev/null
 		{
 			echo "PRAGMA journal_mode=WAL;"
 			echo "CREATE TABLE IF NOT EXISTS [dnsqueries] ([QueryID] INTEGER PRIMARY KEY NOT NULL, [Timestamp] NUMERIC NOT NULL, [SrcIP] TEXT NOT NULL,[ReqDmn] TEXT NOT NULL,[QryType] Text NOT NULL,[Result] Text NOT NULL);"
@@ -834,11 +835,13 @@ Process_Upgrade(){
 			sleep 1
 		done
 		rm -f /tmp/uidivstats.sql
+		Auto_Cron create 2>/dev/null
 		/opt/etc/init.d/S90taildns start >/dev/null 2>&1
 		touch "$SCRIPT_DIR/.upgraded"
 		touch "$SCRIPT_DIR/.upgraded2"
 	elif [ ! -f "$SCRIPT_DIR/.upgraded2" ]; then
 		/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
+		Auto_Cron delete 2>/dev/null
 		{
 			echo "drop index idx_dns;"
 			echo "drop index idx_dns_clients;"
@@ -850,6 +853,7 @@ Process_Upgrade(){
 			sleep 1
 		done
 		rm -f /tmp/uidivstats.sql
+		Auto_Cron create 2>/dev/null
 		/opt/etc/init.d/S90taildns start >/dev/null 2>&1
 		touch "$SCRIPT_DIR/.upgraded2"
 	fi
