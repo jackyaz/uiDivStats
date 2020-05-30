@@ -1220,6 +1220,9 @@ case "$1" in
 	;;
 	trimdb)
 		Trim_DNS_DB
+		Check_Lock
+		Menu_GenerateStats "fullrefresh"
+		Clear_Lock
 		exit 0
 	;;
 	develop)
