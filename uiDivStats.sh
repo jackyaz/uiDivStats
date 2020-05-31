@@ -478,7 +478,9 @@ WritePlainData_ToJS(){
 	for var in "$@"; do
 		varname="$(echo "$var" | cut -f1 -d',')"
 		varvalue="$(echo "$var" | cut -f2 -d',')"
-		sed -i -e '/'"$varname"'/d' "$outputfile"
+		if [ -f "$outputfile" ]; then
+			sed -i -e '/'"$varname"'/d' "$outputfile"
+		fi
 		echo "var $varname = $varvalue;" >> "$outputfile"
 	done
 }
