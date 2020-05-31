@@ -841,6 +841,7 @@ Process_Upgrade(){
 		/opt/etc/init.d/S90taildns start >/dev/null 2>&1
 		touch "$SCRIPT_DIR/.upgraded"
 		touch "$SCRIPT_DIR/.upgraded2"
+		Menu_GenerateStats "fullrefresh"
 	elif [ ! -f "$SCRIPT_DIR/.upgraded2" ]; then
 		/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
 		Auto_Cron delete 2>/dev/null
@@ -868,6 +869,7 @@ Process_Upgrade(){
 		Auto_Cron create 2>/dev/null
 		/opt/etc/init.d/S90taildns start >/dev/null 2>&1
 		touch "$SCRIPT_DIR/.upgraded2"
+		Menu_GenerateStats "fullrefresh"
 	fi
 }
 
