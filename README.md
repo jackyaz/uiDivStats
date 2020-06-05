@@ -3,13 +3,11 @@
 [![Build Status](https://travis-ci.com/jackyaz/uiDivStats.svg?branch=master)](https://travis-ci.com/jackyaz/uiDivStats)
 
 ## v2.0.0
-### Updated on 2020-05-17
+### Updated on 2020-06-05
 ## About
 A graphical representation of domain blocking performed by Diversion.
 
 uiDivStats is free to use under the [GNU General Public License version 3](https://opensource.org/licenses/GPL-3.0) (GPL 3.0).
-
-![Menu UI](https://puu.sh/DrqWN/ca8911697b.png)
 
 ### Supporting development
 Love the script and want to support future development? Any and all donations gratefully received!
@@ -17,6 +15,8 @@ Love the script and want to support future development? Any and all donations gr
 [**PayPal donation**](https://paypal.me/jackyaz21)
 
 [**Buy me a coffee**](https://www.buymeacoffee.com/jackyaz)
+
+![Sample page](https://puu.sh/FSVvq/ec022f2e1c.png)
 
 ## Supported firmware versions
 You must be running firmware Merlin 384.15/384.13_4 or Fork 43E5 (or later) [Asuswrt-Merlin](https://asuswrt.lostrealm.ca/)
