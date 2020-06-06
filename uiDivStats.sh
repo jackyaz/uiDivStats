@@ -1133,6 +1133,8 @@ Menu_Uninstall(){
 	rm -f "/opt/etc/init.d/S90taildns" 2>/dev/null
 	rm -rf "$SCRIPT_DIR/taildns.d" 2>/dev/null
 	
+	rm -rf "$SCRIPT_DIR" 2>/dev/null
+	
 	rm -f "/jffs/scripts/$SCRIPT_NAME" 2>/dev/null
 	Clear_Lock
 	Print_Output "true" "Uninstall completed" "$PASS"
