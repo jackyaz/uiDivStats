@@ -859,6 +859,7 @@ Process_Upgrade(){
 	elif [ ! -f "$SCRIPT_DIR/.upgraded2" ]; then
 		/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
 		Auto_Cron delete 2>/dev/null
+		Print_Output "true" "Deleting older database table indexes..." "$PASS"
 		echo "drop index idx_dns;" > /tmp/uidivstats-upgrade.sql
 		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
 			sleep 1
@@ -867,6 +868,7 @@ Process_Upgrade(){
 		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
 			sleep 1
 		done
+		Print_Output "true" "Creating new database table indexes..." "$PASS"
 		echo "create index idx_dns_domains on dnsqueries (ReqDmn,Timestamp);" > /tmp/uidivstats-upgrade.sql
 		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
 			sleep 1
