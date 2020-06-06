@@ -2,14 +2,12 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/240224b6b96543a782f176f2435ffa03)](https://www.codacy.com/app/jackyaz/uiDivStats?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=jackyaz/uiDivStats&amp;utm_campaign=Badge_Grade)
 [![Build Status](https://travis-ci.com/jackyaz/uiDivStats.svg?branch=master)](https://travis-ci.com/jackyaz/uiDivStats)
 
-## v1.3.2
-### Updated on 2020-05-17
+## v2.0.0
+### Updated on 2020-06-05
 ## About
-See statistics and graphs for Diversion Ad-blocking on your router.
+A graphical representation of domain blocking performed by Diversion.
 
 uiDivStats is free to use under the [GNU General Public License version 3](https://opensource.org/licenses/GPL-3.0) (GPL 3.0).
-
-![Menu UI](https://puu.sh/DrqWN/ca8911697b.png)
 
 ### Supporting development
 Love the script and want to support future development? Any and all donations gratefully received!
@@ -18,9 +16,10 @@ Love the script and want to support future development? Any and all donations gr
 
 [**Buy me a coffee**](https://www.buymeacoffee.com/jackyaz)
 
-## Supported Models
-All models supported by [Asuswrt-Merlin](https://asuswrt.lostrealm.ca/about). Models confirmed to work are below:
-*   RT-AC86U
+![Sample page](https://puu.sh/FSVvq/ec022f2e1c.png)
+
+## Supported firmware versions
+You must be running firmware Merlin 384.15/384.13_4 or Fork 43E5 (or later) [Asuswrt-Merlin](https://asuswrt.lostrealm.ca/)
 
 ## Installation
 Using your preferred SSH client/terminal, copy and paste the following command, then press Enter:

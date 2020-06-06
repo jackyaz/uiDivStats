@@ -1,0 +1,22 @@
+#!/bin/sh
+#shellcheck disable=SC2039
+trap '' SIGHUP
+
+if [ ! -f /opt/bin/pkill ]; then
+	opkg update
+	opkg install procps-ng-pkill
+fi
+
+/jffs/addons/uiDivStats.d/taildns.d/taildnstotal &
+
+while true; do
+	sleep 5
+	if [ "$(pidof taildnstotal | wc -w)" -lt 2 ]; then
+		logger -t "uiDivStats" "taildns dead, restarting..."
+		killall -q taildnstotal
+		/opt/bin/pkill -f "tail -F /opt/var/log/dnsmasq.log /opt/var/log/dnsmasq.log3"
+		sleep 5
+		/jffs/addons/uiDivStats.d/taildns.d/taildnstotal &
+		logger -t "uiDivStats" "taildns restarted"
+	fi
+done

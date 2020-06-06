@@ -1,0 +1,21 @@
+#!/bin/sh
+#shellcheck disable=SC2034
+ln -s /jffs/addons/uiDivStats.d/taildns.d/taildns /opt/bin 2>/dev/null
+chmod 0755 /opt/bin/taildns
+
+if [ "$1" = "stop" ]; then
+	killall -q taildnstotal
+	/opt/bin/pkill -f "tail -F /opt/var/log/dnsmasq.log /opt/var/log/dnsmasq.log3"
+	rm -f /opt/share/uiDivStats.d/dnsqueriestotal.sql
+fi
+
+ENABLED=yes
+PROCS=taildns
+ARGS=""
+PREARGS=""
+PRECMD=""
+POSTCMD=""
+DESC=$PROCS
+PATH=/opt/sbin:/opt/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+. /opt/etc/init.d/rc.func

@@ -15,18 +15,20 @@
 
 ### Start of script variables ###
 readonly SCRIPT_NAME="uiDivStats"
-readonly SCRIPT_VERSION="v1.3.2"
+readonly SCRIPT_VERSION="v2.0.0"
 readonly SCRIPT_BRANCH="master"
 readonly SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/""$SCRIPT_NAME""/""$SCRIPT_BRANCH"
-readonly OLD_SCRIPT_DIR="/jffs/scripts/$SCRIPT_NAME.d"
 readonly SCRIPT_DIR="/jffs/addons/$SCRIPT_NAME.d"
 readonly SCRIPT_WEBPAGE_DIR="$(readlink /www/user)"
 readonly SCRIPT_WEB_DIR="$SCRIPT_WEBPAGE_DIR/$SCRIPT_NAME"
-readonly OLD_SHARED_DIR="/jffs/scripts/shared-jy"
 readonly SHARED_DIR="/jffs/addons/shared-jy"
 readonly SHARED_REPO="https://raw.githubusercontent.com/jackyaz/shared-jy/master"
 readonly SHARED_WEB_DIR="$SCRIPT_WEBPAGE_DIR/shared-jy"
+readonly DNS_DB="/opt/share/uiDivStats.d/dnsqueries.db"
+readonly CSV_OUTPUT_DIR="/opt/share/uiDivStats.d/csv"
 [ -z "$(nvram get odmpid)" ] && ROUTER_MODEL=$(nvram get productid) || ROUTER_MODEL=$(nvram get odmpid)
+[ -f /opt/bin/sqlite3 ] && SQLITE3_PATH=/opt/bin/sqlite3 || SQLITE3_PATH=/usr/sbin/sqlite3
+readonly DIVERSION_DIR="/opt/share/diversion"
 ### End of script variables ###
 
 ### Start of output format variables ###
@@ -46,19 +48,23 @@ Print_Output(){
 	fi
 }
 
+Validate_Number(){
+	if [ "$2" -eq "$2" ] 2>/dev/null; then
+		return 0
+	else
+		formatted="$(echo "$1" | sed -e 's/|/ /g')"
+		if [ -z "$3" ]; then
+			Print_Output "false" "$formatted - $2 is not a number" "$ERR"
+		fi
+		return 1
+	fi
+}
+
 Firmware_Version_Check(){
-	if [ "$1" = "install" ]; then
-		if [ "$(uname -o)" = "ASUSWRT-Merlin" ] && [ "$(nvram get buildno | cut -f1 -d'.')" -ge "384" ]; then
-			return 0
-		else
-			return 1
-		fi
-	elif [ "$1" = "webui" ]; then
-		if nvram get rc_support | grep -qF "am_addons"; then
-			return 0
-		else
-			return 1
-		fi
+	if nvram get rc_support | grep -qF "am_addons"; then
+		return 0
+	else
+		return 1
 	fi
 }
 
@@ -91,35 +97,84 @@ Clear_Lock(){
 	return 0
 }
 
-Update_Version(){
-	if [ -z "$1" ]; then
-		doupdate="false"
-		localver=$(grep "SCRIPT_VERSION=" /jffs/scripts/"$SCRIPT_NAME" | grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})')
-		/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME.sh" | grep -qF "jackyaz" || { Print_Output "true" "404 error detected - stopping update" "$ERR"; return 1; }
-		serverver=$(/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME.sh" | grep "SCRIPT_VERSION=" | grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})')
-		if [ "$localver" != "$serverver" ]; then
-			doupdate="version"
-		else
-			localmd5="$(md5sum "/jffs/scripts/$SCRIPT_NAME" | awk '{print $1}')"
-			remotemd5="$(curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME.sh" | md5sum | awk '{print $1}')"
-			if [ "$localmd5" != "$remotemd5" ]; then
-				doupdate="md5"
+Set_Version_Custom_Settings(){
+	SETTINGSFILE="/jffs/addons/custom_settings.txt"
+	case "$1" in
+		local)
+			if [ -f "$SETTINGSFILE" ]; then
+				if [ "$(grep -c "uidivstats_version_local" $SETTINGSFILE)" -gt 0 ]; then
+					if [ "$SCRIPT_VERSION" != "$(grep "uidivstats_version_local" /jffs/addons/custom_settings.txt | cut -f2 -d' ')" ]; then
+						sed -i "s/uidivstats_version_local.*/uidivstats_version_local $SCRIPT_VERSION/" "$SETTINGSFILE"
+					fi
+				else
+					echo "uidivstats_version_local $SCRIPT_VERSION" >> "$SETTINGSFILE"
+				fi
+			else
+				echo "uidivstats_version_local $SCRIPT_VERSION" >> "$SETTINGSFILE"
 			fi
+		;;
+		server)
+			if [ -f "$SETTINGSFILE" ]; then
+				if [ "$(grep -c "uidivstats_version_server" $SETTINGSFILE)" -gt 0 ]; then
+					if [ "$2" != "$(grep "uidivstats_version_server" /jffs/addons/custom_settings.txt | cut -f2 -d' ')" ]; then
+						sed -i "s/uidivstats_version_server.*/uidivstats_version_server $2/" "$SETTINGSFILE"
+					fi
+				else
+					echo "uidivstats_version_server $2" >> "$SETTINGSFILE"
+				fi
+			else
+				echo "uidivstats_version_server $2" >> "$SETTINGSFILE"
+			fi
+		;;
+	esac
+}
+
+Update_Check(){
+	doupdate="false"
+	localver=$(grep "SCRIPT_VERSION=" /jffs/scripts/"$SCRIPT_NAME" | grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})')
+	/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME.sh" | grep -qF "jackyaz" || { Print_Output "true" "404 error detected - stopping update" "$ERR"; return 1; }
+	serverver=$(/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME.sh" | grep "SCRIPT_VERSION=" | grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})')
+	if [ "$localver" != "$serverver" ]; then
+		doupdate="version"
+		Set_Version_Custom_Settings "server" "$serverver"
+	else
+		localmd5="$(md5sum "/jffs/scripts/$SCRIPT_NAME" | awk '{print $1}')"
+		remotemd5="$(curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME.sh" | md5sum | awk '{print $1}')"
+		if [ "$localmd5" != "$remotemd5" ]; then
+			doupdate="md5"
+			Set_Version_Custom_Settings "server" "$serverver-hotfix"
 		fi
+	fi
+	echo "$doupdate,$localver,$serverver"
+}
+
+Update_Version(){
+	if [ -z "$1" ] || [ "$1" = "unattended" ]; then
+		updatecheckresult="$(Update_Check)"
+		isupdate="$(echo "$updatecheckresult" | cut -f1 -d',')"
+		localver="$(echo "$updatecheckresult" | cut -f2 -d',')"
+		serverver="$(echo "$updatecheckresult" | cut -f3 -d',')"
 		
-		if [ "$doupdate" = "version" ]; then
+		if [ "$isupdate" = "version" ]; then
 			Print_Output "true" "New version of $SCRIPT_NAME available - updating to $serverver" "$PASS"
-		elif [ "$doupdate" = "md5" ]; then
+		elif [ "$isupdate" = "md5" ]; then
 			Print_Output "true" "MD5 hash of $SCRIPT_NAME does not match - downloading updated $serverver" "$PASS"
 		fi
 		
-		Update_File "uidivstats_www.asp"
 		Update_File "shared-jy.tar.gz"
 		
-		if [ "$doupdate" != "false" ]; then
+		if [ "$isupdate" != "false" ]; then
+			Update_File "uidivstats_www.asp"
+			Update_File "taildns.tar.gz"
+			
 			/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME.sh" -o "/jffs/scripts/$SCRIPT_NAME" && Print_Output "true" "$SCRIPT_NAME successfully updated"
 			chmod 0755 /jffs/scripts/"$SCRIPT_NAME"
 			Clear_Lock
+			if [ -z "$1" ]; then
+				exec "$0" "setversion"
+			elif [ "$1" = "unattended" ]; then
+				exec "$0" "setversion" "unattended"
+			fi
 			exit 0
 		else
 			Print_Output "true" "No new version - latest is $localver" "$WARN"
@@ -127,19 +182,24 @@ Update_Version(){
 		fi
 	fi
 	
-	case "$1" in
-		force)
-			serverver=$(/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME.sh" | grep "SCRIPT_VERSION=" | grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})')
-			Print_Output "true" "Downloading latest version ($serverver) of $SCRIPT_NAME" "$PASS"
-			Update_File "uidivstats_www.asp"
-			Update_File "shared-jy.tar.gz"
-			/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME.sh" -o "/jffs/scripts/$SCRIPT_NAME" && Print_Output "true" "$SCRIPT_NAME successfully updated"
-			chmod 0755 /jffs/scripts/"$SCRIPT_NAME"
-			Clear_Lock
-			exit 0
-		;;
-	esac
+	if [ "$1" = "force" ]; then
+		serverver=$(/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME.sh" | grep "SCRIPT_VERSION=" | grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})')
+		Print_Output "true" "Downloading latest version ($serverver) of $SCRIPT_NAME" "$PASS"
+		Update_File "uidivstats_www.asp"
+		Update_File "shared-jy.tar.gz"
+		Update_File "taildns.tar.gz"
+		/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME.sh" -o "/jffs/scripts/$SCRIPT_NAME" && Print_Output "true" "$SCRIPT_NAME successfully updated"
+		chmod 0755 /jffs/scripts/"$SCRIPT_NAME"
+		Clear_Lock
+		if [ -z "$2" ]; then
+			exec "$0" "setversion"
+		elif [ "$2" = "unattended" ]; then
+			exec "$0" "setversion" "unattended"
+		fi
+		exit 0
+	fi
 }
+
 ############################################################################
 
 Update_File(){
@@ -157,6 +217,34 @@ Update_File(){
 			Mount_WebUI
 		fi
 		rm -f "$tmpfile"
+	elif [ "$1" = "taildns.tar.gz" ]; then
+		if [ ! -f "$SCRIPT_DIR/$1.md5" ]; then
+			Download_File "$SCRIPT_REPO/$1" "$SCRIPT_DIR/$1"
+			Download_File "$SCRIPT_REPO/$1.md5" "$SCRIPT_DIR/$1.md5"
+			tar -xzf "$SCRIPT_DIR/$1" -C "$SCRIPT_DIR"
+			if [ -f /opt/etc/init.d/S90taildns ]; then
+				/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
+			fi
+			mv "$SCRIPT_DIR/taildns.d/S90taildns" /opt/etc/init.d/S90taildns
+			/opt/etc/init.d/S90taildns start >/dev/null 2>&1
+			rm -f "$SCRIPT_DIR/$1"
+			Print_Output "true" "New version of $1 downloaded" "$PASS"
+		else
+			localmd5="$(cat "$SCRIPT_DIR/$1.md5")"
+			remotemd5="$(curl -fsL --retry 3 "$SCRIPT_REPO/$1.md5")"
+			if [ "$localmd5" != "$remotemd5" ]; then
+				Download_File "$SCRIPT_REPO/$1" "$SCRIPT_DIR/$1"
+				Download_File "$SCRIPT_REPO/$1.md5" "$SCRIPT_DIR/$1.md5"
+				tar -xzf "$SCRIPT_DIR/$1" -C "$SCRIPT_DIR"
+				if [ -f /opt/etc/init.d/S90taildns ]; then
+					/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
+				fi
+				mv "$SCRIPT_DIR/taildns.d/S90taildns" /opt/etc/init.d/S90taildns
+				/opt/etc/init.d/S90taildns start >/dev/null 2>&1
+				rm -f "$SCRIPT_DIR/$1"
+				Print_Output "true" "New version of $1 downloaded" "$PASS"
+			fi
+		fi
 	elif [ "$1" = "shared-jy.tar.gz" ]; then
 		if [ ! -f "$SHARED_DIR/$1.md5" ]; then
 			Download_File "$SHARED_REPO/$1" "$SHARED_DIR/$1"
@@ -196,17 +284,20 @@ Create_Dirs(){
 	if [ ! -d "$SCRIPT_WEB_DIR" ]; then
 		mkdir -p "$SCRIPT_WEB_DIR"
 	fi
+	
+	if [ ! -d "$CSV_OUTPUT_DIR" ]; then
+		mkdir -p "$CSV_OUTPUT_DIR"
+	fi
 }
 
 Create_Symlinks(){
 	rm -f "$SCRIPT_WEB_DIR/"* 2>/dev/null
 	
-	ln -s "$SCRIPT_DIR/uidivstats.js" "$SCRIPT_WEB_DIR/uidivstats.js" 2>/dev/null
-	ln -s "$SCRIPT_DIR/uidivstatsclients.js" "$SCRIPT_WEB_DIR/uidivstatsclients.js" 2>/dev/null
+	ln -s "$SCRIPT_DIR/SQLData.js" "$SCRIPT_WEB_DIR/SQLData.js" 2>/dev/null
 	
-	ln -s "$SCRIPT_DIR/uidivstatstext.js" "$SCRIPT_WEB_DIR/uidivstatstext.js" 2>/dev/null
-	ln -s "$SCRIPT_DIR/uidivstats.txt" "$SCRIPT_WEB_DIR/uidivstatstext.htm" 2>/dev/null
-	ln -s "$SCRIPT_DIR/psstats.htm" "$SCRIPT_WEB_DIR/psstats.htm" 2>/dev/null
+	if [ ! -d "$SCRIPT_WEB_DIR/csv" ]; then
+		ln -s "$CSV_OUTPUT_DIR" "$SCRIPT_WEB_DIR/csv" 2>/dev/null
+	fi
 	
 	if [ ! -d "$SHARED_WEB_DIR" ]; then
 		ln -s "$SHARED_DIR" "$SHARED_WEB_DIR" 2>/dev/null
@@ -219,7 +310,7 @@ Auto_ServiceEvent(){
 			if [ -f /jffs/scripts/service-event ]; then
 				STARTUPLINECOUNT=$(grep -c '# '"$SCRIPT_NAME" /jffs/scripts/service-event)
 				# shellcheck disable=SC2016
-				STARTUPLINECOUNTEX=$(grep -cx "/jffs/scripts/$SCRIPT_NAME generate"' "$1" "$2" &'' # '"$SCRIPT_NAME" /jffs/scripts/service-event)
+				STARTUPLINECOUNTEX=$(grep -cx '\[ "$(echo "$2" | grep -c "'"$SCRIPT_NAME"'")" -gt 0 \] && /jffs/scripts/'"$SCRIPT_NAME"' service_event "$1" "$2" & # '"$SCRIPT_NAME" /jffs/scripts/service-event)
 				
 				if [ "$STARTUPLINECOUNT" -gt 1 ] || { [ "$STARTUPLINECOUNTEX" -eq 0 ] && [ "$STARTUPLINECOUNT" -gt 0 ]; }; then
 					sed -i -e '/# '"$SCRIPT_NAME"'/d' /jffs/scripts/service-event
@@ -227,13 +318,13 @@ Auto_ServiceEvent(){
 				
 				if [ "$STARTUPLINECOUNTEX" -eq 0 ]; then
 					# shellcheck disable=SC2016
-					echo "/jffs/scripts/$SCRIPT_NAME generate"' "$1" "$2" &'' # '"$SCRIPT_NAME" >> /jffs/scripts/service-event
+					echo '[ "$(echo "$2" | grep -c "'"$SCRIPT_NAME"'")" -gt 0 ] && /jffs/scripts/'"$SCRIPT_NAME"' service_event "$1" "$2" & # '"$SCRIPT_NAME" >> /jffs/scripts/service-event
 				fi
 			else
 				echo "#!/bin/sh" > /jffs/scripts/service-event
 				echo "" >> /jffs/scripts/service-event
 				# shellcheck disable=SC2016
-				echo "/jffs/scripts/$SCRIPT_NAME generate"' "$1" "$2" &'' # '"$SCRIPT_NAME" >> /jffs/scripts/service-event
+				echo '[ "$(echo "$2" | grep -c "'"$SCRIPT_NAME"'")" -gt 0 ] && /jffs/scripts/'"$SCRIPT_NAME"' service_event "$1" "$2" & # '"$SCRIPT_NAME" >> /jffs/scripts/service-event
 				chmod 0755 /jffs/scripts/service-event
 			fi
 		;;
@@ -254,19 +345,19 @@ Auto_Startup(){
 		create)
 			if [ -f /jffs/scripts/services-start ]; then
 				STARTUPLINECOUNT=$(grep -c '# '"$SCRIPT_NAME" /jffs/scripts/services-start)
-				STARTUPLINECOUNTEX=$(grep -cx "/jffs/scripts/$SCRIPT_NAME startup"' # '"$SCRIPT_NAME" /jffs/scripts/services-start)
+				STARTUPLINECOUNTEX=$(grep -cx "/jffs/scripts/$SCRIPT_NAME startup &"' # '"$SCRIPT_NAME" /jffs/scripts/services-start)
 				
 				if [ "$STARTUPLINECOUNT" -gt 1 ] || { [ "$STARTUPLINECOUNTEX" -eq 0 ] && [ "$STARTUPLINECOUNT" -gt 0 ]; }; then
 					sed -i -e '/# '"$SCRIPT_NAME"'/d' /jffs/scripts/services-start
 				fi
 				
 				if [ "$STARTUPLINECOUNTEX" -eq 0 ]; then
-					echo "/jffs/scripts/$SCRIPT_NAME startup"' # '"$SCRIPT_NAME" >> /jffs/scripts/services-start
+					echo "/jffs/scripts/$SCRIPT_NAME startup &"' # '"$SCRIPT_NAME" >> /jffs/scripts/services-start
 				fi
 			else
 				echo "#!/bin/sh" > /jffs/scripts/services-start
 				echo "" >> /jffs/scripts/services-start
-				echo "/jffs/scripts/$SCRIPT_NAME startup"' # '"$SCRIPT_NAME" >> /jffs/scripts/services-start
+				echo "/jffs/scripts/$SCRIPT_NAME startup &"' # '"$SCRIPT_NAME" >> /jffs/scripts/services-start
 				chmod 0755 /jffs/scripts/services-start
 			fi
 		;;
@@ -285,17 +376,43 @@ Auto_Startup(){
 Auto_Cron(){
 	case $1 in
 		create)
-			STARTUPLINECOUNT=$(cru l | grep -c "$SCRIPT_NAME")
+			STARTUPLINECOUNT=$(cru l | grep -cx "0 \* \* \* \* /jffs/scripts/$SCRIPT_NAME generate #uiDivStats#")
+			if [ "$STARTUPLINECOUNT" -gt 0 ]; then
+				cru d "$SCRIPT_NAME"
+			fi
 			
-			if [ "$STARTUPLINECOUNT" -eq 0 ]; then
-				cru a "$SCRIPT_NAME" "0 * * * * /jffs/scripts/$SCRIPT_NAME generate"
+			STARTUPLINECOUNTGENERATE=$(cru l | grep -c "$SCRIPT_NAME""_generate")
+			STARTUPLINECOUNTTRIM=$(cru l | grep -c "$SCRIPT_NAME""_trim")
+			STARTUPLINECOUNTQUERYLOG=$(cru l | grep -c "$SCRIPT_NAME""_querylog")
+			
+			if [ "$STARTUPLINECOUNTGENERATE" -eq 0 ]; then
+				cru a "$SCRIPT_NAME""_generate" "0 * * * * /jffs/scripts/$SCRIPT_NAME generate"
+			fi
+			if [ "$STARTUPLINECOUNTTRIM" -eq 0 ]; then
+				cru a "$SCRIPT_NAME""_trim" "3 0 * * * /jffs/scripts/$SCRIPT_NAME trimdb"
+			fi
+			if [ "$STARTUPLINECOUNTQUERYLOG" -eq 0 ]; then
+				cru a "$SCRIPT_NAME""_querylog" "* * * * * /jffs/scripts/$SCRIPT_NAME querylog"
 			fi
 		;;
 		delete)
-			STARTUPLINECOUNT=$(cru l | grep -c "$SCRIPT_NAME")
-			
+			STARTUPLINECOUNT=$(cru l | grep -cx "0 \* \* \* \* /jffs/scripts/$SCRIPT_NAME generate #uiDivStats#")
 			if [ "$STARTUPLINECOUNT" -gt 0 ]; then
 				cru d "$SCRIPT_NAME"
+			fi
+			
+			STARTUPLINECOUNTGENERATE=$(cru l | grep -c "$SCRIPT_NAME""_generate")
+			STARTUPLINECOUNTTRIM=$(cru l | grep -c "$SCRIPT_NAME""_trim")
+			STARTUPLINECOUNTQUERYLOG=$(cru l | grep -c "$SCRIPT_NAME""_querylog")
+			
+			if [ "$STARTUPLINECOUNTGENERATE" -gt 0 ]; then
+				cru d "$SCRIPT_NAME""_generate"
+			fi
+			if [ "$STARTUPLINECOUNTTRIM" -gt 0 ]; then
+				cru d "$SCRIPT_NAME""_trim"
+			fi
+			if [ "$STARTUPLINECOUNTQUERYLOG" -gt 0 ]; then
+				cru d "$SCRIPT_NAME""_querylog"
 			fi
 		;;
 	esac
@@ -303,14 +420,6 @@ Auto_Cron(){
 
 Download_File(){
 	/usr/sbin/curl -fsL --retry 3 "$1" -o "$2"
-}
-
-Get_spdMerlin_UI(){
-	if [ -f /www/AdaptiveQoS_ROG.asp ]; then
-		echo "AdaptiveQoS_ROG.asp"
-	else
-		echo "AiMesh_Node_FirmwareUpgrade.asp"
-	fi
 }
 
 Get_WebUI_Page () {
@@ -325,25 +434,16 @@ Get_WebUI_Page () {
 }
 
 Mount_WebUI(){
-	if Firmware_Version_Check "webui" ; then
-		Get_WebUI_Page "$SCRIPT_DIR/uidivstats_www.asp"
-		if [ "$MyPage" = "none" ]; then
-			Print_Output "true" "Unable to mount $SCRIPT_NAME WebUI page, exiting" "$CRIT"
-			exit 1
-		fi
-		Print_Output "true" "Mounting $SCRIPT_NAME WebUI page as $MyPage" "$PASS"
-		cp -f "$SCRIPT_DIR/uidivstats_www.asp" "$SCRIPT_WEBPAGE_DIR/$MyPage"
-		
-		if [ ! -f "/tmp/index_style.css" ]; then
-			cp -f "/www/index_style.css" "/tmp/"
-		fi
-		
-		if ! grep -q '.menu_Addons' /tmp/index_style.css ; then
-			echo ".menu_Addons { background: url(ext/shared-jy/addons.png); }" >> /tmp/index_style.css
-		fi
-		
-		umount /www/index_style.css 2>/dev/null
-		mount -o bind /tmp/index_style.css /www/index_style.css
+	Get_WebUI_Page "$SCRIPT_DIR/uidivstats_www.asp"
+	if [ "$MyPage" = "none" ]; then
+		Print_Output "true" "Unable to mount $SCRIPT_NAME WebUI page, exiting" "$CRIT"
+		exit 1
+	fi
+	Print_Output "true" "Mounting $SCRIPT_NAME WebUI page as $MyPage" "$PASS"
+	cp -f "$SCRIPT_DIR/uidivstats_www.asp" "$SCRIPT_WEBPAGE_DIR/$MyPage"
+	echo "uiDivStats" > "$SCRIPT_WEBPAGE_DIR/$(echo $MyPage | cut -f1 -d'.').title"
+	
+	if [ "$(uname -o)" = "ASUSWRT-Merlin" ]; then
 		
 		if [ ! -f "/tmp/menuTree.js" ]; then
 			cp -f "/www/require/modules/menuTree.js" "/tmp/"
@@ -351,136 +451,19 @@ Mount_WebUI(){
 		
 		sed -i "\\~$MyPage~d" /tmp/menuTree.js
 		
-		if ! grep -q 'menuName: "Addons"' /tmp/menuTree.js ; then
-			lineinsbefore="$(( $(grep -n "exclude:" /tmp/menuTree.js | cut -f1 -d':') - 1))"
-			sed -i "$lineinsbefore"'i,\n{\nmenuName: "Addons",\nindex: "menu_Addons",\ntab: [\n{url: "ext/shared-jy/redirect.htm", tabName: "Help & Support"},\n{url: "NULL", tabName: "__INHERIT__"}\n]\n}' /tmp/menuTree.js
+		if /bin/grep 'tabName: \"Diversion\"},' /tmp/menuTree.js >/dev/null 2>&1; then
+			sed -i "/tabName: \"Diversion\"/a {url: \"$MyPage\", tabName: \"uiDivStats\"}," /tmp/menuTree.js
+		else
+			sed -i "/url: \"Advanced_SwitchCtrl_Content.asp\", tabName:/a {url: \"$MyPage\", tabName: \"uiDivStats\"}," /tmp/menuTree.js
 		fi
-		
-		if ! grep -q "javascript:window.open('/ext/shared-jy/redirect.htm'" /tmp/menuTree.js ; then
-			sed -i "s~ext/shared-jy/redirect.htm~javascript:window.open('/ext/shared-jy/redirect.htm','_blank')~" /tmp/menuTree.js
-		fi
-		sed -i "/url: \"javascript:window.open('\/ext\/shared-jy\/redirect.htm'/i {url: \"$MyPage\", tabName: \"Diversion Stats\"}," /tmp/menuTree.js
 		
 		umount /www/require/modules/menuTree.js 2>/dev/null
 		mount -o bind /tmp/menuTree.js /www/require/modules/menuTree.js
-	else
-		Mount_WebUI_Old
-		Modify_WebUI_File
 	fi
-}
-
-Mount_WebUI_Old(){
-	umount /www/Advanced_MultiSubnet_Content.asp 2>/dev/null
-	
-	mount -o bind "$SCRIPT_DIR/uidivstats_www.asp" "/www/Advanced_MultiSubnet_Content.asp"
-}
-
-Modify_WebUI_File(){
-	### menuTree.js ###
-	umount /www/require/modules/menuTree.js 2>/dev/null
-	tmpfile=/tmp/menuTree.js
-	cp "/www/require/modules/menuTree.js" "$tmpfile"
-	
-	sed -i '/{url: "Advanced_MultiSubnet_Content.asp", tabName: /d' "$tmpfile"
-	sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "Advanced_MultiSubnet_Content.asp", tabName: "Diversion Statistics"},' "$tmpfile"
-	sed -i '/retArray.push("Advanced_MultiSubnet_Content.asp");/d' "$tmpfile"
-	
-	if [ -f "/jffs/scripts/connmon" ]; then
-		sed -i '/{url: "Advanced_Feedback.asp", tabName: /d' "$tmpfile"
-		sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "Advanced_Feedback.asp", tabName: "Uptime Monitoring"},' "$tmpfile"
-		sed -i '/retArray.push("Advanced_Feedback.asp");/d' "$tmpfile"
-	fi
-	
-	if [ -f "/jffs/scripts/spdmerlin" ]; then
-		sed -i '/{url: "'"$(Get_spdMerlin_UI)"'", tabName: /d' "$tmpfile"
-		sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "'"$(Get_spdMerlin_UI)"'", tabName: "SpeedTest"},' "$tmpfile"
-		sed -i '/retArray.push("'"$(Get_spdMerlin_UI)"'");/d' "$tmpfile"
-	fi
-	
-	if [ -f "/jffs/scripts/ntpmerlin" ]; then
-		sed -i '/"Tools_OtherSettings.asp", tabName: "Other Settings"/a {url: "Feedback_Info.asp", tabName: "NTP Daemon"},' "$tmpfile"
-	fi
-	
-	if [ -f /jffs/scripts/custom_menuTree.js ]; then
-		mv /jffs/scripts/custom_menuTree.js "$SHARED_DIR/custom_menuTree.js"
-	fi
-	
-	if [ ! -f "$SHARED_DIR/custom_menuTree.js" ]; then
-		cp "$tmpfile" "$SHARED_DIR/custom_menuTree.js"
-	fi
-	
-	if ! diff -q "$tmpfile" "$SHARED_DIR/custom_menuTree.js" >/dev/null 2>&1; then
-		cp "$tmpfile" "$SHARED_DIR/custom_menuTree.js"
-	fi
-	
-	rm -f "$tmpfile"
-	
-	mount -o bind "$SHARED_DIR/custom_menuTree.js" "/www/require/modules/menuTree.js"
-	### ###
-	
-	### start_apply.htm ###
-	umount /www/start_apply.htm 2>/dev/null
-	tmpfile=/tmp/start_apply.htm
-	cp "/www/start_apply.htm" "$tmpfile"
-	
-	if [ -f /jffs/scripts/spdmerlin ]; then
-		sed -i -e '/else if(current_page.indexOf("Feedback") != -1){/i else if(current_page.indexOf("Advanced_Feedback.asp") != -1){'"\\r\\n"'setTimeout(getXMLAndRedirect, restart_time*1000);'"\\r\\n"'}' "$tmpfile"
-	fi
-	
-	if [ -f /jffs/scripts/ntpmerlin ]; then
-		sed -i -e '/else if(current_page.indexOf("Feedback") != -1){/i else if(current_page.indexOf("Feedback_Info.asp") != -1){'"\\r\\n"'setTimeout(getXMLAndRedirect, restart_time*1000);'"\\r\\n"'}' "$tmpfile"
-	fi
-	
-	if [ -f /jffs/scripts/connmon ]; then
-		sed -i -e '/else if(current_page.indexOf("Feedback") != -1){/i else if(current_page.indexOf("'"$(Get_spdMerlin_UI)"'") != -1){'"\\r\\n"'setTimeout(getXMLAndRedirect, restart_time*1000);'"\\r\\n"'}' "$tmpfile"
-	fi
-	
-	sed -i -e '/else if(current_page.indexOf("Feedback") != -1){/i else if(current_page.indexOf("Advanced_MultiSubnet_Content.asp") != -1){'"\\r\\n"'setTimeout(getXMLAndRedirect, restart_time*1000);'"\\r\\n"'}' "$tmpfile"
-	
-	if [ -f /jffs/scripts/custom_start_apply.htm ]; then
-		mv /jffs/scripts/custom_start_apply.htm "$SHARED_DIR/custom_start_apply.htm"
-	fi
-	
-	if [ ! -f "$SHARED_DIR/custom_start_apply.htm" ]; then
-		cp "/www/start_apply.htm" "$SHARED_DIR/custom_start_apply.htm"
-	fi
-	
-	if ! diff -q "$tmpfile" "$SHARED_DIR/custom_start_apply.htm" >/dev/null 2>&1; then
-		cp "$tmpfile" "$SHARED_DIR/custom_start_apply.htm"
-	fi
-	
-	rm -f "$tmpfile"
-	
-	mount -o bind "$SHARED_DIR/custom_start_apply.htm" /www/start_apply.htm
-	### ###
-}
-
-WriteOptions_ToJS(){
-	{
-	echo "var clients;"
-	echo "clients = [];"; } > "$2"
-	contents=""
-	contents="$contents""clients.unshift("
-	while IFS='' read -r line || [ -n "$line" ]; do
-		contents="$contents""'""$(echo "$line" | awk '{$1=$1};1' | awk 'BEGIN{FS="  *"}{ print $2" ("$1")"}')""'"","
-	done < "$1"
-	contents=$(echo "$contents" | sed 's/.$//')
-	contents="$contents"");"
-	echo "$contents" >> "$2"
-	
-	{
-	echo "function SetClients(){"
-	echo "selectField = document.getElementById(\"clientdomains\");"
-	echo "selectField.options.length = 0;"
-	echo "for (i=0; i<clients.length; i++)"
-	echo "{"
-	echo "selectField.options[selectField.length] = new Option(clients[i], i);"
-	echo "}"
-	echo "}" ; } >> "$2"
 }
 
 WriteStats_ToJS(){
-	echo "function $3(){" >> "$2"
+	{ echo ""; echo "function $3(){"; } >> "$2"
 	html='document.getElementById("'"$4"'").innerHTML="'
 	while IFS='' read -r line || [ -n "$line" ]; do
 		html="$html""$line""\\r\\n"
@@ -489,422 +472,404 @@ WriteStats_ToJS(){
 	printf "%s\\r\\n}\\r\\n" "$html" >> "$2"
 }
 
-WriteData_ToJS(){
-	inputfile="$1"
-	outputfile="$2"
-	shift;shift
-	i="0"
+WritePlainData_ToJS(){
+	outputfile="$1"
+	shift
 	for var in "$@"; do
-		i=$((i+1))
-		{ echo "var $var;"
-			echo "$var = [];"
-			echo "${var}.unshift('$(awk -v i=$i '{printf t $i} {t=","}' "$inputfile" | sed "s~,~\\',\\'~g")');"
-			echo; } >> "$outputfile"
+		varname="$(echo "$var" | cut -f1 -d',')"
+		varvalue="$(echo "$var" | cut -f2 -d',')"
+		if [ -f "$outputfile" ]; then
+			sed -i -e '/'"$varname"'/d' "$outputfile"
+		fi
+		echo "var $varname = $varvalue;" >> "$outputfile"
 	done
 }
 
-# shellcheck disable=SC1090
-# shellcheck disable=SC2154
-# shellcheck disable=SC2034
-# shellcheck disable=SC2188
-# shellcheck disable=SC2167
-# shellcheck disable=SC2165
-# shellcheck disable=SC2059
-# shellcheck disable=SC2129
-# shellcheck disable=SC2126
-# shellcheck disable=SC2086
-# shellcheck disable=SC2005
-# shellcheck disable=SC2013
-# shellcheck disable=SC2002
-# shellcheck disable=SC2004
-# shellcheck disable=SC1003
-Generate_Stats_Diversion(){
-	### Code for this function courtesy of https://github.com/decoderman - credit to @thelonelycoder ###
+Write_View_Sql_ToFile(){
+	if [ "$6" = "create" ]; then
+		timenow="$5"
+		echo "CREATE VIEW IF NOT EXISTS [$1$2] AS SELECT * FROM $1 WHERE ([Timestamp] >= $timenow - (86400*$3)) AND ([Timestamp] <= $timenow);" >> "$4"
+	elif [ "$6" = "drop" ]; then
+		echo "DROP VIEW IF EXISTS [$1$2];" >> "$4"
+	fi
+}
+
+#$1 fieldname $2 tablename $3 length (days) $4 outputfile $5 outputfrequency $6 sqlfile $7 timestamp
+Write_Count_Sql_ToFile(){
+	timenow="$7"
 	
-	# set environment PATH to system binaries
-	export PATH=/sbin:/bin:/usr/sbin:/usr/bin:$PATH
+	{
+		echo ".mode csv"
+		echo ".headers on"
+		echo ".output $4$5.htm"
+	} > "$6"
 	
-	Auto_Startup create 2>/dev/null
-	Auto_Cron create 2>/dev/null
-	Auto_ServiceEvent create 2>/dev/null
-	Shortcut_script create
-	Create_Dirs
-	Create_Symlinks
+	if [ "$1" = "Total" ]; then
+		echo "SELECT '$1' Fieldname, [ReqDmn] ReqDmn, Count([ReqDmn]) Count FROM $2$5 GROUP BY [ReqDmn] ORDER BY COUNT([ReqDmn]) DESC LIMIT 20;" >> "$6"
+	elif [ "$1" = "Blocked" ]; then
+		echo "SELECT '$1' Fieldname, [ReqDmn] ReqDmn, Count([ReqDmn]) Count FROM $2$5 WHERE ([Result] LIKE 'blocked%') GROUP BY [ReqDmn] ORDER BY COUNT([ReqDmn]) DESC LIMIT 20;" >> "$6"
+	fi
+}
+
+#$1 fieldname $2 tablename $3 length (days) $4 outputfile $5 outputfrequency $6 sqlfile $7 timestamp
+Write_Count_PerClient_Sql_ToFile(){
+	timenow="$7"
+	echo ".mode list" > "$6"
+	echo ".output /tmp/distinctclients" >> "$6"
+	if [ "$1" = "Total" ]; then
+		echo "SELECT DISTINCT [SrcIP] SrcIP FROM $2$5;" >> "$6"
+	elif [ "$1" = "Blocked" ]; then
+		echo "SELECT DISTINCT [SrcIP] SrcIP FROM $2$5 WHERE ([Result] LIKE 'blocked%');" >> "$6"
+	fi
 	
-	Print_Output "true" "Starting Diversion statistic generation..." "$PASS"
+	while ! "$SQLITE3_PATH" "$DNS_DB" < "$6" >/dev/null 2>&1; do
+		sleep 1
+	done
+	clients="$(cat /tmp/distinctclients)"
+	rm -f /tmp/distinctclients
 	
-	DIVERSION_DIR=/opt/share/diversion
+	{
+		echo ".mode csv"
+		echo ".headers off"
+		echo ".output ""$4$5""clients.htm"
+	} > "$6"
 	
-	if [ -f "${DIVERSION_DIR}/.conf/diversion.conf" ] && [ -s /opt/var/log/dnsmasq.log ]; then
-		diversion count_ads
-		. "${DIVERSION_DIR}/.conf/diversion.conf"
-		
-		[ -z "$wsTopHosts" ] && wsTopHosts=15
-		[ "$wsTopHosts" -gt 30 ] && wsTopHosts=30
-		[ -z "$wsTopClients" ] && wsTopClients=10
-		[ "$wsTopClients" -gt 30 ] && wsTopClients=30
-		
-		wsFilterLN=on
-		
-		lanIPaddr=$(nvram get lan_ipaddr | sed 's/\.[0-9]*$/./')
-		human_number(){	sed -re " :restart ; s/([0-9])([0-9]{3})($|[^0-9])/\1,\2\3/ ; t restart ";}
-		LINE=" --------------------------------------------------------\\n"
-		statsFile="/tmp/uidivstats.txt"
-		clientsFile="/tmp/uidivclients.txt"
-		
-		# start of the output for the stats
-		printf "\\n Diversion Statistics $(date +"%c")\\n$LINE" >${statsFile}
-		[ "$thisM_VERSION" ] && THIS_VERSION="${thisVERSION}.$thisM_VERSION" || THIS_VERSION=$thisVERSION
-		printf " Compiled by $NAME $THIS_VERSION\\n" >>${statsFile}
-		printf "\\n Ad-Blocking stats:" >>${statsFile}
-		printf "\\n$LINE" >>${statsFile}
-		
-		BLL="$(($(/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/blockinglist" | wc -w)-$(/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/blockinglist" | wc -l)))"
-		[ "$(nvram get ipv6_service)" != "disabled" ] && BLL="$((BLL/2))"
-		BL="$(/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/blacklist" | wc -l)"
-		[ "$(nvram get ipv6_service)" != "disabled" ] && BL="$((BL/2))"
-		WCBL="$(/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/wc_blacklist" | wc -l)"
-		BD="$((BLL+BL+WCBL))"
-		
-		printf "%-13s%s\\n" " $(echo $BD | human_number)" "domains in total are blocked" >>${statsFile}
-		echo "$(echo $BD | human_number)" > /tmp/uidivstatskeystatsdomains.txt
-		WriteStats_ToJS "/tmp/uidivstatskeystatsdomains.txt" "/tmp/uidivstatstext.js" "SetKeyStatsDomains" "keystatsdomains"
-		if [ "$bfFs" = "on" ]; then
-			BLLFS="$(($(/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/blockinglist_fs" | wc -w)-$(/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/blockinglist_fs"| wc -l)))"
-			[ "$(nvram get ipv6_service)" != "disabled" ] && BLLFS="$((BLLFS/2))"
-			if [ "$bfTypeinUse" = "primary" ]; then
-				printf "%-13s%s\\n" " $(echo $BLL | human_number)" "blocked by primary blocking list in use" >>${statsFile}
-				printf "%-13s%s\\n" " $(echo $BLLFS | human_number)" "(blocked by secondary blocking list)" >>${statsFile}
-			else
-				printf "%-13s%s\\n" " $(echo $BLLFS | human_number)" "blocked by secondary blocking list in use" >>${statsFile}
-				printf "%-13s%s\\n" " $(echo $BLL | human_number)" "(blocked by primary blocking list)" >>${statsFile}
-			fi
-		else
-			printf "%-13s%s\\n" " $(echo $BLL | human_number)" "blocked by blocking list" >>${statsFile}
-		fi
-		
-		printf "%-13s%s\\n" " $BL" "blocked by blacklist" >>${statsFile}
-		printf "%-13s%s\\n" " $WCBL" "blocked by wildcard blacklist" >>${statsFile}
-		printf "\\n" >>${statsFile}
-		keystatsblocked=0;
-		if [ "$bfFs" = "on" ] && [ "$alternateBF" = "on" ]; then
-			if [ "$excludeIP" = "on" ]; then
-				sed -ri "/$(echo $excludeIPlist | sed 's/ /|/g')/d" /opt/var/log/dnsmasq.log*
-				kill -USR2 "$(pidof dnsmasq)"
-			fi
-			dnsmasqLog="/opt/var/log/dnsmasq.log*"
-			printf " Primary ad-blocking:\\n" >>${statsFile}
-			printf "%-13s%s\\n" " $(echo $adsBlocked | human_number)" "ads in total blocked" >>${statsFile}
-			printf "%-13s%s\\n" " $(echo $adsWeek | human_number)" "ads this week, since last $bfUpdateDay" >>${statsFile}
-			printf "%-13s%s\\n" " $(echo $adsNew | human_number)" "new ads, since $adsPrevCount" >>${statsFile}
-			printf " Alternate ad-blocking:\\n" >>${statsFile}
-			printf "%-13s%s\\n" " $(echo $adsBlockedAlt | human_number)" "ads in total blocked" >>${statsFile}
-			printf "%-13s%s\\n" " $(echo $adsWeekAlt | human_number)" "ads this week, since last $bfUpdateDay" >>${statsFile}
-			printf "%-13s%s\\n" " $(echo $adsNewAlt | human_number)" "new ads, since $adsPrevCount" >>${statsFile}
-			printf " Combined ad-blocking totals:\\n" >>${statsFile}
-			printf "%-13s%s\\n" " $(echo $((adsBlocked+adsBlockedAlt)) | human_number)" "ads in total blocked" >>${statsFile}
-			printf "%-13s%s\\n" " $(echo $((adsWeek+adsWeekAlt)) | human_number)" "ads this week, since last $bfUpdateDay" >>${statsFile}
-			printf "%-13s%s\\n" " $(echo $((adsNew+adsNewAlt)) | human_number)" "new ads, since $adsPrevCount" >>${statsFile}
-			echo "$(echo $((adsWeek+adsWeekAlt)) | human_number)" > /tmp/uidivstatskeystatsblocked.txt
-			keystatsblocked=$(($adsWeek+$adsWeekAlt))
-		else
-			if [ "$excludeIP" = "on" ]; then
-				sed -ri "/$(echo $excludeIPlist | sed 's/ /|/g')/d" /opt/var/log/dnsmasq.log /opt/var/log/dnsmasq.log1 /opt/var/log/dnsmasq.log2
-				kill -USR2 "$(pidof dnsmasq)"
-			fi
-			dnsmasqLog="/opt/var/log/dnsmasq.log /opt/var/log/dnsmasq.log1 /opt/var/log/dnsmasq.log2"
-			printf "%-13s%s\\n" " $(echo $adsBlocked | human_number)" "ads in total blocked" >>${statsFile}
-			printf "%-13s%s\\n" " $(echo $adsWeek | human_number)" "ads this week, since last $bfUpdateDay" >>${statsFile}
-			printf "%-13s%s\\n" " $(echo $adsNew | human_number)" "new ads, since $adsPrevCount" >>${statsFile}
-			echo "$(echo $adsWeek | human_number)" > /tmp/uidivstatskeystatsblocked.txt
-			keystatsblocked=$adsWeek
-		fi
-		
-		WriteStats_ToJS "/tmp/uidivstatskeystatsblocked.txt" "/tmp/uidivstatstext.js" "SetKeyStatsBlocked" "keystatsblocked"
-		
-		[ -d /tmp/uidivstats ] && rm -rf /tmp/uidivstats
-		mkdir /tmp/uidivstats
-		
-		# make copies of files to count on to /tmp
-		/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/whitelist" | awk '{print $1}' > /tmp/uidivstats/div-whitelist
-		/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/blacklist" | awk '{print " "$2}' > /tmp/uidivstats/div-blacklist
-		/opt/bin/grep "^[^#]" "${DIVERSION_DIR}/list/wc_blacklist" | awk '{print $1}' > /tmp/uidivstats/div-wc_blacklist
-		
-		# create local client names lists for name resolution and, if wsFilterLN enabled, for more accurate stats results
-		# from hosts.dnsmasq
-		[ -s /etc/hosts.dnsmasq ] && awk '{print $1}' /etc/hosts.dnsmasq >>/tmp/uidivstats/div-allips.tmp
-		# from dnsmasq.leases
-		[ -s /var/lib/misc/dnsmasq.leases ] && awk '{print $3}' /var/lib/misc/dnsmasq.leases >>/tmp/uidivstats/div-allips.tmp
-		# don't run the clients specific code if none are found
-		if [ -s /tmp/uidivstats/div-allips.tmp ]; then
-			# remove duplicates, sort by last octet
-			cat /tmp/uidivstats/div-allips.tmp | sort -t . -k 4,4n -u > /tmp/uidivstats/div-allips
-			foundClients=1
-		else
-			wsFilterLN=off
-		fi
-		
-		# add reverse router IP
-		echo "$lanIPaddr" | awk -F. '{print "."$3"." $2"."$1}' >>/tmp/uidivstats/div-ipleases
-		
-		# create local client files if any were found
-		if [ "$foundClients" ]; then
-			for i in $(awk '{print $1}' /tmp/uidivstats/div-allips); do
-				if [ -s /etc/hosts.dnsmasq ] && /opt/bin/grep -wq $i /etc/hosts.dnsmasq; then
-					echo "$(awk -v var="$i" -F' ' '$1 == var{print $2}' /etc/hosts.dnsmasq)" >>/tmp/uidivstats/div-hostleases
-					echo "$(awk -v var="$i" -F' ' '$1 == var{print $1, $2}' /etc/hosts.dnsmasq)" >>/tmp/uidivstats/div-iphostleases
-					echo "$(awk -v var="$i" -F' ' '$1 == var{print $1}' /etc/hosts.dnsmasq)" >>/tmp/uidivstats/div-ipleases
-					# add the reverse client IP addresses
-					echo "$i" | awk -F. '{print $4"."$3"." $2"."$1}' >>/tmp/uidivstats/div-ipleases
-				elif /opt/bin/grep -Fq "$i * " /var/lib/misc/dnsmasq.leases; then
-					echo "$i Name-N/A" >>/tmp/uidivstats/div-iphostleases
-					echo "$i" >>/tmp/uidivstats/div-ipleases
-					# add the reverse client IP addresses
-					echo "$i" | awk -F. '{print $4"."$3"." $2"."$1}' >>/tmp/uidivstats/div-ipleases
-				else
-					echo "$(awk -v var="$i" -F' ' '$3 == var{print $4}' /var/lib/misc/dnsmasq.leases)" >>/tmp/uidivstats/div-hostleases
-					echo "$(awk -v var="$i" -F' ' '$3 == var{print $3, $4}' /var/lib/misc/dnsmasq.leases)" >>/tmp/uidivstats/div-iphostleases
-					echo "$(awk -v var="$i" -F' ' '$3 == var{print $3}' /var/lib/misc/dnsmasq.leases)" >>/tmp/uidivstats/div-ipleases
-					# add the reverse client IP addresses
-					echo "$i" | awk -F. '{print $4"."$3"." $2"."$1}' >>/tmp/uidivstats/div-ipleases
-				fi
-			done
-		fi
-		
-		# overwrite with empty files if filtering is off
-		[ "$wsFilterLN" = "off" ] && >/tmp/uidivstats/div-hostleases >/tmp/uidivstats/div-ipleases
-		
-		# write empty backup file if not found for [Client Name*] list
-		[ ! -f "${DIVERSION_DIR}/backup/diversion_stats-iphostleases" ] && > "${DIVERSION_DIR}/backup/diversion_stats-iphostleases"
-		
-		# begin of stats computing
-		printf "\\n The top $wsTopHosts requested domains were:\\n$LINE" >>${statsFile}
-		awk '/query\[AAAA]|query\[A]/ {print $(NF-2)}' $dnsmasqLog |
-		awk '{for(i=1;i<=NF;i++)a[$i]++}END{for(o in a) printf "\n %-6s %-40s""%s %s",a[o],o}' | sort -nr |
-		
-		/opt/bin/grep -viF -f /tmp/uidivstats/div-hostleases | /opt/bin/grep -viF -f /tmp/uidivstats/div-ipleases >>/tmp/uidivstats/div-th-all
-		awk '{$1=$1};1' /tmp/uidivstats/div-th-all  | cut -d ' ' -f1 >>/tmp/uidivstats/div-th-all-count
-		reqdomains=0
-		while IFS='' read -r line || [ -n "$line" ]; do
-			reqdomains=$((reqdomains+line))
-		done < /tmp/uidivstats/div-th-all-count
-		echo "$(echo $reqdomains | human_number)" > /tmp/uidivstatskeystatsreq.txt
-		WriteStats_ToJS "/tmp/uidivstatskeystatsreq.txt" "/tmp/uidivstatstext.js" "SetKeyStatsReq" "keystatstotal"
-		
-		echo "$(echo "$keystatsblocked" "$reqdomains" | awk '{printf "%3.2f\n",$1/$2*100}')%"  > /tmp/uidivstatskeystatsprecent.txt
-		WriteStats_ToJS "/tmp/uidivstatskeystatsprecent.txt" "/tmp/uidivstatstext.js" "SetKeyStatsPercent" "keystatspercent"
-		
-		head -$wsTopHosts /tmp/uidivstats/div-th-all >>/tmp/uidivstats/div-th
-		# show if found in any of these lists
-		for i in $(awk '{print $2}' /tmp/uidivstats/div-th); do
-			i=$(echo $i | sed -e 's/\./\\./g')
-			if /opt/bin/grep -q " $i$\| $i " "${DIVERSION_DIR}/list/blockinglist"; then
-				echo "blocked" >>/tmp/uidivstats/div-bwl
-			elif /opt/bin/grep -q " $i$" /tmp/uidivstats/div-blacklist; then
-				echo "blacklisted" >>/tmp/uidivstats/div-bwl
-			elif /opt/bin/grep -q "$i$" /tmp/uidivstats/div-wc_blacklist; then
-				echo "wc_blacklisted" >>/tmp/uidivstats/div-bwl
-			elif /opt/bin/grep -q "$i$" /tmp/uidivstats/div-whitelist; then
-				echo "whitelisted" >>/tmp/uidivstats/div-bwl
-			else
-				echo >>/tmp/uidivstats/div-bwl
-			fi
+	if [ "$1" = "Total" ]; then
+		for client in $clients; do
+			echo "SELECT '$1' Fieldname, [SrcIP] SrcIP, [ReqDmn] ReqDmn, Count([ReqDmn]) Count FROM $2$5 WHERE ([SrcIP] = '$client') GROUP BY [ReqDmn] ORDER BY COUNT([ReqDmn]) DESC LIMIT 20;" >> "$6"
 		done
-		
-		awk 'NR==FNR{a[FNR]=$0 "";next} {print a[FNR],$0}' /tmp/uidivstats/div-th /tmp/uidivstats/div-bwl >>${statsFile}
-		
-		printf "\\n The top $wsTopHosts blocked ad domains were:\\n$LINE" >>${statsFile}
-		
-		case "$EDITION" in
-			Lite)		awk '/is '$blockingIP'|is 0.0.0.0/ {print $(NF-2)}' $dnsmasqLog |
-						awk '{for(i=1;i<=NF;i++)a[$i]++}END{for(o in a) printf "\n %-6s %-40s""%s %s",a[o],o}' | sort -nr |
-						head -$wsTopHosts >>/tmp/uidivstats/div-tah
-						;;
-			Standard)	if [ "$LANblockingIP" ]; then
-							awk '/is '$lanBIP'|is '$psIP'|is 0.0.0.0/ {print $(NF-2)}' $dnsmasqLog |
-							awk '{for(i=1;i<=NF;i++)a[$i]++}END{for(o in a) printf "\n %-6s %-40s""%s %s",a[o],o}' | sort -nr |
-							head -$wsTopHosts >>/tmp/uidivstats/div-tah
-						else
-							awk '/is '$psIP'|is 0.0.0.0/ {print $(NF-2)}' $dnsmasqLog |
-							awk '{for(i=1;i<=NF;i++)a[$i]++}END{for(o in a) printf "\n %-6s %-40s""%s %s",a[o],o}' | sort -nr |
-							head -$wsTopHosts >>/tmp/uidivstats/div-tah
-						fi
-						;;
-		esac
-		
-		# show if found in any of these lists
-		for i in $(awk '{print $2}' /tmp/uidivstats/div-tah); do
-			i=$(echo $i | sed -e 's/\./\\./g')
-			if /opt/bin/grep -q " $i$\| $i " "${DIVERSION_DIR}/list/blockinglist"; then
-				echo "blocked" >>/tmp/uidivstats/div-bw
-			elif /opt/bin/grep -q " $i$" /tmp/uidivstats/div-blacklist; then
-				echo "blacklisted" >>/tmp/uidivstats/div-bw
-			elif /opt/bin/grep -q "$i$" /tmp/uidivstats/div-wc_blacklist; then
-				echo "wc_blacklisted" >>/tmp/uidivstats/div-bw
-			fi
+	elif [ "$1" = "Blocked" ]; then
+		for client in $clients; do
+			echo "SELECT '$1' Fieldname, [SrcIP] SrcIP, [ReqDmn] ReqDmn, Count([ReqDmn]) Count FROM $2$5 WHERE ([SrcIP] = '$client') AND ([Result] LIKE 'blocked%') GROUP BY [ReqDmn] ORDER BY COUNT([ReqDmn]) DESC LIMIT 20;" >> "$6"
 		done
-		[ ! -f /tmp/uidivstats/div-bw ] && >/tmp/uidivstats/div-bw
-		awk 'NR==FNR{a[FNR]=$0 "";next} {print a[FNR],$0}' /tmp/uidivstats/div-tah /tmp/uidivstats/div-bw >>${statsFile}
-		
-		# compile client stats if any were found
-		if [ "$foundClients" ]; then
-			AL=1 # prevent divide by zero
-			printf "\\n The top $wsTopClients noisiest name clients:\\n$LINE\\n" >>${statsFile}
-			printf " count for IP, client name: count for domain - percentage\\n$LINE" >>${statsFile}
-			awk -F " " '/from '$lanIPaddr'/ {print $NF}' $dnsmasqLog |
-			awk '{for(i=1;i<=NF;i++)a[$i]++}END{for(o in a) printf "\n %-6s %-15s""%s %s",a[o],o}' | sort -nr | head -$wsTopClients >/tmp/uidivstats/div1
-			for i in $(awk '{print $2}' /tmp/uidivstats/div1); do
-				i=$(echo $i | sed -e 's/\./\\./g')
-				/opt/bin/grep -a " query\[A.* from $i$" $dnsmasqLog | awk '{print $(NF-2)}' |
-				awk '{for(i=1;i<=NF;i++)a[$i]++}END{for(o in a) printf "\n %-6s %-40s""%s %s",a[o],o}' | sort -nr |
-				/opt/bin/grep -viF -f /tmp/uidivstats/div-hostleases | /opt/bin/grep -viF -f /tmp/uidivstats/div-ipleases | head -1 >>/tmp/uidivstats/div2
-				CH="$(awk 'END{print $1}' /tmp/uidivstats/div2)"
-				TH="$(awk -v AL="$AL" 'FNR==AL{print $1}' /tmp/uidivstats/div1)"
-				AL=$(( AL + 1))
-				awk -v CH="$CH" -v TH="$TH" 'BEGIN{printf "%-5.2f%s\n", ((CH * 100)/TH), "%"}' >>/tmp/uidivstats/div3
-			done
-			
-			# add client names
-			for i in $(awk '{print $2}' /tmp/uidivstats/div1); do
-				i=$(echo $i | sed -e 's/\./\\./g')
-				if /opt/bin/grep -wq $i /tmp/uidivstats/div-iphostleases; then
-					printf "%-26s\\n" "$(awk -v var="$i" -F' ' '$1 == var{print $2}' /tmp/uidivstats/div-iphostleases):" >>/tmp/uidivstats/div5
-				elif /opt/bin/grep -wq $i "${DIVERSION_DIR}/backup/diversion_stats-iphostleases"; then
-					if [ "$(awk -v var="$i" -F' ' '$1 == var{print $2}' ${DIVERSION_DIR}/backup/diversion_stats-iphostleases)" != "*" ]; then
-						printf "%-26s\\n" "$(awk -v var="$i" -F' ' '$1 == var{print $2}' ${DIVERSION_DIR}/backup/diversion_stats-iphostleases)*:" >>/tmp/uidivstats/div5
-					else
-						printf "%-26s\\n" "Name-N/A*:" >>/tmp/uidivstats/div5
-					fi
-				else
-					printf "%-26s\\n" "Name-N/A:" >>/tmp/uidivstats/div5
-				fi
-			done
-			
-			# show if found in any of these lists
-			for i in $(awk '{print $2}' /tmp/uidivstats/div2); do
-				i=$(echo $i | sed -e 's/\./\\./g')
-				if /opt/bin/grep -q " $i$\| $i " "${DIVERSION_DIR}/list/blockinglist"; then
-					echo "blocked" >>/tmp/uidivstats/div-noisy
-				elif /opt/bin/grep -q " $i$" /tmp/uidivstats/div-blacklist; then
-					echo "blacklisted" >>/tmp/uidivstats/div-noisy
-				elif /opt/bin/grep -q "$i$" /tmp/uidivstats/div-wc_blacklist; then
-					echo "wc_blacklisted" >>/tmp/uidivstats/div-noisy
-				elif /opt/bin/grep -q "$i$" /tmp/uidivstats/div-whitelist; then
-					echo "whitelisted" >>/tmp/uidivstats/div-noisy
-				else
-					echo >>/tmp/uidivstats/div-noisy
-				fi
-			done
-			
-			# assemble the tables and print
-			awk 'NR==FNR{a[FNR]=$0 "-";next} {print a[FNR],$0}' /tmp/uidivstats/div2 /tmp/uidivstats/div3 >/tmp/uidivstats/div4
-			awk 'NR==FNR{a[FNR]=$0 "";next} {print a[FNR],$0}' /tmp/uidivstats/div4 /tmp/uidivstats/div-noisy >/tmp/uidivstats/div7
-			awk 'NR==FNR{a[FNR]=$0 "";next} {print a[FNR],$0}' /tmp/uidivstats/div1 /tmp/uidivstats/div5 >/tmp/uidivstats/div6
-			awk 'NR==FNR{a[FNR]=$0 "";next} {print a[FNR],$0}' /tmp/uidivstats/div6 /tmp/uidivstats/div7 >>${statsFile}
-			
-			printf "\\n\\n Top $wsTopHosts domains for top $wsTopClients clients:\\n$LINE" >>${statsFile}
-			printf "%s\\n" "*    All Clients" >> "$clientsFile"
-			COUNTER=1
-			for i in $(awk '{print $2}' /tmp/uidivstats/div1); do
-				if /opt/bin/grep -wq $i /tmp/uidivstats/div-iphostleases; then
-					printf "\\n $i, $(awk -v var="$i" -F' ' '$1 == var{print $2}' /tmp/uidivstats/div-iphostleases):\\n$LINE" >>${statsFile}
-				elif /opt/bin/grep -wq $i "${DIVERSION_DIR}/backup/diversion_stats-iphostleases"; then
-					if [ "$(awk -v var="$i" -F' ' '$1 == var{print $2}' ${DIVERSION_DIR}/backup/diversion_stats-iphostleases)" != "*" ]; then
-						printf "\\n $i, $(awk -v var="$i" -F' ' '$1 == var{print $2}' ${DIVERSION_DIR}/backup/diversion_stats-iphostleases)*:\\n$LINE" >>${statsFile}
-					else
-						printf "\\n $i, Name-N/A*:\\n$LINE" >>${statsFile}
-					fi
-				else
-					printf "\\n $i, Name-N/A:\\n$LINE" >>${statsFile}
-				fi
-				
-				clientname="$(tail -n 2 "$statsFile" | head -n 1 | sed 's/,/    /g' | sed 's/://g')"
-				printf "%s\\n" "$clientname" >> "$clientsFile"
-				
-				# remove files for next client compiling run
-				rm -f /tmp/uidivstats/div-thtc /tmp/uidivstats/div-toptop /tmp/uidivstats/div-thtc-toptop
-				/opt/bin/grep -aw $i$ $dnsmasqLog | awk '{print $(NF-2)}' |
-				awk '{for(i=1;i<=NF;i++)a[$i]++}END{for(o in a) printf "\n %-6s %-40s""%s %s",a[o],o}' | sort -nr |
-				/opt/bin/grep -viF -f /tmp/uidivstats/div-hostleases | /opt/bin/grep -viF -f /tmp/uidivstats/div-ipleases | head -$wsTopHosts >>/tmp/uidivstats/div-thtc
-				# show if found in any of these lists
-				for i in $(awk '{print $2}' /tmp/uidivstats/div-thtc); do
-					i=$(echo $i | sed -e 's/\./\\./g')
-					if /opt/bin/grep -q " $i$\| $i " "${DIVERSION_DIR}/list/blockinglist"; then
-						echo "blocked" >>/tmp/uidivstats/div-toptop
-					elif /opt/bin/grep -q " $i$" /tmp/uidivstats/div-blacklist; then
-						echo "blacklisted" >>/tmp/uidivstats/div-toptop
-					elif /opt/bin/grep -q "$i$" /tmp/uidivstats/div-wc_blacklist; then
-						echo "wc_blacklisted" >>/tmp/uidivstats/div-toptop
-					elif /opt/bin/grep -q "$i$" /tmp/uidivstats/div-whitelist; then
-						echo "whitelisted" >>/tmp/uidivstats/div-toptop
-					else
-						echo >>/tmp/uidivstats/div-toptop
-					fi
-				done
-				
-				awk 'NR==FNR{a[FNR]=$0 "";next} {print a[FNR],$0}' /tmp/uidivstats/div-thtc /tmp/uidivstats/div-toptop  >>${statsFile}
-				awk 'NR==FNR{a[FNR]=$0 "";next} {print a[FNR],$0}' /tmp/uidivstats/div-thtc /tmp/uidivstats/div-toptop  >>/tmp/uidivstats/div-thtc-toptop
-				WriteData_ToJS /tmp/uidivstats/div-thtc-toptop "/tmp/uidivstats.js" "barDataDomains$COUNTER" "barLabelsDomains$COUNTER" "barLabelsDomainsType$COUNTER"
-				COUNTER=$((COUNTER + 1))
-			done
-			
-			# preserve /tmp/uidivstats/div-iphostleases for next run for [Client Name*] list
-			# remove unknown ip to name resolves, add empty line
-			sed -i '/Name-N/d; $a\' /tmp/uidivstats/div-iphostleases
-			# combine new and backup, sort by ip, remove dupes and empty lines
-			cat /tmp/uidivstats/div-iphostleases "${DIVERSION_DIR}/backup/diversion_stats-iphostleases" > /tmp/uidivstats/div-iphostleases.tmp
-			sed -i '/^\s*$/d' /tmp/uidivstats/div-iphostleases.tmp
-			cat /tmp/uidivstats/div-iphostleases.tmp | sort -t . -k 4,4n -u > "${DIVERSION_DIR}/backup/diversion_stats-iphostleases"
-			printf "\\n" >>${statsFile}
-		else
-			printf "%s\\n" "*    All Clients" >> "$clientsFile"
-			printf "\\n No stats for connected clients were compiled.\\n This router provided no client list.\\n" >>${statsFile}
-		fi
-		
-		printf "$LINE End of stats report\\n" >>${statsFile}
-		
-		WriteData_ToJS /tmp/uidivstats/div-tah "/tmp/uidivstats.js" "barDataBlockedAds" "barLabelsBlockedAds"
-		awk 'NR==FNR{a[FNR]=$0 "";next} {print a[FNR],$0}' /tmp/uidivstats/div-th /tmp/uidivstats/div-bwl >>/tmp/uidivstats/div-th-bwl
-		WriteData_ToJS /tmp/uidivstats/div-th-bwl "/tmp/uidivstats.js" "barDataDomains0" "barLabelsDomains0" "barLabelsDomainsType0"
-		WriteOptions_ToJS "$clientsFile" "/tmp/uidivstatsclients.js"
-		mv "/tmp/uidivstats.js" "$SCRIPT_DIR/uidivstats.js"
-		mv "/tmp/uidivstatsclients.js" "$SCRIPT_DIR/uidivstatsclients.js"
-		
-		printf "$(head -n 2 "$statsFile" | tail -n 1 | sed 's/^ //' | sed 's/Stats/Stats generated on/')" > /tmp/uidivtitle.txt
-		WriteStats_ToJS "/tmp/uidivtitle.txt" "/tmp/uidivstatstext.js" "SetDivStatsTitle" "statstitle"
-		
-		echo "Top $wsTopHosts blocked domains (click to expand/collapse)" > /tmp/uidivtitle2.txt
-		echo "Top $wsTopHosts requested domains (click to expand/collapse)" > /tmp/uidivtitle3.txt
-		
-		WriteStats_ToJS "/tmp/uidivtitle2.txt" "/tmp/uidivstatstext.js" "SetTopBlockedTitle" "topblocked"
-		WriteStats_ToJS "/tmp/uidivtitle3.txt" "/tmp/uidivstatstext.js" "SetTopRequestedTitle" "toprequested"
-		
-		mv "/tmp/uidivstatstext.js" "$SCRIPT_DIR/uidivstatstext.js"
-		cp "$statsFile" "$SCRIPT_DIR/uidivstats.txt"
-		
-		psstatsFile="$SCRIPT_DIR/psstats.htm"
-		
-		if [ "$EDITION" = "Standard" ]; then
-			if [ "$LANblockingIP" ] && [ "$LANblockingIP" = on ]; then
-				/usr/sbin/curl -fs --retry 3 --connect-timeout 15 "http://$lanBIP/servstats" -o "$psstatsFile"
-			else
-				/usr/sbin/curl -fs --retry 3 --connect-timeout 15 "http://$psIP/servstats" -o "$psstatsFile"
-			fi
-		else
-			echo "Pixelserv not installed" > "$psstatsFile"
-		fi
-		
-		rm -f "$statsFile"
-		rm -f "$clientsFile"
-		rm -f "/tmp/uidivstats.js"
-		rm -f "/tmp/uidivstatsclients.js"
-		rm -f "/tmp/uidivstatstext.js"
-		rm -f /tmp/uidiv*.txt
-		rm -rf /tmp/uidivstats
-		
-		Print_Output "true" "Diversion statistic generation completed successfully!" "$PASS"
+	fi
+}
+
+#$1 fieldname $2 tablename $3 frequency (hours) $4 length (days) $5 outputfile $6 outputfrequency $7 sqlfile $8 timestamp
+Write_Time_Sql_ToFile(){
+	timenow="$8"
+	multiplier="$(echo "$3" | awk '{printf (60*60*$1)}')"
+	
+	{
+		echo ".mode csv"
+		echo ".headers off"
+		echo ".output $5$6""time.htm"
+	} > "$7"
+	
+	if [ "$1" = "Total" ]; then
+		echo "SELECT '$1' Fieldname, [Timestamp] Time, COUNT([QueryID]) QueryCount FROM $2$6 GROUP BY ([Timestamp]/($multiplier));" >> "$7"
+	elif [ "$1" = "Blocked" ]; then
+		echo "SELECT '$1' Fieldname, [Timestamp] Time, COUNT([QueryID]) QueryCount FROM $2$6 WHERE ([Result] LIKE 'blocked%') GROUP BY ([Timestamp]/($multiplier));" >> "$7"
+	fi
+}
+
+Write_KeyStats_Sql_ToFile(){
+	timenow="$6"
+	
+	{
+		echo ".headers off"
+		echo ".output /tmp/queries$1$3"
+	} > "$5"
+	
+	if [ "$1" = "Total" ]; then
+		echo "SELECT COUNT(QueryID) QueryCount FROM [$2$3] WHERE [Timestamp] >= ($timenow - (86400*$4)) AND ([Timestamp] <= $timenow);" >> "$5"
+	elif [ "$1" = "Blocked" ]; then
+		echo "SELECT COUNT(QueryID) QueryCount FROM [$2$3] WHERE [Timestamp] >= ($timenow - (86400*$4)) AND ([Timestamp] <= $timenow) AND [Result] LIKE 'blocked%';" >> "$5"
+	fi
+}
+
+Generate_NG(){
+	TZ=$(cat /etc/TZ)
+	export TZ
+	
+	timenow=$(date +"%s")
+	timenowfriendly=$(date +"%c")
+	
+	rm -f /tmp/uidivstats.sql
+	
+	if [ -n "$1" ] && [ "$1" = "fullrefresh" ]; then
+		Write_View_Sql_ToFile "dnsqueries" "daily" 1 "/tmp/uidivstats.sql" "$timenow" "drop"
+		Write_View_Sql_ToFile "dnsqueries" "weekly" 7 "/tmp/uidivstats.sql" "$timenow" "drop"
+		Write_View_Sql_ToFile "dnsqueries" "monthly" 30 "/tmp/uidivstats.sql" "$timenow" "drop"
+		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+			sleep 1
+		done
+		rm -f /tmp/uidivstats.sql
+	fi
+	
+	Write_View_Sql_ToFile "dnsqueries" "daily" 1 "/tmp/uidivstats.sql" "$timenow" "create"
+	Write_View_Sql_ToFile "dnsqueries" "weekly" 7 "/tmp/uidivstats.sql" "$timenow" "create"
+	Write_View_Sql_ToFile "dnsqueries" "monthly" 30 "/tmp/uidivstats.sql" "$timenow" "create"
+	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+		sleep 1
+	done
+	rm -f /tmp/uidivstats.sql
+	
+	Generate_Count_Blocklist_Domains
+	
+	if [ -n "$1" ] && [ "$1" = "fullrefresh" ]; then
+		Generate_KeyStats "$timenow" "fullrefresh"
+		Generate_Stats_From_SQLite "$timenow" "fullrefresh"
 	else
-		Print_Output "true" "Diversion configuration not found or empty dnsmasq.log file, exiting!" "$ERR"
+		Generate_KeyStats "$timenow"
+		Generate_Stats_From_SQLite "$timenow"
+	fi
+	
+	echo "Stats last updated: $timenowfriendly" > "/tmp/uidivstatstitle.txt"
+	WriteStats_ToJS "/tmp/uidivstatstitle.txt" "$SCRIPT_DIR/SQLData.js" "SetuiDivStatsTitle" "statstitle"
+	Print_Output "false" "Stats updated successfully" "$PASS"
+	rm -f "/tmpuidivstatstitle.txt"
+}
+
+Generate_Query_Log(){
+	{
+		echo ".mode csv"
+		echo ".headers off"
+		echo ".separator '|'"
+		echo ".output $CSV_OUTPUT_DIR/SQLQueryLog.htm"
+		echo "SELECT [Timestamp] Time, [ReqDmn] ReqDmn, [SrcIP] SrcIP, [QryType] QryType, [Result] Result FROM [dnsqueries] ORDER BY [Timestamp] DESC LIMIT 5000;"
+	} > /tmp/uidivstats-query.sql
+	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-query.sql >/dev/null 2>&1; do
+		sleep 1
+	done
+	rm -f /tmp/uidivstats-query.sql
+}
+
+Generate_KeyStats(){
+	timenow="$1"
+	
+	#daily
+	Write_KeyStats_Sql_ToFile "Total" "dnsqueries" "daily" 1 "/tmp/uidivstats.sql" "$timenow"
+	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+		sleep 1
+	done
+	
+	Write_KeyStats_Sql_ToFile "Blocked" "dnsqueries" "daily" 1 "/tmp/uidivstats.sql" "$timenow"
+	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+		sleep 1
+	done
+	
+	queriesTotaldaily="$(cat "/tmp/queriesTotaldaily")"
+	queriesBlockeddaily="$(cat "/tmp/queriesBlockeddaily")"
+	if ! Validate_Number "" "$queriesBlockeddaily" "silent"; then queriesBlockeddaily=0; fi
+	queriesPercentagedaily="$(echo "$queriesBlockeddaily" "$queriesTotaldaily" | awk '{printf "%3.2f\n",$1/$2*100}')"
+	
+	WritePlainData_ToJS "$SCRIPT_DIR/SQLData.js" "QueriesTotaldaily,$queriesTotaldaily" "QueriesBlockeddaily,$queriesBlockeddaily" "BlockedPercentagedaily,$queriesPercentagedaily"
+	
+	#weekly
+	if [ -n "$2" ] && [ "$2" = "fullrefresh" ]; then
+		Write_KeyStats_Sql_ToFile "Total" "dnsqueries" "weekly" 7 "/tmp/uidivstats.sql" "$timenow"
+		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+			sleep 1
+		done
+		
+		Write_KeyStats_Sql_ToFile "Blocked" "dnsqueries" "weekly" 7 "/tmp/uidivstats.sql" "$timenow"
+		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+			sleep 1
+		done
+		
+		queriesTotalweekly="$(cat "/tmp/queriesTotalweekly")"
+		queriesBlockedweekly="$(cat "/tmp/queriesBlockedweekly")"
+		if ! Validate_Number "" "$queriesBlockedweekly" "silent"; then queriesBlockedweekly=0; fi
+		queriesPercentageweekly="$(echo "$queriesBlockedweekly" "$queriesTotalweekly" | awk '{printf "%3.2f\n",$1/$2*100}')"
+		
+		WritePlainData_ToJS "$SCRIPT_DIR/SQLData.js" "QueriesTotalweekly,$queriesTotalweekly" "QueriesBlockedweekly,$queriesBlockedweekly" "BlockedPercentageweekly,$queriesPercentageweekly"
+	fi
+
+	#monthly
+	if [ -n "$2" ] && [ "$2" = "fullrefresh" ]; then
+		Write_KeyStats_Sql_ToFile "Total" "dnsqueries" "monthly" 30 "/tmp/uidivstats.sql" "$timenow"
+		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+			sleep 1
+		done
+		
+		Write_KeyStats_Sql_ToFile "Blocked" "dnsqueries" "monthly" 30 "/tmp/uidivstats.sql" "$timenow"
+		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+			sleep 1
+		done
+		
+		queriesTotalmonthly="$(cat "/tmp/queriesTotalmonthly")"
+		queriesBlockedmonthly="$(cat "/tmp/queriesBlockedmonthly")"
+		if ! Validate_Number "" "$queriesBlockedmonthly" "silent"; then queriesBlockedmonthly=0; fi
+		queriesPercentagemonthly="$(echo "$queriesBlockedmonthly" "$queriesTotalmonthly" | awk '{printf "%3.2f\n",$1/$2*100}')"
+		
+		WritePlainData_ToJS "$SCRIPT_DIR/SQLData.js" "QueriesTotalmonthly,$queriesTotalmonthly" "QueriesBlockedmonthly,$queriesBlockedmonthly" "BlockedPercentagemonthly,$queriesPercentagemonthly"
+	fi
+	
+	rm -f /tmp/queriesTotal*
+	rm -f /tmp/queriesBlocked*
+}
+
+Generate_Count_Blocklist_Domains(){
+	blockinglistfile="$DIVERSION_DIR/list/blockinglist"
+	blacklistfile="$DIVERSION_DIR/list/blacklist"
+	blacklistwcfile="$DIVERSION_DIR/list/wc_blacklist"
+	
+	BLL="$(($(/opt/bin/grep "^[^#]" "$blockinglistfile" | wc -w)-$(/opt/bin/grep "^[^#]" "$blockinglistfile" | wc -l)))"
+	[ "$(nvram get ipv6_service)" != "disabled" ] && BLL="$((BLL/2))"
+	BL="$(/opt/bin/grep "^[^#]" "$blacklistfile" | wc -l)"
+	[ "$(nvram get ipv6_service)" != "disabled" ] && BL="$((BL/2))"
+	WCBL="$(/opt/bin/grep "^[^#]" "$blacklistwcfile" | wc -l)"
+	blocklistdomains="$((BLL+BL+WCBL))"
+	if ! Validate_Number "" "$blocklistdomains" "silent"; then blocklistdomains=0; fi
+	WritePlainData_ToJS "$SCRIPT_DIR/SQLData.js" "BlockedDomains,$blocklistdomains"
+}
+
+Generate_Stats_From_SQLite(){
+	timenow="$1"
+	
+	metriclist="Total Blocked"
+	
+	for metric in $metriclist; do
+		
+		#daily
+		Write_Time_Sql_ToFile "$metric" "dnsqueries" 0.25 1 "$CSV_OUTPUT_DIR/$metric" "daily" "/tmp/uidivstats.sql" "$timenow"
+		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+			sleep 1
+		done
+		
+		Write_Count_Sql_ToFile "$metric" "dnsqueries" 1 "$CSV_OUTPUT_DIR/$metric" "daily" "/tmp/uidivstats.sql" "$timenow"
+		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+			sleep 1
+		done
+		
+		Write_Count_PerClient_Sql_ToFile "$metric" "dnsqueries" 1 "$CSV_OUTPUT_DIR/$metric" "daily" "/tmp/uidivstats.sql" "$timenow"
+		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+			sleep 1
+		done
+		sed -i '1i Fieldname,SrcIP,ReqDmn,Count' "$CSV_OUTPUT_DIR/$metric""dailyclients.htm"
+		
+		cat "$CSV_OUTPUT_DIR/Totaldailytime.htm" "$CSV_OUTPUT_DIR/Blockeddailytime.htm" > "$CSV_OUTPUT_DIR/TotalBlockeddailytime.htm" 2> /dev/null
+		sed -i '1i Fieldname,Time,QueryCount' "$CSV_OUTPUT_DIR/TotalBlockeddailytime.htm"
+		
+		#weekly
+		if [ -n "$2" ] && [ "$2" = "fullrefresh" ]; then
+			Write_Time_Sql_ToFile "$metric" "dnsqueries" 1 7 "$CSV_OUTPUT_DIR/$metric" "weekly" "/tmp/uidivstats.sql" "$timenow"
+			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+				sleep 1
+			done
+			
+			Write_Count_Sql_ToFile "$metric" "dnsqueries" 7 "$CSV_OUTPUT_DIR/$metric" "weekly" "/tmp/uidivstats.sql" "$timenow"
+			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+				sleep 1
+			done
+			
+			Write_Count_PerClient_Sql_ToFile "$metric" "dnsqueries" 7 "$CSV_OUTPUT_DIR/$metric" "weekly" "/tmp/uidivstats.sql" "$timenow"
+			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+				sleep 1
+			done
+			sed -i '1i Fieldname,SrcIP,ReqDmn,Count' "$CSV_OUTPUT_DIR/$metric""weeklyclients.htm"
+			
+			cat "$CSV_OUTPUT_DIR/Totalweeklytime.htm" "$CSV_OUTPUT_DIR/Blockedweeklytime.htm" > "$CSV_OUTPUT_DIR/TotalBlockedweeklytime.htm" 2> /dev/null
+			sed -i '1i Fieldname,Time,QueryCount' "$CSV_OUTPUT_DIR/TotalBlockedweeklytime.htm"
+		fi
+		
+		#monthly
+		if [ -n "$2" ] && [ "$2" = "fullrefresh" ]; then
+			Write_Time_Sql_ToFile "$metric" "dnsqueries" 3 30 "$CSV_OUTPUT_DIR/$metric" "monthly" "/tmp/uidivstats.sql" "$timenow"
+			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+				sleep 1
+			done
+					
+			Write_Count_Sql_ToFile "$metric" "dnsqueries" 30 "$CSV_OUTPUT_DIR/$metric" "monthly" "/tmp/uidivstats.sql" "$timenow"
+			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+				sleep 1
+			done
+			
+			Write_Count_PerClient_Sql_ToFile "$metric" "dnsqueries" 30 "$CSV_OUTPUT_DIR/$metric" "monthly" "/tmp/uidivstats.sql" "$timenow"
+			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+				sleep 1
+			done
+			sed -i '1i Fieldname,SrcIP,ReqDmn,Count' "$CSV_OUTPUT_DIR/$metric""monthlyclients.htm"
+			
+			cat "$CSV_OUTPUT_DIR/Totalmonthlytime.htm" "$CSV_OUTPUT_DIR/Blockedmonthlytime.htm" > "$CSV_OUTPUT_DIR/TotalBlockedmonthlytime.htm" 2> /dev/null
+			sed -i '1i Fieldname,Time,QueryCount' "$CSV_OUTPUT_DIR/TotalBlockedmonthlytime.htm"
+		fi
+	done
+	
+	rm -f /tmp/uidivstats.sql
+	Write_View_Sql_ToFile "dnsqueries" "daily" 1 "/tmp/uidivstats.sql" "$timenow" "drop"
+	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+		sleep 1
+	done
+	rm -f /tmp/uidivstats.sql
+}
+
+Trim_DNS_DB(){
+	TZ=$(cat /etc/TZ)
+	export TZ
+	timenow=$(date +"%s")
+	
+	{
+		echo "DELETE FROM [dnsqueries] WHERE [Timestamp] < ($timenow - (86400*30));"
+	} > /tmp/uidivstats-trim.sql
+	
+	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-trim.sql >/dev/null 2>&1; do
+		sleep 1
+	done
+	rm -f /tmp/uidivstats-trim.sql
+	
+	Write_View_Sql_ToFile "dnsqueries" "weekly" 7 "/tmp/uidivstats-trim.sql" "$timenow" "drop"
+	Write_View_Sql_ToFile "dnsqueries" "monthly" 30 "/tmp/uidivstats-trim.sql" "$timenow" "drop"
+	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-trim.sql >/dev/null 2>&1; do
+		sleep 1
+	done
+	rm -f /tmp/uidivstats-trim.sql
+}
+
+Process_Upgrade(){
+	if [ ! -f "$SCRIPT_DIR/.upgraded" ] && [ ! -f "$SCRIPT_DIR/.upgraded2" ]; then
+		opkg update
+		opkg install grep
+		opkg install sqlite3-cli
+		opkg install procps-ng-pkill
+		Update_File "taildns.tar.gz"
+		/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
+		Auto_Cron delete 2>/dev/null
+		{
+			echo "PRAGMA journal_mode=WAL;"
+			echo "CREATE TABLE IF NOT EXISTS [dnsqueries] ([QueryID] INTEGER PRIMARY KEY NOT NULL, [Timestamp] NUMERIC NOT NULL, [SrcIP] TEXT NOT NULL,[ReqDmn] TEXT NOT NULL,[QryType] Text NOT NULL,[Result] Text NOT NULL);"
+			echo "create index idx_dns_domains on dnsqueries (ReqDmn,Timestamp);"
+			echo "create index idx_dns_time on dnsqueries (Timestamp,ReqDmn);"
+			echo "create index idx_dns_clients on dnsqueries (SrcIP,Timestamp,ReqDmn);"
+		}  > /tmp/uidivstats.sql
+		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+			sleep 1
+		done
+		rm -f /tmp/uidivstats.sql
+		Auto_Cron create 2>/dev/null
+		/opt/etc/init.d/S90taildns start >/dev/null 2>&1
+		touch "$SCRIPT_DIR/.upgraded"
+		touch "$SCRIPT_DIR/.upgraded2"
+		Menu_GenerateStats "fullrefresh"
+	elif [ ! -f "$SCRIPT_DIR/.upgraded2" ]; then
+		/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
+		Auto_Cron delete 2>/dev/null
+		echo "drop index idx_dns;" > /tmp/uidivstats.sql
+		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+			sleep 1
+		done
+		echo "drop index idx_dns_clients;" > /tmp/uidivstats.sql
+		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+			sleep 1
+		done
+		echo "create index idx_dns_domains on dnsqueries (ReqDmn,Timestamp);" > /tmp/uidivstats.sql
+		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+			sleep 1
+		done
+		echo "create index idx_dns_time on dnsqueries (Timestamp,ReqDmn);" > /tmp/uidivstats.sql
+		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+			sleep 1
+		done
+		echo "create index idx_dns_clients on dnsqueries (SrcIP,Timestamp,ReqDmn);" > /tmp/uidivstats.sql
+		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+			sleep 1
+		done
+		rm -f /tmp/uidivstats.sql
+		Auto_Cron create 2>/dev/null
+		/opt/etc/init.d/S90taildns start >/dev/null 2>&1
+		touch "$SCRIPT_DIR/.upgraded2"
+		Menu_GenerateStats "fullrefresh"
 	fi
 }
 
@@ -958,7 +923,9 @@ ScriptHeader(){
 }
 
 MainMenu(){
-	printf "1.    Generate Diversion Statistics now\\n\\n"
+	printf "1.    Update Diversion Statistics (daily only)\\n\\n"
+	printf "2.    Update Diversion Statistics (daily, weekly and monthly)\\n"
+	printf "      WARNING: THIS WILL TAKE A WHILE\\n\\n"
 	printf "u.    Check for updates\\n"
 	printf "uf.   Update %s with latest version (force update)\\n\\n" "$SCRIPT_NAME"
 	printf "e.    Exit %s\\n\\n" "$SCRIPT_NAME"
@@ -975,6 +942,14 @@ MainMenu(){
 				printf "\\n"
 				if Check_Lock "menu"; then
 					Menu_GenerateStats
+				fi
+				PressEnter
+				break
+			;;
+			2)
+				printf "\\n"
+				if Check_Lock "menu"; then
+					Menu_GenerateStats "fullrefresh"
 				fi
 				PressEnter
 				break
@@ -1065,6 +1040,8 @@ Check_Requirements(){
 	if [ "$CHECKSFAILED" = "false" ]; then
 		opkg update
 		opkg install grep
+		opkg install sqlite3-cli
+		opkg install procps-ng-pkill
 		return 0
 	else
 		return 1
@@ -1090,12 +1067,15 @@ Menu_Install(){
 	
 	Update_File "uidivstats_www.asp"
 	Update_File "shared-jy.tar.gz"
+	Update_File "taildns.tar.gz"
 	
 	Auto_Startup create 2>/dev/null
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
 	Shortcut_script create
-	Menu_GenerateStats
+	
+	Process_Upgrade
+	/opt/etc/init.d/S90taildns start >/dev/null 2>&1
 	
 	Clear_Lock
 }
@@ -1113,7 +1093,7 @@ Menu_Startup(){
 
 Menu_GenerateStats(){
 	if /opt/bin/grep -q 'log-facility=/opt/var/log/dnsmasq.log' /etc/dnsmasq.conf; then
-		Generate_Stats_Diversion
+		Generate_NG "$1"
 	else
 		Print_Output "true" "Diversion logging not enabled!" "$ERR"
 		Print_Output "true" "Open Diversion and use option l to enable logging" ""
@@ -1139,31 +1119,84 @@ Menu_Uninstall(){
 	
 	Shortcut_script delete
 	
-	if Firmware_Version_Check "webui" ; then
-		Get_WebUI_Page "$SCRIPT_DIR/uidivstats_www.asp"
-		if [ -n "$MyPage" ] && [ "$MyPage" != "none" ] && [ -f "/tmp/menuTree.js" ]; then
-			sed -i "\\~$MyPage~d" /tmp/menuTree.js
-			umount /www/require/modules/menuTree.js
-			mount -o bind /tmp/menuTree.js /www/require/modules/menuTree.js
-			rm -rf "{$SCRIPT_WEBPAGE_DIR:?}/$MyPage"
-		fi
-	else
-		umount /www/Advanced_MultiSubnet_Content.asp 2>/dev/null
-		sed -i '/{url: "Advanced_MultiSubnet_Content.asp", tabName: "Diversion Statistics"}/d' "/jffs/scripts/custom_menuTree.js"
-		umount /www/require/modules/menuTree.js 2>/dev/null
-		
-		if [ ! -f "/jffs/scripts/ntpmerlin" ] && [ ! -f "/jffs/scripts/spdmerlin" ] && [ ! -f "/jffs/scripts/connmon" ]; then
-			rm -f "$SHARED_DIR/custom_menuTree.js" 2>/dev/null
-		else
-			mount -o bind "$SHARED_DIR/custom_menuTree.js" "/www/require/modules/menuTree.js"
-		fi
+	Get_WebUI_Page "$SCRIPT_DIR/uidivstats_www.asp"
+	if [ -n "$MyPage" ] && [ "$MyPage" != "none" ] && [ -f "/tmp/menuTree.js" ]; then
+		sed -i "\\~$MyPage~d" /tmp/menuTree.js
+		umount /www/require/modules/menuTree.js
+		mount -o bind /tmp/menuTree.js /www/require/modules/menuTree.js
+		rm -rf "{$SCRIPT_WEBPAGE_DIR:?}/$MyPage"
 	fi
 	rm -f "$SCRIPT_DIR/uidivstats_www.asp" 2>/dev/null
 	rm -rf "$SCRIPT_WEB_DIR" 2>/dev/null
+	
+	/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
+	rm -f "/opt/etc/init.d/S90taildns" 2>/dev/null
+	rm -rf "$SCRIPT_DIR/taildns.d" 2>/dev/null
+	
+	rm -rf "$SCRIPT_DIR" 2>/dev/null
+	
 	rm -f "/jffs/scripts/$SCRIPT_NAME" 2>/dev/null
 	Clear_Lock
 	Print_Output "true" "Uninstall completed" "$PASS"
 }
+
+NTP_Ready(){
+	if [ "$1" = "service_event" ]; then
+		if [ -n "$2" ] && [ "$(echo "$3" | grep -c "$SCRIPT_NAME")" -eq 0 ]; then
+			exit 0
+		fi
+	fi
+	if [ "$(nvram get ntp_ready)" = "0" ]; then
+		ntpwaitcount="0"
+		Check_Lock
+		while [ "$(nvram get ntp_ready)" = "0" ] && [ "$ntpwaitcount" -lt "300" ]; do
+			ntpwaitcount="$((ntpwaitcount + 1))"
+			if [ "$ntpwaitcount" = "60" ]; then
+				Print_Output "true" "Waiting for NTP to sync..." "$WARN"
+			fi
+			sleep 1
+		done
+		if [ "$ntpwaitcount" -ge "300" ]; then
+			Print_Output "true" "NTP failed to sync after 5 minutes. Please resolve!" "$CRIT"
+			Clear_Lock
+			exit 1
+		else
+			Print_Output "true" "NTP synced, $SCRIPT_NAME will now continue" "$PASS"
+			Clear_Lock
+		fi
+	fi
+}
+
+### function based on @Adamm00's Skynet USB wait function ###
+Entware_Ready(){
+	if [ "$1" = "service_event" ]; then
+		if [ -n "$2" ] && [ "$(echo "$3" | grep -c "$SCRIPT_NAME")" -eq 0 ]; then
+			exit 0
+		fi
+	fi
+	
+	if [ ! -f "/opt/bin/opkg" ] && ! echo "$@" | grep -wqE "(install|uninstall|update|forceupdate)"; then
+		Check_Lock
+		sleepcount=1
+		while [ ! -f "/opt/bin/opkg" ] && [ "$sleepcount" -le 10 ]; do
+			Print_Output "true" "Entware not found, sleeping for 10s (attempt $sleepcount of 10)" "$ERR"
+			sleepcount="$((sleepcount + 1))"
+			sleep 10
+		done
+		if [ ! -f "/opt/bin/opkg" ]; then
+			Print_Output "true" "Entware not found and is required for $SCRIPT_NAME to run, please resolve" "$CRIT"
+			Clear_Lock
+			exit 1
+		else
+			Print_Output "true" "Entware found, $SCRIPT_NAME will now continue" "$PASS"
+			Clear_Lock
+		fi
+	fi
+}
+### ###
+
+NTP_Ready "$@"
+Entware_Ready "$@"
 
 if [ -z "$1" ]; then
 	Create_Dirs
@@ -1172,6 +1205,7 @@ if [ -z "$1" ]; then
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
 	Shortcut_script create
+	Process_Upgrade
 	ScriptHeader
 	MainMenu
 	exit 0
@@ -1185,17 +1219,47 @@ case "$1" in
 	;;
 	startup)
 		Check_Lock
+		sleep 4
 		Menu_Startup
 		exit 0
 	;;
 	generate)
-		if [ -z "$2" ] && [ -z "$3" ]; then
+		Check_Lock
+		Menu_GenerateStats
+		exit 0
+	;;
+	service_event)
+		if [ "$2" = "start" ] && [ "$3" = "$SCRIPT_NAME" ]; then
 			Check_Lock
 			Menu_GenerateStats
-		elif [ "$2" = "start" ] && [ "$3" = "$SCRIPT_NAME" ]; then
+			exit 0
+		elif [ "$2" = "start" ] && [ "$3" = "$SCRIPT_NAME""checkupdate" ]; then
 			Check_Lock
-			Menu_GenerateStats
+			updatecheckresult="$(Update_Check)"
+			Clear_Lock
+			exit 0
+		elif [ "$2" = "start" ] && [ "$3" = "$SCRIPT_NAME""doupdate" ]; then
+			Check_Lock
+			Update_Version "force" "unattended"
+			Clear_Lock
+			exit 0
 		fi
+		exit 0
+	;;
+	fullrefresh)
+		Check_Lock
+		Menu_GenerateStats "fullrefresh"
+		exit 0
+	;;
+	querylog)
+		Generate_Query_Log
+		exit 0
+	;;
+	trimdb)
+		Trim_DNS_DB
+		Check_Lock
+		Menu_GenerateStats "fullrefresh"
+		Clear_Lock
 		exit 0
 	;;
 	develop)
@@ -1215,11 +1279,32 @@ case "$1" in
 	update)
 		Check_Lock
 		Menu_Update
+		Update_Version "unattended"
+		Clear_Lock
 		exit 0
 	;;
 	forceupdate)
 		Check_Lock
 		Menu_ForceUpdate
+		Update_Version "force" "unattended"
+		Clear_Lock
+		exit 0
+	;;
+	setversion)
+		Check_Lock
+		Set_Version_Custom_Settings "local"
+		Set_Version_Custom_Settings "server" "$SCRIPT_VERSION"
+		Clear_Lock
+		if [ -z "$2" ]; then
+			exec "$0"
+		fi
+		exit 0
+	;;
+	checkupdate)
+		Check_Lock
+		#shellcheck disable=SC2034
+		updatecheckresult="$(Update_Check)"
+		Clear_Lock
 		exit 0
 	;;
 	uninstall)
