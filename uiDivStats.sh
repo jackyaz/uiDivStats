@@ -418,6 +418,39 @@ Auto_Cron(){
 	esac
 }
 
+Auto_DNSMASQ_Postconf(){
+	case $1 in
+		create)
+			if [ -f /jffs/scripts/dnsmasq.postconf ]; then
+				STARTUPLINECOUNT=$(grep -c '# '"$SCRIPT_NAME" /jffs/scripts/dnsmasq.postconf)
+				STARTUPLINECOUNTEX=$(grep -cx "/jffs/scripts/$SCRIPT_NAME dnsmasq &"' # '"$SCRIPT_NAME" /jffs/scripts/dnsmasq.postconf)
+				
+				if [ "$STARTUPLINECOUNT" -gt 1 ] || { [ "$STARTUPLINECOUNTEX" -eq 0 ] && [ "$STARTUPLINECOUNT" -gt 0 ]; }; then
+					sed -i -e '/# '"$SCRIPT_NAME"'/d' /jffs/scripts/dnsmasq.postconf
+				fi
+				
+				if [ "$STARTUPLINECOUNTEX" -eq 0 ]; then
+					echo "/jffs/scripts/$SCRIPT_NAME dnsmasq &"' # '"$SCRIPT_NAME" >> /jffs/scripts/dnsmasq.postconf
+				fi
+			else
+				echo "#!/bin/sh" > /jffs/scripts/dnsmasq.postconf
+				echo "" >> /jffs/scripts/dnsmasq.postconf
+				echo "/jffs/scripts/$SCRIPT_NAME dnsmasq &"' # '"$SCRIPT_NAME" >> /jffs/scripts/dnsmasq.postconf
+				chmod 0755 /jffs/scripts/dnsmasq.postconf
+			fi
+		;;
+		delete)
+			if [ -f /jffs/scripts/dnsmasq.postconf ]; then
+				STARTUPLINECOUNT=$(grep -c '# '"$SCRIPT_NAME" /jffs/scripts/dnsmasq.postconf)
+				
+				if [ "$STARTUPLINECOUNT" -gt 0 ]; then
+					sed -i -e '/# '"$SCRIPT_NAME"'/d' /jffs/scripts/dnsmasq.postconf
+				fi
+			fi
+		;;
+	esac
+}
+
 Download_File(){
 	/usr/sbin/curl -fsL --retry 3 "$1" -o "$2"
 }
@@ -1072,6 +1105,7 @@ Menu_Install(){
 	Update_File "taildns.tar.gz"
 	
 	Auto_Startup create 2>/dev/null
+	Auto_DNSMASQ_Postconf create 2>/dev/null
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
 	Shortcut_script create
@@ -1084,6 +1118,7 @@ Menu_Install(){
 
 Menu_Startup(){
 	Auto_Startup create 2>/dev/null
+	Auto_DNSMASQ_Postconf create 2>/dev/null
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
 	Shortcut_script create
@@ -1116,6 +1151,7 @@ Menu_ForceUpdate(){
 Menu_Uninstall(){
 	Print_Output "true" "Removing $SCRIPT_NAME..." "$PASS"
 	Auto_Startup delete 2>/dev/null
+	Auto_DNSMASQ_Postconf delete 2>/dev/null
 	Auto_Cron delete 2>/dev/null
 	Auto_ServiceEvent delete 2>/dev/null
 	
@@ -1204,6 +1240,7 @@ if [ -z "$1" ]; then
 	Create_Dirs
 	Create_Symlinks
 	Auto_Startup create 2>/dev/null
+	Auto_DNSMASQ_Postconf create 2>/dev/null
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
 	Shortcut_script create
@@ -1245,17 +1282,14 @@ case "$1" in
 			Update_Version "force" "unattended"
 			Clear_Lock
 			exit 0
-		elif [ "$3" = "dnsmasq" ]; then
-			if [ "$2" = "start" ] || [ "$2" = "restart" ]; then
-				sleep 1
-				/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
-				sleep 1
-				/opt/etc/init.d/S90taildns start >/dev/null 2>&1
-			elif [ "$2" = "start" ] || [ "$2" = "restart" ]; then
-				/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
-			fi
-			exit 0
 		fi
+		exit 0
+	;;
+	dnsmasq)
+		Print_Output "true" "dnsmasq has restarted, restarting taildns" "$PASS"
+		/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
+		sleep 5
+		/opt/etc/init.d/S90taildns start >/dev/null 2>&1
 		exit 0
 	;;
 	fullrefresh)
