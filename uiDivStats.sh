@@ -837,17 +837,12 @@ Process_Upgrade(){
 		
 		Print_Output "true" "Creating database table indexes..." "$PASS"
 		echo "create index idx_dns_domains on dnsqueries (ReqDmn,Timestamp);" > /tmp/uidivstats-upgrade.sql
-		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
-			sleep 1
-		done
+		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
 		echo "create index idx_dns_time on dnsqueries (Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
-		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
-			sleep 1
-		done
+		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
 		echo "create index idx_dns_clients on dnsqueries (SrcIP,Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
-		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
-			sleep 1
-		done
+		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
+		
 		rm -f /tmp/uidivstats-upgrade.sql
 		Print_Output "true" "Database ready, starting services..." "$PASS"
 		Auto_Cron create 2>/dev/null
@@ -859,29 +854,22 @@ Process_Upgrade(){
 	elif [ ! -f "$SCRIPT_DIR/.upgraded2" ]; then
 		/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
 		Auto_Cron delete 2>/dev/null
+		
 		Print_Output "true" "Deleting older database table indexes..." "$PASS"
 		echo "drop index idx_dns;" > /tmp/uidivstats-upgrade.sql
-		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
-			sleep 1
-		done
+		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
 		echo "drop index idx_dns_clients;" > /tmp/uidivstats-upgrade.sql
-		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
-			sleep 1
-		done
+		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
+		
 		Print_Output "true" "Creating new database table indexes..." "$PASS"
 		echo "create index idx_dns_domains on dnsqueries (ReqDmn,Timestamp);" > /tmp/uidivstats-upgrade.sql
-		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
-			sleep 1
-		done
+		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
 		echo "create index idx_dns_time on dnsqueries (Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
-		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
-			sleep 1
-		done
+		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
 		echo "create index idx_dns_clients on dnsqueries (SrcIP,Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
-		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
-			sleep 1
-		done
+		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
 		rm -f /tmp/uidivstats-upgrade.sql
+		
 		Auto_Cron create 2>/dev/null
 		/opt/etc/init.d/S90taildns start >/dev/null 2>&1
 		touch "$SCRIPT_DIR/.upgraded2"
