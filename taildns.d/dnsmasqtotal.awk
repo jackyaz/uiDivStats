@@ -4,7 +4,7 @@ BEGIN {
 	OFS = ",";
 }
 {
-	if ($5 ~ "query") {
+	if ($5 ~ "query" && $5 !~ "dnssec") {
 		result = "allowed";
 		time = mktime( \
 			sprintf("%04d %02d %02d %s\n", \
