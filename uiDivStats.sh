@@ -826,6 +826,7 @@ Process_Upgrade(){
 		Update_File "taildns.tar.gz"
 		/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
 		Auto_Cron delete 2>/dev/null
+		Print_Output "true" "Creating database table and enabling write-ahead logging..." "$PASS"
 		{
 			echo "PRAGMA journal_mode=WAL;"
 			echo "CREATE TABLE IF NOT EXISTS [dnsqueries] ([QueryID] INTEGER PRIMARY KEY NOT NULL, [Timestamp] NUMERIC NOT NULL, [SrcIP] TEXT NOT NULL,[ReqDmn] TEXT NOT NULL,[QryType] Text NOT NULL,[Result] Text NOT NULL);"
@@ -833,6 +834,8 @@ Process_Upgrade(){
 		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
 			sleep 1
 		done
+		
+		Print_Output "true" "Creating database table indexes..." "$PASS"
 		echo "create index idx_dns_domains on dnsqueries (ReqDmn,Timestamp);" > /tmp/uidivstats-upgrade.sql
 		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
 			sleep 1
@@ -846,10 +849,12 @@ Process_Upgrade(){
 			sleep 1
 		done
 		rm -f /tmp/uidivstats-upgrade.sql
+		Print_Output "true" "Database ready, starting services..." "$PASS"
 		Auto_Cron create 2>/dev/null
 		/opt/etc/init.d/S90taildns start >/dev/null 2>&1
 		touch "$SCRIPT_DIR/.upgraded"
 		touch "$SCRIPT_DIR/.upgraded2"
+		Print_Output "true" "Starting first run of stat generation..." "$PASS"
 		Menu_GenerateStats "fullrefresh"
 	elif [ ! -f "$SCRIPT_DIR/.upgraded2" ]; then
 		/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
