@@ -1245,6 +1245,16 @@ case "$1" in
 			Update_Version "force" "unattended"
 			Clear_Lock
 			exit 0
+		elif [ "$3" = "dnsmasq" ]; then
+			if [ "$2" = "start" ] || [ "$2" = "restart" ]; then
+				sleep 1
+				/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
+				sleep 1
+				/opt/etc/init.d/S90taildns start >/dev/null 2>&1
+			elif [ "$2" = "start" ] || [ "$2" = "restart" ]; then
+				/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
+			fi
+			exit 0
 		fi
 		exit 0
 	;;
