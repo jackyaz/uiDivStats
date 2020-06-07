@@ -800,7 +800,7 @@ function BuildChartHtml(txttitle, txtbase, istime, perip) {
 			charthtml += '<tr class="even">';
 			charthtml += '<th width="40%">Client to display</th>';
 			charthtml += '<td>';
-			charthtml += '<select style="width:215px" class="input_option" onchange="changeChart(this)" id="' + txtbase + '_Clients">';
+			charthtml += '<select style="width:250px" class="input_option" onchange="changeChart(this)" id="' + txtbase + '_Clients">';
 			charthtml += '<option value=0>All (*)</option>';
 			charthtml += '</select>';
 			charthtml += '</td>';
