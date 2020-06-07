@@ -839,6 +839,30 @@ Generate_Stats_From_SQLite(){
 		sleep 1
 	done
 	rm -f /tmp/uidivstats.sql
+	
+	echo ".mode list" > /tmp/ipdistinctclients.sql
+	echo ".output /tmp/ipdistinctclients" >> /tmp/ipdistinctclients.sql
+	echo "SELECT DISTINCT [SrcIP] SrcIP FROM dnsqueries;" >> /tmp/ipdistinctclients.sql
+	
+	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/ipdistinctclients.sql >/dev/null 2>&1; do
+		sleep 1
+	done
+	rm -f /tmp/ipdistinctclients.sql
+	ipclients="$(cat /tmp/ipdistinctclients)"
+	rm -f /tmp/ipdistinctclients
+	
+	if [ ! -f /opt/bin/dig ]; then
+		opkg update
+		opkg install bind-dig
+	fi
+	
+	echo "var hostiparray =[" > "$CSV_OUTPUT_DIR/ipdistinctclients.js"
+	
+	for ipclient in $ipclients; do
+		echo '["'"$ipclient"'","'"$(dig +short +answer -x "$ipclient" '@'"$(nvram get lan_ipaddr)" | cut -f1 -d'.')"'"],' >> "$CSV_OUTPUT_DIR/ipdistinctclients.js"
+	done
+	sed -i '$ s/,$//' "$CSV_OUTPUT_DIR/ipdistinctclients.js"
+	echo "];" >> "$CSV_OUTPUT_DIR/ipdistinctclients.js"
 }
 
 Trim_DNS_DB(){
