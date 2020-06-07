@@ -743,7 +743,7 @@ function BuildChartHtml(txttitle, txtbase, istime, perip) {
 	charthtml += '<tr class="even">';
 	charthtml += '<th width="40%">Period to display</th>';
 	charthtml += '<td>';
-	charthtml += '<select style="width:125px" class="input_option" onchange="changeChart(this)" id="' + txtbase + '_Period">';
+	charthtml += '<select style="width:150px" class="input_option" onchange="changeChart(this)" id="' + txtbase + '_Period">';
 	charthtml += '<option value=0>Last 24 hours</option>';
 	charthtml += '<option value=1>Last 7 days</option>';
 	charthtml += '<option value=2>Last 30 days</option>';
@@ -766,7 +766,7 @@ function BuildChartHtml(txttitle, txtbase, istime, perip) {
 			charthtml += '<tr class="even">';
 			charthtml += '<th width="40%">Client to display</th>';
 			charthtml += '<td>';
-			charthtml += '<select style="width:125px" class="input_option" onchange="changeChart(this)" id="' + txtbase + '_Clients">';
+			charthtml += '<select style="width:215px" class="input_option" onchange="changeChart(this)" id="' + txtbase + '_Clients">';
 			charthtml += '<option value=0>All (*)</option>';
 			charthtml += '</select>';
 			charthtml += '</td>';
@@ -797,7 +797,7 @@ function BuildKeyStatsTableHtml(txttitle, txtbase) {
 	tablehtml += '<tr class="even">';
 	tablehtml += '<th>Period to display</th>';
 	tablehtml += '<td colspan="2">';
-	tablehtml += '<select style="width:125px" class="input_option" onchange="changeTable(this)" id="' + txtbase + '_Period">';
+	tablehtml += '<select style="width:150px" class="input_option" onchange="changeTable(this)" id="' + txtbase + '_Period">';
 	tablehtml += '<option value=0>Last 24 hours</option>';
 	tablehtml += '<option value=1>Last 7 days</option>';
 	tablehtml += '<option value=2>Last 30 days</option>';
