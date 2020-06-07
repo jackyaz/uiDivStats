@@ -690,12 +690,12 @@ function getAxisLabel(type, axis) {
 	if (axis == "x") {
 		if (type == "horizontalBar") axislabel = "Hits";
 			else if (type == "bar") {
-				axislabel = "Domain";
+				axislabel = "";
 			} else if (type == "pie") axislabel = "";
 			return axislabel;
 	} else if (axis == "y") {
 		if (type == "horizontalBar") {
-			axislabel = "Domain";
+			axislabel = "";
 		} else if (type == "bar") axislabel = "Hits";
 		else if (type == "pie") axislabel = "";
 		return axislabel;
