@@ -589,10 +589,23 @@ Write_Time_Sql_ToFile(){
 		echo ".output $5$6""time.htm"
 	} > "$7"
 	
-	if [ "$1" = "Total" ]; then
-		echo "SELECT '$1' Fieldname, [Timestamp] Time, COUNT([QueryID]) QueryCount FROM $2$6 GROUP BY ([Timestamp]/($multiplier));" >> "$7"
-	elif [ "$1" = "Blocked" ]; then
-		echo "SELECT '$1' Fieldname, [Timestamp] Time, COUNT([QueryID]) QueryCount FROM $2$6 WHERE ([Result] LIKE 'blocked%') GROUP BY ([Timestamp]/($multiplier));" >> "$7"
+	if [ "$4" = "1" ]; then
+		maxcount="$(echo "$multiplier" | awk '{printf (60*60*24/$1)}')"
+		currentcount=0
+		while [ "$currentcount" -lt "$maxcount" ]; do
+			if [ "$1" = "Total" ]; then
+				echo "SELECT '$1' Fieldname, $timenow - ($multiplier*$currentcount) Time, COUNT([QueryID]) QueryCount FROM $2$6 WHERE ([Timestamp] >= $timenow - ($multiplier*($currentcount+1))) AND ([Timestamp] <= $timenow - ($multiplier*$currentcount));" >> "$7"
+			elif [ "$1" = "Blocked" ]; then
+				echo "SELECT '$1' Fieldname, $timenow - ($multiplier*$currentcount) Time, COUNT([QueryID]) QueryCount FROM $2$6 WHERE ([Result] LIKE 'blocked%') AND ([Timestamp] >= $timenow - ($multiplier*($currentcount+1))) AND ([Timestamp] <= $timenow - ($multiplier*$currentcount));" >> "$7"
+			fi
+			currentcount="$((currentcount + 1))"
+		done
+	else
+		if [ "$1" = "Total" ]; then
+			echo "SELECT '$1' Fieldname, [Timestamp] Time, COUNT([QueryID]) QueryCount FROM $2$6 GROUP BY ([Timestamp]/($multiplier));" >> "$7"
+		elif [ "$1" = "Blocked" ]; then
+			echo "SELECT '$1' Fieldname, [Timestamp] Time, COUNT([QueryID]) QueryCount FROM $2$6 WHERE ([Result] LIKE 'blocked%') GROUP BY ([Timestamp]/($multiplier));" >> "$7"
+		fi
 	fi
 }
 
