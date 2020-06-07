@@ -52,10 +52,12 @@ function Draw_Chart_NoData(txtchartname){
 function Draw_Chart(txtchartname){
 	var chartperiod = getChartPeriod($j("#" + txtchartname + "_Period option:selected").val());
 	var charttype = getChartType($j("#" + txtchartname + "_Type option:selected").val());
-	var chartclient = $j("#" + txtchartname + "_Clients option:selected").text();
+	var chartclientraw = $j("#" + txtchartname + "_Clients option:selected").text();
+	
+	var chartclient = chartclientraw.substring(chartclientraw.indexOf('(') + 1,chartclientraw.indexOf(')',chartclientraw.indexOf('(') + 1))
 	
 	var dataobject;
-	if(chartclient == "All (*)"){
+	if(chartclientraw == "All (*)"){
 		dataobject = window[txtchartname+chartperiod];
 	}
 	else {
@@ -66,7 +68,7 @@ function Draw_Chart(txtchartname){
 	
 	var chartData,chartLabels;
 	
-	if(chartclient == "All (*)"){
+	if(chartclientraw == "All (*)"){
 		chartData = dataobject.map(function(d) {return d.Count});
 		chartLabels = dataobject.map(function(d) {return d.ReqDmn});
 	}
@@ -459,9 +461,12 @@ function SetClients(txtchartname){
 	
 	chartClients.sort();
 	for (i = 0; i < chartClients.length; i++) {
+		var arrclient = hostiparray.filter(function(item){
+				return item[0] == chartClients[i];
+			})[0];
 		$j('#'+txtchartname+'_Clients').append($j('<option>', {
 			value: i+1,
-			text: chartClients[i]
+			text: arrclient[1] + " (" + arrclient[0] + ")"
 		}));
 	}
 }
