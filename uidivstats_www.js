@@ -253,12 +253,12 @@ function Draw_Time_Chart(txtchartname){
 		title: { display: true, text: txttitle },
 		tooltips: {
 			callbacks: {
-					title: function (tooltipItem, data) { return (moment(tooltipItem[0].xLabel,"X").format('YYYY-MM-DD HH:mm:ss')); },
-					label: function (tooltipItem, data) { return data.datasets[tooltipItem.datasetIndex].label + ": " + data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].y;}
-				},
-				mode: 'x',
-				position: 'cursor',
-				intersect: false
+				title: function (tooltipItem, data) { return (moment(tooltipItem[0].xLabel,"X").format('YYYY-MM-DD HH:mm:ss')); },
+				label: function (tooltipItem, data) { return data.datasets[tooltipItem.datasetIndex].label + ": " + data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].y;}
+			},
+			mode: 'x',
+			position: 'cursor',
+			intersect: false
 		},
 		scales: {
 			xAxes: [{
