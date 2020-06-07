@@ -78,6 +78,11 @@ function Draw_Chart(txtchartname){
 			return item.SrcIP == chartclient;
 		}).map(function(d) {return d.ReqDmn});
 	}
+	
+	$j.each(chartLabels, function(index,value) {
+		chartLabels[index] = chunk(value.toLowerCase(), 30).join('\n');
+	});
+	
 	var objchartname = window["Chart" + txtchartname];;
 	
 	if (objchartname != undefined) objchartname.destroy();
@@ -151,6 +156,9 @@ function Draw_Chart(txtchartname){
 				ticks: {
 					display: showTicks(charttype, "y"),
 					beginAtZero: false,
+					autoSkip: false,
+					lineHeight: 0.8,
+					padding: -5,
 					callback: function (value, index, values) {
 						if(! isNaN(value)){
 							return round(value,0).toFixed(0);
@@ -204,7 +212,16 @@ function Draw_Chart(txtchartname){
 	objchartname = new Chart(ctx, {
 		type: charttype,
 		options: chartOptions,
-		data: chartDataset
+		data: chartDataset,
+		plugins: [{
+			beforeInit: function(chart) {
+				chart.data.labels.forEach(function(e, i, a) {
+					if (/\n/.test(e)) {
+						a[i] = e.split(/\n/);
+					}
+				});
+			}
+		}]
 	});
 	window["Chart" + txtchartname] = objchartname;
 }
@@ -340,6 +357,18 @@ function getDataSets(txtchartname, objdata, objQueryTypes) {
 	datasets.reverse();
 	return datasets;
 }
+
+function chunk(str, n) {
+	var ret = [];
+	var i;
+	var len;
+	
+	for(i = 0, len = str.length; i < len; i += n) {
+		ret.push(str.substr(i, n));
+	}
+	
+	return ret;
+};
 
 function GetCookie(cookiename) {
 	var s;
