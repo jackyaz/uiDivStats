@@ -15,17 +15,19 @@
 
 ### Start of script variables ###
 readonly SCRIPT_NAME="uiDivStats"
-readonly SCRIPT_VERSION="v2.0.1"
+readonly SCRIPT_VERSION="v2.1.0"
 readonly SCRIPT_BRANCH="develop"
 readonly SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/""$SCRIPT_NAME""/""$SCRIPT_BRANCH"
 readonly SCRIPT_DIR="/jffs/addons/$SCRIPT_NAME.d"
+readonly SCRIPT_CONF="$SCRIPT_DIR/config"
+readonly SCRIPT_USB_DIR="/opt/share/uiDivStats.d"
 readonly SCRIPT_WEBPAGE_DIR="$(readlink /www/user)"
 readonly SCRIPT_WEB_DIR="$SCRIPT_WEBPAGE_DIR/$SCRIPT_NAME"
 readonly SHARED_DIR="/jffs/addons/shared-jy"
 readonly SHARED_REPO="https://raw.githubusercontent.com/jackyaz/shared-jy/master"
 readonly SHARED_WEB_DIR="$SCRIPT_WEBPAGE_DIR/shared-jy"
-readonly DNS_DB="/opt/share/uiDivStats.d/dnsqueries.db"
-readonly CSV_OUTPUT_DIR="/opt/share/uiDivStats.d/csv"
+readonly DNS_DB="$SCRIPT_USB_DIR/dnsqueries.db"
+readonly CSV_OUTPUT_DIR="$SCRIPT_USB_DIR/csv"
 [ -z "$(nvram get odmpid)" ] && ROUTER_MODEL=$(nvram get productid) || ROUTER_MODEL=$(nvram get odmpid)
 SQLITE3_PATH=/opt/bin/sqlite3
 readonly DIVERSION_DIR="/opt/share/diversion"
@@ -304,6 +306,18 @@ Create_Symlinks(){
 	fi
 }
 
+Conf_Exists(){
+	if [ -f "$SCRIPT_CONF" ]; then
+		dos2unix "$SCRIPT_CONF"
+		chmod 0644 "$SCRIPT_CONF"
+		sed -i -e 's/"//g' "$SCRIPT_CONF"
+		return 0
+	else
+		echo "QUERYMODE=all" > "$SCRIPT_CONF"
+		return 1
+	fi
+}
+
 Auto_ServiceEvent(){
 	case $1 in
 		create)
@@ -493,6 +507,27 @@ Mount_WebUI(){
 		umount /www/require/modules/menuTree.js 2>/dev/null
 		mount -o bind /tmp/menuTree.js /www/require/modules/menuTree.js
 	fi
+}
+
+QueryMode(){
+	case "$1" in
+		all)
+			sed -i 's/^QUERYMODE.*$/QUERYMODE=all/' "$SCRIPT_CONF"
+			/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
+			sleep 5
+			/opt/etc/init.d/S90taildns start >/dev/null 2>&1
+		;;
+		A+AAAA)
+			sed -i 's/^QUERYMODE.*$/QUERYMODE=A+AAAA/' "$SCRIPT_CONF"
+			/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
+			sleep 5
+			/opt/etc/init.d/S90taildns start >/dev/null 2>&1
+		;;
+		check)
+			QUERYMODE="$(grep "QUERYMODE" "$SCRIPT_CONF" | cut -f2 -d"=")"
+			echo "$QUERYMODE"
+		;;
+	esac
 }
 
 WriteStats_ToJS(){
@@ -995,9 +1030,11 @@ ScriptHeader(){
 }
 
 MainMenu(){
+	QUERYMODE_MENU="$(QueryMode "check")"
 	printf "1.    Update Diversion Statistics (daily only)\\n\\n"
 	printf "2.    Update Diversion Statistics (daily, weekly and monthly)\\n"
-	printf "      WARNING: THIS WILL TAKE A WHILE\\n\\n"
+	printf "      WARNING: THIS WILL TAKE A WHILE (>10 minutes)\\n\\n"
+	printf "q.    Toggle query mode\\n      Currently \\e[1m%s\\e[0m query types will be logged\\n\\n" "$QUERYMODE_MENU"
 	printf "u.    Check for updates\\n"
 	printf "uf.   Update %s with latest version (force update)\\n\\n" "$SCRIPT_NAME"
 	printf "e.    Exit %s\\n\\n" "$SCRIPT_NAME"
@@ -1024,6 +1061,13 @@ MainMenu(){
 					Menu_GenerateStats "fullrefresh"
 				fi
 				PressEnter
+				break
+			;;
+			q)
+				printf "\\n"
+				if Check_Lock "menu"; then
+					Menu_ToggleQueryMode
+				fi
 				break
 			;;
 			u)
@@ -1135,6 +1179,7 @@ Menu_Install(){
 	fi
 	
 	Create_Dirs
+	Conf_Exists
 	Create_Symlinks
 	
 	Update_File "uidivstats_www.asp"
@@ -1160,6 +1205,7 @@ Menu_Startup(){
 	Auto_ServiceEvent create 2>/dev/null
 	Shortcut_script create
 	Create_Dirs
+	Conf_Exists
 	Create_Symlinks
 	Mount_WebUI
 	Clear_Lock
@@ -1171,6 +1217,15 @@ Menu_GenerateStats(){
 	else
 		Print_Output "true" "Diversion logging not enabled!" "$ERR"
 		Print_Output "true" "Open Diversion and use option l to enable logging" ""
+	fi
+	Clear_Lock
+}
+
+Menu_ToggleQueryMode(){
+	if [ "$(QueryMode "check")" = "all" ]; then
+		QueryMode "A+AAAA"
+	elif [ "$(QueryMode "check")" = "A+AAAA" ]; then
+		QueryMode "all"
 	fi
 	Clear_Lock
 }
@@ -1275,6 +1330,7 @@ Entware_Ready "$@"
 
 if [ -z "$1" ]; then
 	Create_Dirs
+	Conf_Exists
 	Create_Symlinks
 	Auto_Startup create 2>/dev/null
 	Auto_DNSMASQ_Postconf create 2>/dev/null
