@@ -892,8 +892,12 @@ Flush_Cache_To_DB(){
 		echo "CREATE TABLE IF NOT EXISTS [dnsqueries] ([QueryID] INTEGER PRIMARY KEY NOT NULL, [Timestamp] NUMERIC NOT NULL, [SrcIP] TEXT NOT NULL,[ReqDmn] TEXT NOT NULL,[QryType] Text NOT NULL,[Result] Text NOT NULL);"
 		echo ".mode csv"
 		echo ".import /tmp/cache-uiDivStats-SQL.tmp dnsqueries"
-
-	while ! /opt/bin/sqlite3 "/opt/share/uiDivStats.d/dnsqueries.db" < /opt/share/uiDivStats.d/dnsqueriestotal.sql >/dev/null 2>&1; do sleep 1; done \
+	} > /tmp/cache-uiDivStats-SQL.sql
+	while ! /opt/bin/sqlite3 "/opt/share/uiDivStats.d/dnsqueries.db" < /tmp/cache-uiDivStats-SQL.sql >/dev/null 2>&1; do
+		sleep 1
+	done
+	rm -f /tmp/cache-uiDivStats-SQL.sql
+	rm -f /tmp/cache-uiDivStats-SQL.tmp
 }
 
 Process_Upgrade(){
