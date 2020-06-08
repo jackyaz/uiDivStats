@@ -226,6 +226,7 @@ Update_File(){
 			tar -xzf "$SCRIPT_DIR/$1" -C "$SCRIPT_DIR"
 			if [ -f /opt/etc/init.d/S90taildns ]; then
 				/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
+				sleep 5
 			fi
 			mv "$SCRIPT_DIR/taildns.d/S90taildns" /opt/etc/init.d/S90taildns
 			/opt/etc/init.d/S90taildns start >/dev/null 2>&1
@@ -240,6 +241,7 @@ Update_File(){
 				tar -xzf "$SCRIPT_DIR/$1" -C "$SCRIPT_DIR"
 				if [ -f /opt/etc/init.d/S90taildns ]; then
 					/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
+					sleep 5
 				fi
 				mv "$SCRIPT_DIR/taildns.d/S90taildns" /opt/etc/init.d/S90taildns
 				/opt/etc/init.d/S90taildns start >/dev/null 2>&1
@@ -956,6 +958,7 @@ Process_Upgrade(){
 		Menu_GenerateStats "fullrefresh"
 	elif [ ! -f "$SCRIPT_DIR/.upgraded2" ]; then
 		/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
+		sleep 5
 		Auto_Cron delete 2>/dev/null
 		
 		Print_Output "true" "Deleting older database table indexes..." "$PASS"
@@ -1260,6 +1263,7 @@ Menu_Uninstall(){
 	rm -rf "$SCRIPT_WEB_DIR" 2>/dev/null
 	
 	/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
+	sleep 5
 	rm -f "/opt/etc/init.d/S90taildns" 2>/dev/null
 	rm -rf "$SCRIPT_DIR/taildns.d" 2>/dev/null
 	
