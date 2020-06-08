@@ -6,7 +6,7 @@ chmod 0755 /opt/bin/taildns
 if [ "$1" = "stop" ]; then
 	killall -q taildnstotal
 	/opt/bin/pkill -f "tail -F /opt/var/log/dnsmasq.log /opt/var/log/dnsmasq.log3"
-	rm -f /opt/share/uiDivStats.d/dnsqueriestotal.sql
+	rm -f /opt/share/uiDivStats.d/dnsqueriestotal.sql 2>/dev/null
 fi
 
 ENABLED=yes
