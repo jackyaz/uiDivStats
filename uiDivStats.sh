@@ -785,17 +785,24 @@ Generate_KeyStats(){
 
 Generate_Count_Blocklist_Domains(){
 	blockinglistfile="$DIVERSION_DIR/list/blockinglist"
+	blockinglistfsfile="$DIVERSION_DIR/list/blockinglist_fs"
+	hostslistfile="$DIVERSION_DIR/list/hostslist"
+	hostslistfsfile="$DIVERSION_DIR/list/hostslist_fs"
 	blacklistfile="$DIVERSION_DIR/list/blacklist"
 	blacklistwcfile="$DIVERSION_DIR/list/wc_blacklist"
 	
-	BLL="$(($(/opt/bin/grep "^[^#]" "$blockinglistfile" | wc -w)-$(/opt/bin/grep "^[^#]" "$blockinglistfile" | wc -l)))"
+	BLL="$(($(/opt/bin/grep "^[^#]" "$blockinglistfile" "$blockinglistfsfile" | wc -w)-$(/opt/bin/grep "^[^#]" "$blockinglistfile" "$blockinglistfsfile" | wc -l)))"
 	[ "$(nvram get ipv6_service)" != "disabled" ] && BLL="$((BLL/2))"
 	BL="$(/opt/bin/grep "^[^#]" "$blacklistfile" | wc -l)"
 	[ "$(nvram get ipv6_service)" != "disabled" ] && BL="$((BL/2))"
 	WCBL="$(/opt/bin/grep "^[^#]" "$blacklistwcfile" | wc -l)"
 	blocklistdomains="$((BLL+BL+WCBL))"
 	if ! Validate_Number "" "$blocklistdomains" "silent"; then blocklistdomains=0; fi
-	WritePlainData_ToJS "$SCRIPT_DIR/SQLData.js" "BlockedDomains,$blocklistdomains"
+	
+	hostlistcount="$(/opt/bin/grep "^[^#]" "$hostslistfile" "$hostslistfsfile" | wc -l)"
+	if ! Validate_Number "" "$HLL" "silent"; then hostlistcount=0; fi
+	
+	WritePlainData_ToJS "$SCRIPT_DIR/SQLData.js" "BlockedDomains,$blocklistdomains" "HostlistCount,$hostlistcount"
 }
 
 Generate_Stats_From_SQLite(){
