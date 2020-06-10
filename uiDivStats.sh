@@ -800,7 +800,7 @@ Generate_Count_Blocklist_Domains(){
 	if ! Validate_Number "" "$blocklistdomains" "silent"; then blocklistdomains=0; fi
 	
 	hostlistcount="$(/opt/bin/grep "^[^#]" "$hostslistfile" "$hostslistfsfile" | wc -l)"
-	if ! Validate_Number "" "$HLL" "silent"; then hostlistcount=0; fi
+	if ! Validate_Number "" "$hostlistcount" "silent"; then hostlistcount=0; fi
 	
 	WritePlainData_ToJS "$SCRIPT_DIR/SQLData.js" "BlockedDomains,$blocklistdomains" "HostlistCount,$hostlistcount"
 }
