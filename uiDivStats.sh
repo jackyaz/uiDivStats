@@ -538,11 +538,14 @@ BlockingFile(){
 		DIVCONF="$DIVERSION_DIR/.conf/diversion.conf"
 		BLOCKINGFILE="$DIVERSION_DIR/list/blockinglist"
 		
-		if [ "$(grep "bfFs" "$DIVCONF" | cut -f2 -d"=")" = "on" ]; then
+		if [ "$(grep alternateBF "$DIVCONF" | cut -f2 -d"=")" = "on" ]; then
+				BLOCKINGFILE="$DIVERSION_DIR/list/blockinglist $DIVERSION_DIR/list/blockinglist_fs"
+		elif [ "$(grep "bfFs" "$DIVCONF" | cut -f2 -d"=")" = "on" ]; then
 			if [ "$(grep "bfTypeinUse" "$DIVCONF" | cut -f2 -d"=")" != "primary" ]; then
 				BLOCKINGFILE="$DIVERSION_DIR/list/blockinglist_fs"
 			fi
 		fi
+		
 		echo "$BLOCKINGFILE"
 		;;
 	esac
@@ -806,7 +809,7 @@ Generate_Count_Blocklist_Domains(){
 	blacklistfile="$DIVERSION_DIR/list/blacklist"
 	blacklistwcfile="$DIVERSION_DIR/list/wc_blacklist"
 	
-	BLL="$(($(/opt/bin/grep "^[^#]" "$blockinglistfile" | wc -w)-$(/opt/bin/grep "^[^#]" "$blockinglistfile" | wc -l)))"
+	BLL="$(($(/opt/bin/grep "^[^#]" $blockinglistfile | wc -w)-$(/opt/bin/grep "^[^#]" $blockinglistfile | wc -l)))"
 	[ "$(nvram get ipv6_service)" != "disabled" ] && BLL="$((BLL/2))"
 	BL="$(/opt/bin/grep "^[^#]" "$blacklistfile" | wc -l)"
 	[ "$(nvram get ipv6_service)" != "disabled" ] && BL="$((BL/2))"
