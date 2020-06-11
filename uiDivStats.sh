@@ -809,6 +809,7 @@ Generate_Count_Blocklist_Domains(){
 	blacklistfile="$DIVERSION_DIR/list/blacklist"
 	blacklistwcfile="$DIVERSION_DIR/list/wc_blacklist"
 	
+	#shellcheck disable=SC2086
 	BLL="$(($(/opt/bin/grep "^[^#]" $blockinglistfile | wc -w)-$(/opt/bin/grep "^[^#]" $blockinglistfile | wc -l)))"
 	[ "$(nvram get ipv6_service)" != "disabled" ] && BLL="$((BLL/2))"
 	BL="$(/opt/bin/grep "^[^#]" "$blacklistfile" | wc -l)"
