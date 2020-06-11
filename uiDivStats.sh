@@ -804,8 +804,7 @@ Generate_KeyStats(){
 
 Generate_Count_Blocklist_Domains(){
 	blockinglistfile="$(BlockingFile "check")"
-	hostslistfile="$DIVERSION_DIR/list/hostslist"
-	hostslistfsfile="$DIVERSION_DIR/list/hostslist_fs"
+	
 	blacklistfile="$DIVERSION_DIR/list/blacklist"
 	blacklistwcfile="$DIVERSION_DIR/list/wc_blacklist"
 	
@@ -818,10 +817,7 @@ Generate_Count_Blocklist_Domains(){
 	blocklistdomains="$((BLL+BL+WCBL))"
 	if ! Validate_Number "" "$blocklistdomains" "silent"; then blocklistdomains=0; fi
 	
-	hostlistcount="$(/opt/bin/grep "^[^#]" "$hostslistfile" "$hostslistfsfile" | wc -l)"
-	if ! Validate_Number "" "$hostlistcount" "silent"; then hostlistcount=0; fi
-	
-	WritePlainData_ToJS "$SCRIPT_DIR/SQLData.js" "BlockedDomains,$blocklistdomains" "HostlistCount,$hostlistcount"
+	WritePlainData_ToJS "$SCRIPT_DIR/SQLData.js" "BlockedDomains,$blocklistdomains"
 }
 
 Generate_Stats_From_SQLite(){
