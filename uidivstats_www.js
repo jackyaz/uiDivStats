@@ -52,10 +52,12 @@ function Draw_Chart_NoData(txtchartname){
 function Draw_Chart(txtchartname){
 	var chartperiod = getChartPeriod($j("#" + txtchartname + "_Period option:selected").val());
 	var charttype = getChartType($j("#" + txtchartname + "_Type option:selected").val());
-	var chartclient = $j("#" + txtchartname + "_Clients option:selected").text();
+	var chartclientraw = $j("#" + txtchartname + "_Clients option:selected").text();
+	
+	var chartclient = chartclientraw.substring(chartclientraw.indexOf('(') + 1,chartclientraw.indexOf(')',chartclientraw.indexOf('(') + 1))
 	
 	var dataobject;
-	if(chartclient == "All (*)"){
+	if(chartclientraw == "All (*)"){
 		dataobject = window[txtchartname+chartperiod];
 	}
 	else {
@@ -66,7 +68,7 @@ function Draw_Chart(txtchartname){
 	
 	var chartData,chartLabels;
 	
-	if(chartclient == "All (*)"){
+	if(chartclientraw == "All (*)"){
 		chartData = dataobject.map(function(d) {return d.Count});
 		chartLabels = dataobject.map(function(d) {return d.ReqDmn});
 	}
@@ -78,6 +80,11 @@ function Draw_Chart(txtchartname){
 			return item.SrcIP == chartclient;
 		}).map(function(d) {return d.ReqDmn});
 	}
+	
+	$j.each(chartLabels, function(index,value) {
+		chartLabels[index] = chunk(value.toLowerCase(), 30).join('\n');
+	});
+	
 	var objchartname = window["Chart" + txtchartname];;
 	
 	if (objchartname != undefined) objchartname.destroy();
@@ -151,6 +158,9 @@ function Draw_Chart(txtchartname){
 				ticks: {
 					display: showTicks(charttype, "y"),
 					beginAtZero: false,
+					autoSkip: false,
+					lineHeight: 0.8,
+					padding: -5,
 					callback: function (value, index, values) {
 						if(! isNaN(value)){
 							return round(value,0).toFixed(0);
@@ -204,7 +214,16 @@ function Draw_Chart(txtchartname){
 	objchartname = new Chart(ctx, {
 		type: charttype,
 		options: chartOptions,
-		data: chartDataset
+		data: chartDataset,
+		plugins: [{
+			beforeInit: function(chart) {
+				chart.data.labels.forEach(function(e, i, a) {
+					if (/\n/.test(e)) {
+						a[i] = e.split(/\n/);
+					}
+				});
+			}
+		}]
 	});
 	window["Chart" + txtchartname] = objchartname;
 }
@@ -253,12 +272,12 @@ function Draw_Time_Chart(txtchartname){
 		title: { display: true, text: txttitle },
 		tooltips: {
 			callbacks: {
-					title: function (tooltipItem, data) { return (moment(tooltipItem[0].xLabel,"X").format('YYYY-MM-DD HH:mm:ss')); },
-					label: function (tooltipItem, data) { return data.datasets[tooltipItem.datasetIndex].label + ": " + data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].y;}
-				},
-				mode: 'x',
-				position: 'cursor',
-				intersect: false
+				title: function (tooltipItem, data) { return (moment(tooltipItem[0].xLabel,"X").format('YYYY-MM-DD HH:mm:ss')); },
+				label: function (tooltipItem, data) { return data.datasets[tooltipItem.datasetIndex].label + ": " + data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].y;}
+			},
+			mode: 'x',
+			position: 'cursor',
+			intersect: false
 		},
 		scales: {
 			xAxes: [{
@@ -340,6 +359,18 @@ function getDataSets(txtchartname, objdata, objQueryTypes) {
 	datasets.reverse();
 	return datasets;
 }
+
+function chunk(str, n) {
+	var ret = [];
+	var i;
+	var len;
+	
+	for(i = 0, len = str.length; i < len; i += n) {
+		ret.push(str.substr(i, n));
+	}
+	
+	return ret;
+};
 
 function GetCookie(cookiename) {
 	var s;
@@ -430,9 +461,12 @@ function SetClients(txtchartname){
 	
 	chartClients.sort();
 	for (i = 0; i < chartClients.length; i++) {
+		var arrclient = hostiparray.filter(function(item){
+				return item[0] == chartClients[i];
+			})[0];
 		$j('#'+txtchartname+'_Clients').append($j('<option>', {
 			value: i+1,
-			text: chartClients[i]
+			text: arrclient[1] + " (" + arrclient[0] + ")"
 		}));
 	}
 }
@@ -690,12 +724,12 @@ function getAxisLabel(type, axis) {
 	if (axis == "x") {
 		if (type == "horizontalBar") axislabel = "Hits";
 			else if (type == "bar") {
-				axislabel = "Domain";
+				axislabel = "";
 			} else if (type == "pie") axislabel = "";
 			return axislabel;
 	} else if (axis == "y") {
 		if (type == "horizontalBar") {
-			axislabel = "Domain";
+			axislabel = "";
 		} else if (type == "bar") axislabel = "Hits";
 		else if (type == "pie") axislabel = "";
 		return axislabel;
@@ -743,7 +777,7 @@ function BuildChartHtml(txttitle, txtbase, istime, perip) {
 	charthtml += '<tr class="even">';
 	charthtml += '<th width="40%">Period to display</th>';
 	charthtml += '<td>';
-	charthtml += '<select style="width:125px" class="input_option" onchange="changeChart(this)" id="' + txtbase + '_Period">';
+	charthtml += '<select style="width:150px" class="input_option" onchange="changeChart(this)" id="' + txtbase + '_Period">';
 	charthtml += '<option value=0>Last 24 hours</option>';
 	charthtml += '<option value=1>Last 7 days</option>';
 	charthtml += '<option value=2>Last 30 days</option>';
@@ -766,7 +800,7 @@ function BuildChartHtml(txttitle, txtbase, istime, perip) {
 			charthtml += '<tr class="even">';
 			charthtml += '<th width="40%">Client to display</th>';
 			charthtml += '<td>';
-			charthtml += '<select style="width:125px" class="input_option" onchange="changeChart(this)" id="' + txtbase + '_Clients">';
+			charthtml += '<select style="width:250px" class="input_option" onchange="changeChart(this)" id="' + txtbase + '_Clients">';
 			charthtml += '<option value=0>All (*)</option>';
 			charthtml += '</select>';
 			charthtml += '</td>';
@@ -797,7 +831,7 @@ function BuildKeyStatsTableHtml(txttitle, txtbase) {
 	tablehtml += '<tr class="even">';
 	tablehtml += '<th>Period to display</th>';
 	tablehtml += '<td colspan="2">';
-	tablehtml += '<select style="width:125px" class="input_option" onchange="changeTable(this)" id="' + txtbase + '_Period">';
+	tablehtml += '<select style="width:150px" class="input_option" onchange="changeTable(this)" id="' + txtbase + '_Period">';
 	tablehtml += '<option value=0>Last 24 hours</option>';
 	tablehtml += '<option value=1>Last 7 days</option>';
 	tablehtml += '<option value=2>Last 30 days</option>';

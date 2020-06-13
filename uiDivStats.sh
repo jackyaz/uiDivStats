@@ -15,17 +15,19 @@
 
 ### Start of script variables ###
 readonly SCRIPT_NAME="uiDivStats"
-readonly SCRIPT_VERSION="v2.0.0"
+readonly SCRIPT_VERSION="v2.1.0"
 readonly SCRIPT_BRANCH="master"
 readonly SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/""$SCRIPT_NAME""/""$SCRIPT_BRANCH"
 readonly SCRIPT_DIR="/jffs/addons/$SCRIPT_NAME.d"
+readonly SCRIPT_CONF="$SCRIPT_DIR/config"
+readonly SCRIPT_USB_DIR="/opt/share/uiDivStats.d"
 readonly SCRIPT_WEBPAGE_DIR="$(readlink /www/user)"
 readonly SCRIPT_WEB_DIR="$SCRIPT_WEBPAGE_DIR/$SCRIPT_NAME"
 readonly SHARED_DIR="/jffs/addons/shared-jy"
 readonly SHARED_REPO="https://raw.githubusercontent.com/jackyaz/shared-jy/master"
 readonly SHARED_WEB_DIR="$SCRIPT_WEBPAGE_DIR/shared-jy"
-readonly DNS_DB="/opt/share/uiDivStats.d/dnsqueries.db"
-readonly CSV_OUTPUT_DIR="/opt/share/uiDivStats.d/csv"
+readonly DNS_DB="$SCRIPT_USB_DIR/dnsqueries.db"
+readonly CSV_OUTPUT_DIR="$SCRIPT_USB_DIR/csv"
 [ -z "$(nvram get odmpid)" ] && ROUTER_MODEL=$(nvram get productid) || ROUTER_MODEL=$(nvram get odmpid)
 SQLITE3_PATH=/opt/bin/sqlite3
 readonly DIVERSION_DIR="/opt/share/diversion"
@@ -224,6 +226,7 @@ Update_File(){
 			tar -xzf "$SCRIPT_DIR/$1" -C "$SCRIPT_DIR"
 			if [ -f /opt/etc/init.d/S90taildns ]; then
 				/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
+				sleep 5
 			fi
 			mv "$SCRIPT_DIR/taildns.d/S90taildns" /opt/etc/init.d/S90taildns
 			/opt/etc/init.d/S90taildns start >/dev/null 2>&1
@@ -238,6 +241,7 @@ Update_File(){
 				tar -xzf "$SCRIPT_DIR/$1" -C "$SCRIPT_DIR"
 				if [ -f /opt/etc/init.d/S90taildns ]; then
 					/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
+					sleep 5
 				fi
 				mv "$SCRIPT_DIR/taildns.d/S90taildns" /opt/etc/init.d/S90taildns
 				/opt/etc/init.d/S90taildns start >/dev/null 2>&1
@@ -301,6 +305,18 @@ Create_Symlinks(){
 	
 	if [ ! -d "$SHARED_WEB_DIR" ]; then
 		ln -s "$SHARED_DIR" "$SHARED_WEB_DIR" 2>/dev/null
+	fi
+}
+
+Conf_Exists(){
+	if [ -f "$SCRIPT_CONF" ]; then
+		dos2unix "$SCRIPT_CONF"
+		chmod 0644 "$SCRIPT_CONF"
+		sed -i -e 's/"//g' "$SCRIPT_CONF"
+		return 0
+	else
+		echo "QUERYMODE=all" > "$SCRIPT_CONF"
+		return 1
 	fi
 }
 
@@ -495,6 +511,46 @@ Mount_WebUI(){
 	fi
 }
 
+QueryMode(){
+	case "$1" in
+		all)
+			sed -i 's/^QUERYMODE.*$/QUERYMODE=all/' "$SCRIPT_CONF"
+			/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
+			sleep 5
+			/opt/etc/init.d/S90taildns start >/dev/null 2>&1
+		;;
+		A+AAAA)
+			sed -i 's/^QUERYMODE.*$/QUERYMODE=A+AAAA/' "$SCRIPT_CONF"
+			/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
+			sleep 5
+			/opt/etc/init.d/S90taildns start >/dev/null 2>&1
+		;;
+		check)
+			QUERYMODE="$(grep "QUERYMODE" "$SCRIPT_CONF" | cut -f2 -d"=")"
+			echo "$QUERYMODE"
+		;;
+	esac
+}
+
+BlockingFile(){
+	case "$1" in
+		check)
+		DIVCONF="$DIVERSION_DIR/.conf/diversion.conf"
+		BLOCKINGFILE="$DIVERSION_DIR/list/blockinglist"
+		
+		if [ "$(grep alternateBF "$DIVCONF" | cut -f2 -d"=")" = "on" ]; then
+				BLOCKINGFILE="$DIVERSION_DIR/list/blockinglist $DIVERSION_DIR/list/blockinglist_fs"
+		elif [ "$(grep "bfFs" "$DIVCONF" | cut -f2 -d"=")" = "on" ]; then
+			if [ "$(grep "bfTypeinUse" "$DIVCONF" | cut -f2 -d"=")" != "primary" ]; then
+				BLOCKINGFILE="$DIVERSION_DIR/list/blockinglist_fs"
+			fi
+		fi
+		
+		echo "$BLOCKINGFILE"
+		;;
+	esac
+}
+
 WriteStats_ToJS(){
 	{ echo ""; echo "function $3(){"; } >> "$2"
 	html='document.getElementById("'"$4"'").innerHTML="'
@@ -589,10 +645,23 @@ Write_Time_Sql_ToFile(){
 		echo ".output $5$6""time.htm"
 	} > "$7"
 	
-	if [ "$1" = "Total" ]; then
-		echo "SELECT '$1' Fieldname, [Timestamp] Time, COUNT([QueryID]) QueryCount FROM $2$6 GROUP BY ([Timestamp]/($multiplier));" >> "$7"
-	elif [ "$1" = "Blocked" ]; then
-		echo "SELECT '$1' Fieldname, [Timestamp] Time, COUNT([QueryID]) QueryCount FROM $2$6 WHERE ([Result] LIKE 'blocked%') GROUP BY ([Timestamp]/($multiplier));" >> "$7"
+	if [ "$4" = "1" ]; then
+		maxcount="$(echo "$multiplier" | awk '{printf (60*60*24/$1)}')"
+		currentcount=0
+		while [ "$currentcount" -lt "$maxcount" ]; do
+			if [ "$1" = "Total" ]; then
+				echo "SELECT '$1' Fieldname, $timenow - ($multiplier*$currentcount) Time, COUNT([QueryID]) QueryCount FROM $2$6 WHERE ([Timestamp] >= $timenow - ($multiplier*($currentcount+1))) AND ([Timestamp] <= $timenow - ($multiplier*$currentcount));" >> "$7"
+			elif [ "$1" = "Blocked" ]; then
+				echo "SELECT '$1' Fieldname, $timenow - ($multiplier*$currentcount) Time, COUNT([QueryID]) QueryCount FROM $2$6 WHERE ([Result] LIKE 'blocked%') AND ([Timestamp] >= $timenow - ($multiplier*($currentcount+1))) AND ([Timestamp] <= $timenow - ($multiplier*$currentcount));" >> "$7"
+			fi
+			currentcount="$((currentcount + 1))"
+		done
+	else
+		if [ "$1" = "Total" ]; then
+			echo "SELECT '$1' Fieldname, [Timestamp] Time, COUNT([QueryID]) QueryCount FROM $2$6 GROUP BY ([Timestamp]/($multiplier));" >> "$7"
+		elif [ "$1" = "Blocked" ]; then
+			echo "SELECT '$1' Fieldname, [Timestamp] Time, COUNT([QueryID]) QueryCount FROM $2$6 WHERE ([Result] LIKE 'blocked%') GROUP BY ([Timestamp]/($multiplier));" >> "$7"
+		fi
 	fi
 }
 
@@ -734,17 +803,20 @@ Generate_KeyStats(){
 }
 
 Generate_Count_Blocklist_Domains(){
-	blockinglistfile="$DIVERSION_DIR/list/blockinglist"
+	blockinglistfile="$(BlockingFile "check")"
+	
 	blacklistfile="$DIVERSION_DIR/list/blacklist"
 	blacklistwcfile="$DIVERSION_DIR/list/wc_blacklist"
 	
-	BLL="$(($(/opt/bin/grep "^[^#]" "$blockinglistfile" | wc -w)-$(/opt/bin/grep "^[^#]" "$blockinglistfile" | wc -l)))"
+	#shellcheck disable=SC2086
+	BLL="$(($(/opt/bin/grep "^[^#]" $blockinglistfile | wc -w)-$(/opt/bin/grep "^[^#]" $blockinglistfile | wc -l)))"
 	[ "$(nvram get ipv6_service)" != "disabled" ] && BLL="$((BLL/2))"
 	BL="$(/opt/bin/grep "^[^#]" "$blacklistfile" | wc -l)"
 	[ "$(nvram get ipv6_service)" != "disabled" ] && BL="$((BL/2))"
 	WCBL="$(/opt/bin/grep "^[^#]" "$blacklistwcfile" | wc -l)"
 	blocklistdomains="$((BLL+BL+WCBL))"
 	if ! Validate_Number "" "$blocklistdomains" "silent"; then blocklistdomains=0; fi
+	
 	WritePlainData_ToJS "$SCRIPT_DIR/SQLData.js" "BlockedDomains,$blocklistdomains"
 }
 
@@ -826,6 +898,30 @@ Generate_Stats_From_SQLite(){
 		sleep 1
 	done
 	rm -f /tmp/uidivstats.sql
+	
+	echo ".mode list" > /tmp/ipdistinctclients.sql
+	echo ".output /tmp/ipdistinctclients" >> /tmp/ipdistinctclients.sql
+	echo "SELECT DISTINCT [SrcIP] SrcIP FROM dnsqueries;" >> /tmp/ipdistinctclients.sql
+	
+	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/ipdistinctclients.sql >/dev/null 2>&1; do
+		sleep 1
+	done
+	rm -f /tmp/ipdistinctclients.sql
+	ipclients="$(cat /tmp/ipdistinctclients)"
+	rm -f /tmp/ipdistinctclients
+	
+	if [ ! -f /opt/bin/dig ]; then
+		opkg update
+		opkg install bind-dig
+	fi
+	
+	echo "var hostiparray =[" > "$CSV_OUTPUT_DIR/ipdistinctclients.js"
+	
+	for ipclient in $ipclients; do
+		echo '["'"$ipclient"'","'"$(dig +short +answer -x "$ipclient" '@'"$(nvram get lan_ipaddr)" | cut -f1 -d'.')"'"],' >> "$CSV_OUTPUT_DIR/ipdistinctclients.js"
+	done
+	sed -i '$ s/,$//' "$CSV_OUTPUT_DIR/ipdistinctclients.js"
+	echo "];" >> "$CSV_OUTPUT_DIR/ipdistinctclients.js"
 }
 
 Trim_DNS_DB(){
@@ -884,6 +980,7 @@ Process_Upgrade(){
 		Menu_GenerateStats "fullrefresh"
 	elif [ ! -f "$SCRIPT_DIR/.upgraded2" ]; then
 		/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
+		sleep 5
 		Auto_Cron delete 2>/dev/null
 		
 		Print_Output "true" "Deleting older database table indexes..." "$PASS"
@@ -958,9 +1055,11 @@ ScriptHeader(){
 }
 
 MainMenu(){
+	QUERYMODE_MENU="$(QueryMode "check")"
 	printf "1.    Update Diversion Statistics (daily only)\\n\\n"
 	printf "2.    Update Diversion Statistics (daily, weekly and monthly)\\n"
-	printf "      WARNING: THIS WILL TAKE A WHILE\\n\\n"
+	printf "      WARNING: THIS WILL TAKE A WHILE (>10 minutes)\\n\\n"
+	printf "q.    Toggle query mode\\n      Currently \\e[1m%s\\e[0m query types will be logged\\n\\n" "$QUERYMODE_MENU"
 	printf "u.    Check for updates\\n"
 	printf "uf.   Update %s with latest version (force update)\\n\\n" "$SCRIPT_NAME"
 	printf "e.    Exit %s\\n\\n" "$SCRIPT_NAME"
@@ -987,6 +1086,13 @@ MainMenu(){
 					Menu_GenerateStats "fullrefresh"
 				fi
 				PressEnter
+				break
+			;;
+			q)
+				printf "\\n"
+				if Check_Lock "menu"; then
+					Menu_ToggleQueryMode
+				fi
 				break
 			;;
 			u)
@@ -1098,6 +1204,7 @@ Menu_Install(){
 	fi
 	
 	Create_Dirs
+	Conf_Exists
 	Create_Symlinks
 	
 	Update_File "uidivstats_www.asp"
@@ -1123,6 +1230,7 @@ Menu_Startup(){
 	Auto_ServiceEvent create 2>/dev/null
 	Shortcut_script create
 	Create_Dirs
+	Conf_Exists
 	Create_Symlinks
 	Mount_WebUI
 	Clear_Lock
@@ -1134,6 +1242,15 @@ Menu_GenerateStats(){
 	else
 		Print_Output "true" "Diversion logging not enabled!" "$ERR"
 		Print_Output "true" "Open Diversion and use option l to enable logging" ""
+	fi
+	Clear_Lock
+}
+
+Menu_ToggleQueryMode(){
+	if [ "$(QueryMode "check")" = "all" ]; then
+		QueryMode "A+AAAA"
+	elif [ "$(QueryMode "check")" = "A+AAAA" ]; then
+		QueryMode "all"
 	fi
 	Clear_Lock
 }
@@ -1168,6 +1285,7 @@ Menu_Uninstall(){
 	rm -rf "$SCRIPT_WEB_DIR" 2>/dev/null
 	
 	/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
+	sleep 5
 	rm -f "/opt/etc/init.d/S90taildns" 2>/dev/null
 	rm -rf "$SCRIPT_DIR/taildns.d" 2>/dev/null
 	
@@ -1238,6 +1356,7 @@ Entware_Ready "$@"
 
 if [ -z "$1" ]; then
 	Create_Dirs
+	Conf_Exists
 	Create_Symlinks
 	Auto_Startup create 2>/dev/null
 	Auto_DNSMASQ_Postconf create 2>/dev/null
