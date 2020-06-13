@@ -1405,10 +1405,12 @@ case "$1" in
 		exit 0
 	;;
 	dnsmasq)
-		Print_Output "true" "dnsmasq has restarted, restarting taildns" "$PASS"
-		/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
-		sleep 5
-		/opt/etc/init.d/S90taildns start >/dev/null 2>&1
+		if grep -q 'log-facility' /etc/dnsmasq.conf; then
+			Print_Output "true" "dnsmasq has restarted, restarting taildns" "$PASS"
+			/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
+			sleep 5
+			/opt/etc/init.d/S90taildns start >/dev/null 2>&1
+		fi
 		exit 0
 	;;
 	fullrefresh)
