@@ -16,7 +16,7 @@
 ### Start of script variables ###
 readonly SCRIPT_NAME="uiDivStats"
 readonly SCRIPT_VERSION="v2.1.0"
-readonly SCRIPT_BRANCH="master"
+readonly SCRIPT_BRANCH="cachetotmp"
 readonly SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/""$SCRIPT_NAME""/""$SCRIPT_BRANCH"
 readonly SCRIPT_DIR="/jffs/addons/$SCRIPT_NAME.d"
 readonly SCRIPT_CONF="$SCRIPT_DIR/config"
@@ -944,6 +944,19 @@ Trim_DNS_DB(){
 		sleep 1
 	done
 	rm -f /tmp/uidivstats-trim.sql
+}
+
+Flush_Cache_To_DB(){
+	{
+		echo "CREATE TABLE IF NOT EXISTS [dnsqueries] ([QueryID] INTEGER PRIMARY KEY NOT NULL, [Timestamp] NUMERIC NOT NULL, [SrcIP] TEXT NOT NULL,[ReqDmn] TEXT NOT NULL,[QryType] Text NOT NULL,[Result] Text NOT NULL);"
+		echo ".mode csv"
+		echo ".import /tmp/cache-uiDivStats-SQL.tmp dnsqueries"
+	} > /tmp/cache-uiDivStats-SQL.sql
+	while ! /opt/bin/sqlite3 "/opt/share/uiDivStats.d/dnsqueries.db" < /tmp/cache-uiDivStats-SQL.sql >/dev/null 2>&1; do
+		sleep 1
+	done
+	rm -f /tmp/cache-uiDivStats-SQL.sql
+	rm -f /tmp/cache-uiDivStats-SQL.tmp
 }
 
 Process_Upgrade(){
