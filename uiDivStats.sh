@@ -400,6 +400,7 @@ Auto_Cron(){
 			STARTUPLINECOUNTGENERATE=$(cru l | grep -c "$SCRIPT_NAME""_generate")
 			STARTUPLINECOUNTTRIM=$(cru l | grep -c "$SCRIPT_NAME""_trim")
 			STARTUPLINECOUNTQUERYLOG=$(cru l | grep -c "$SCRIPT_NAME""_querylog")
+			STARTUPLINECOUNTFLUSHTODB=$(cru l | grep -c "$SCRIPT_NAME""_flushtodb")
 			
 			if [ "$STARTUPLINECOUNTGENERATE" -eq 0 ]; then
 				cru a "$SCRIPT_NAME""_generate" "0 * * * * /jffs/scripts/$SCRIPT_NAME generate"
@@ -409,6 +410,9 @@ Auto_Cron(){
 			fi
 			if [ "$STARTUPLINECOUNTQUERYLOG" -eq 0 ]; then
 				cru a "$SCRIPT_NAME""_querylog" "* * * * * /jffs/scripts/$SCRIPT_NAME querylog"
+			fi
+			if [ "$STARTUPLINECOUNTFLUSHTODB" -eq 0 ]; then
+				cru a "$SCRIPT_NAME""_flushtodb" "4,9,14,19,24,29,34,39,44,49,54,59 * * * * /jffs/scripts/$SCRIPT_NAME flushtodb"
 			fi
 		;;
 		delete)
@@ -420,6 +424,7 @@ Auto_Cron(){
 			STARTUPLINECOUNTGENERATE=$(cru l | grep -c "$SCRIPT_NAME""_generate")
 			STARTUPLINECOUNTTRIM=$(cru l | grep -c "$SCRIPT_NAME""_trim")
 			STARTUPLINECOUNTQUERYLOG=$(cru l | grep -c "$SCRIPT_NAME""_querylog")
+			STARTUPLINECOUNTFLUSHTODB=$(cru l | grep -c "$SCRIPT_NAME""_flushtodb")
 			
 			if [ "$STARTUPLINECOUNTGENERATE" -gt 0 ]; then
 				cru d "$SCRIPT_NAME""_generate"
@@ -429,6 +434,9 @@ Auto_Cron(){
 			fi
 			if [ "$STARTUPLINECOUNTQUERYLOG" -gt 0 ]; then
 				cru d "$SCRIPT_NAME""_querylog"
+			fi
+			if [ "$STARTUPLINECOUNTFLUSHTODB" -eq 0 ]; then
+				cru d "$SCRIPT_NAME""_flushtodb"
 			fi
 		;;
 	esac
@@ -1433,6 +1441,10 @@ case "$1" in
 	;;
 	querylog)
 		Generate_Query_Log
+		exit 0
+	;;
+	flushtodb)
+		Flush_Cache_To_DB
 		exit 0
 	;;
 	trimdb)
