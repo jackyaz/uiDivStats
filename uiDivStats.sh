@@ -757,17 +757,32 @@ Generate_NG(){
 }
 
 Generate_Query_Log(){
+	recordcount=5000
+	if [ "$(CacheMode "check")" = "tmp" ]; then
+		if [ -f /tmp/cache-uiDivStats-SQL.tmp ]; then
+			sort -s -k 1,1 -n -r /tmp/cache-uiDivStats-SQL.tmp > /tmp/cache-uiDivStats-SQL.tmp.sorted
+			sed -i 's/,/|/' /tmp/cache-uiDivStats-SQL.tmp.sorted
+			recordcount="$((recordcount - "$(cat /tmp/cache-uiDivStats-SQL.tmp.sorted | wc -l)"))"
+		fi
+	fi
+	
+	echo "$recordcount"
+	
 	{
 		echo ".mode csv"
 		echo ".headers off"
 		echo ".separator '|'"
-		echo ".output $CSV_OUTPUT_DIR/SQLQueryLog.htm"
-		echo "SELECT [Timestamp] Time, [ReqDmn] ReqDmn, [SrcIP] SrcIP, [QryType] QryType, [Result] Result FROM [dnsqueries] ORDER BY [Timestamp] DESC LIMIT 5000;"
+		echo ".output $CSV_OUTPUT_DIR/SQLQueryLog.tmp"
+		echo "SELECT [Timestamp] Time, [ReqDmn] ReqDmn, [SrcIP] SrcIP, [QryType] QryType, [Result] Result FROM [dnsqueries] ORDER BY [Timestamp] DESC LIMIT $recordcount;"
 	} > /tmp/uidivstats-query.sql
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-query.sql >/dev/null 2>&1; do
 		sleep 1
 	done
 	rm -f /tmp/uidivstats-query.sql
+	
+	cat /tmp/cache-uiDivStats-SQL.tmp.sorted "$CSV_OUTPUT_DIR/SQLQueryLog.tmp" > "$CSV_OUTPUT_DIR/SQLQueryLog.htm" 2> /dev/null
+	rm -f /tmp/cache-uiDivStats-SQL.tmp.sorted
+	rm -f "$CSV_OUTPUT_DIR/SQLQueryLog.tmp"
 }
 
 Generate_KeyStats(){
