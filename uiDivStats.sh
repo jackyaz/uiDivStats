@@ -762,7 +762,8 @@ Generate_Query_Log(){
 		if [ -f /tmp/cache-uiDivStats-SQL.tmp ]; then
 			sort -s -k 1,1 -n -r /tmp/cache-uiDivStats-SQL.tmp > /tmp/cache-uiDivStats-SQL.tmp.sorted
 			sed -i 's/,/|/g' /tmp/cache-uiDivStats-SQL.tmp.sorted
-			recordcount="$((recordcount - $(cat /tmp/cache-uiDivStats-SQL.tmp.sorted | wc -l)))"
+			awk 'BEGIN{FS=OFS="|"} {t=$2; $2=$3; $3=t; print} ' /tmp/cache-uiDivStats-SQL.tmp.sorted > /tmp/cache-uiDivStats-SQL.tmp.ordered
+			recordcount="$((recordcount - $(cat /tmp/cache-uiDivStats-SQL.tmp.ordered | wc -l)))"
 		fi
 	fi
 	
@@ -778,8 +779,9 @@ Generate_Query_Log(){
 	done
 	rm -f /tmp/uidivstats-query.sql
 	
-	cat /tmp/cache-uiDivStats-SQL.tmp.sorted "$CSV_OUTPUT_DIR/SQLQueryLog.tmp" > "$CSV_OUTPUT_DIR/SQLQueryLog.htm" 2> /dev/null
+	cat /tmp/cache-uiDivStats-SQL.tmp.ordered "$CSV_OUTPUT_DIR/SQLQueryLog.tmp" > "$CSV_OUTPUT_DIR/SQLQueryLog.htm" 2> /dev/null
 	rm -f /tmp/cache-uiDivStats-SQL.tmp.sorted
+	rm -f /tmp/cache-uiDivStats-SQL.tmp.ordered
 	rm -f "$CSV_OUTPUT_DIR/SQLQueryLog.tmp"
 }
 
