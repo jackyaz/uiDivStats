@@ -761,8 +761,8 @@ Generate_Query_Log(){
 	if [ "$(CacheMode "check")" = "tmp" ]; then
 		if [ -f /tmp/cache-uiDivStats-SQL.tmp ]; then
 			sort -s -k 1,1 -n -r /tmp/cache-uiDivStats-SQL.tmp > /tmp/cache-uiDivStats-SQL.tmp.sorted
-			sed -i 's/,/|/' /tmp/cache-uiDivStats-SQL.tmp.sorted
-			recordcount="$((recordcount - "$(cat /tmp/cache-uiDivStats-SQL.tmp.sorted | wc -l)"))"
+			sed -i 's/,/|/g' /tmp/cache-uiDivStats-SQL.tmp.sorted
+			recordcount="$((recordcount - $(cat /tmp/cache-uiDivStats-SQL.tmp.sorted | wc -l)))"
 		fi
 	fi
 	
