@@ -313,9 +313,12 @@ Conf_Exists(){
 		dos2unix "$SCRIPT_CONF"
 		chmod 0644 "$SCRIPT_CONF"
 		sed -i -e 's/"//g' "$SCRIPT_CONF"
+		if [ "$(wc -l < "$SCRIPT_CONF")" -eq 1 ]; then
+			echo "CACHEMODE=none" >> "$SCRIPT_CONF"
+		fi
 		return 0
 	else
-		echo "QUERYMODE=all" > "$SCRIPT_CONF"
+		{ echo "QUERYMODE=all"; echo "CACHEMODE=none"; } > "$SCRIPT_CONF"
 		return 1
 	fi
 }
@@ -536,6 +539,27 @@ QueryMode(){
 		check)
 			QUERYMODE="$(grep "QUERYMODE" "$SCRIPT_CONF" | cut -f2 -d"=")"
 			echo "$QUERYMODE"
+		;;
+	esac
+}
+
+CacheMode(){
+	case "$1" in
+		none)
+			sed -i 's/^CACHEMODE.*$/CACHEMODE=none/' "$SCRIPT_CONF"
+			/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
+			sleep 5
+			/opt/etc/init.d/S90taildns start >/dev/null 2>&1
+		;;
+		tmp)
+			sed -i 's/^CACHEMODE.*$/CACHEMODE=tmp/' "$SCRIPT_CONF"
+			/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
+			sleep 5
+			/opt/etc/init.d/S90taildns start >/dev/null 2>&1
+		;;
+		check)
+			CACHEMODE="$(grep "CACHEMODE" "$SCRIPT_CONF" | cut -f2 -d"=")"
+			echo "$CACHEMODE"
 		;;
 	esac
 }
@@ -1082,10 +1106,12 @@ ScriptHeader(){
 
 MainMenu(){
 	QUERYMODE_MENU="$(QueryMode "check")"
+	CACHEMODE_MENU="$(CacheMode "check")"
 	printf "1.    Update Diversion Statistics (daily only)\\n\\n"
 	printf "2.    Update Diversion Statistics (daily, weekly and monthly)\\n"
 	printf "      WARNING: THIS WILL TAKE A WHILE (>10 minutes)\\n\\n"
 	printf "q.    Toggle query mode\\n      Currently \\e[1m%s\\e[0m query types will be logged\\n\\n" "$QUERYMODE_MENU"
+	printf "c.    Toggle cache mode\\n      Currently \\e[1m%s\\e[0m being used to cache query records\\n\\n" "$CACHEMODE_MENU"
 	printf "u.    Check for updates\\n"
 	printf "uf.   Update %s with latest version (force update)\\n\\n" "$SCRIPT_NAME"
 	printf "e.    Exit %s\\n\\n" "$SCRIPT_NAME"
@@ -1118,6 +1144,13 @@ MainMenu(){
 				printf "\\n"
 				if Check_Lock "menu"; then
 					Menu_ToggleQueryMode
+				fi
+				break
+			;;
+			c)
+				printf "\\n"
+				if Check_Lock "menu"; then
+					Menu_ToggleCacheMode
 				fi
 				break
 			;;
@@ -1277,6 +1310,15 @@ Menu_ToggleQueryMode(){
 		QueryMode "A+AAAA"
 	elif [ "$(QueryMode "check")" = "A+AAAA" ]; then
 		QueryMode "all"
+	fi
+	Clear_Lock
+}
+
+Menu_ToggleCacheMode(){
+	if [ "$(CacheMode "check")" = "none" ]; then
+		CacheMode "tmp"
+	elif [ "$(CacheMode "check")" = "tmp" ]; then
+		CacheMode "none"
 	fi
 	Clear_Lock
 }
