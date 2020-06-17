@@ -763,7 +763,7 @@ Generate_Query_Log(){
 			sort -s -k 1,1 -n -r /tmp/cache-uiDivStats-SQL.tmp > /tmp/cache-uiDivStats-SQL.tmp.sorted
 			sed -i 's/,/|/g' /tmp/cache-uiDivStats-SQL.tmp.sorted
 			awk 'BEGIN{FS=OFS="|"} {t=$2; $2=$3; $3=t; print} ' /tmp/cache-uiDivStats-SQL.tmp.sorted > /tmp/cache-uiDivStats-SQL.tmp.ordered
-			recordcount="$((recordcount - $(cat /tmp/cache-uiDivStats-SQL.tmp.ordered | wc -l)))"
+			recordcount="$((recordcount - $(wc -l < /tmp/cache-uiDivStats-SQL.tmp.ordered)))"
 		fi
 	fi
 	
