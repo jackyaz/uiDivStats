@@ -766,8 +766,6 @@ Generate_Query_Log(){
 		fi
 	fi
 	
-	echo "$recordcount"
-	
 	{
 		echo ".mode csv"
 		echo ".headers off"
