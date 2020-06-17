@@ -548,8 +548,8 @@ CacheMode(){
 		none)
 			sed -i 's/^CACHEMODE.*$/CACHEMODE=none/' "$SCRIPT_CONF"
 			/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
-			Flush_Cache_To_DB
 			sleep 5
+			Flush_Cache_To_DB
 			/opt/etc/init.d/S90taildns start >/dev/null 2>&1
 		;;
 		tmp)
