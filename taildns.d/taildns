@@ -22,7 +22,7 @@ while true; do
 		killall -q taildnstotal
 		/opt/bin/pkill -f "tail -F /opt/var/log/dnsmasq.log /opt/var/log/dnsmasq.log3"
 		sleep 5
-		/jffs/addons/uiDivStats.d/taildns.d/taildnstotal &
+		/jffs/addons/uiDivStats.d/taildns.d/taildnstotal"$taildnsfilesuffix" &
 		logger -t "uiDivStats" "taildns restarted"
 	fi
 done
