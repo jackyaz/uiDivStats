@@ -1,0 +1,29 @@
+#!/bin/sh
+#shellcheck disable=SC2039
+trap '' SIGHUP
+
+querymode="$(grep "QUERYMODE" "/jffs/addons/uiDivStats.d/config" | cut -f2 -d"=")"
+tailfilesuffix=""
+if [ "$querymode" = "A+AAAA" ]; then
+	tailfilesuffix="-a-aaaa"
+fi
+
+tailfile=""
+if grep -q "log-queries=extra" /etc/dnsmasq.conf ; then
+	tailfile="/jffs/addons/uiDivStats.d/taildns.d/dnsmasqtotalextra$tailfilesuffix.awk"
+else
+	tailfile="/jffs/addons/uiDivStats.d/taildns.d/dnsmasqtotal$tailfilesuffix.awk"
+fi
+
+tail -F /opt/var/log/dnsmasq.log /opt/var/log/dnsmasq.log3 | "$tailfile" | \
+
+while read line; do \
+timestamp="$(echo $line | cut -f1 -d',')" \
+srcip="$(echo $line | cut -f2 -d',')" \
+reqdmn="$(echo $line | cut -f3 -d',')" \
+qrytype="$(echo $line | cut -f4 -d',')" \
+result="$(echo $line | cut -f5 -d',')" \
+
+echo "$timestamp,$srcip,$reqdmn,$qrytype,$result" >> /tmp/cache-uiDivStats-SQL.tmp \
+
+done

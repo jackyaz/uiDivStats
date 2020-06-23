@@ -15,7 +15,7 @@
 
 ### Start of script variables ###
 readonly SCRIPT_NAME="uiDivStats"
-readonly SCRIPT_VERSION="v2.1.0"
+readonly SCRIPT_VERSION="v2.2.0"
 readonly SCRIPT_BRANCH="master"
 readonly SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/""$SCRIPT_NAME""/""$SCRIPT_BRANCH"
 readonly SCRIPT_DIR="/jffs/addons/$SCRIPT_NAME.d"
@@ -313,9 +313,12 @@ Conf_Exists(){
 		dos2unix "$SCRIPT_CONF"
 		chmod 0644 "$SCRIPT_CONF"
 		sed -i -e 's/"//g' "$SCRIPT_CONF"
+		if [ "$(wc -l < "$SCRIPT_CONF")" -eq 1 ]; then
+			echo "CACHEMODE=none" >> "$SCRIPT_CONF"
+		fi
 		return 0
 	else
-		echo "QUERYMODE=all" > "$SCRIPT_CONF"
+		{ echo "QUERYMODE=all"; echo "CACHEMODE=none"; } > "$SCRIPT_CONF"
 		return 1
 	fi
 }
@@ -400,6 +403,7 @@ Auto_Cron(){
 			STARTUPLINECOUNTGENERATE=$(cru l | grep -c "$SCRIPT_NAME""_generate")
 			STARTUPLINECOUNTTRIM=$(cru l | grep -c "$SCRIPT_NAME""_trim")
 			STARTUPLINECOUNTQUERYLOG=$(cru l | grep -c "$SCRIPT_NAME""_querylog")
+			STARTUPLINECOUNTFLUSHTODB=$(cru l | grep -c "$SCRIPT_NAME""_flushtodb")
 			
 			if [ "$STARTUPLINECOUNTGENERATE" -eq 0 ]; then
 				cru a "$SCRIPT_NAME""_generate" "0 * * * * /jffs/scripts/$SCRIPT_NAME generate"
@@ -409,6 +413,9 @@ Auto_Cron(){
 			fi
 			if [ "$STARTUPLINECOUNTQUERYLOG" -eq 0 ]; then
 				cru a "$SCRIPT_NAME""_querylog" "* * * * * /jffs/scripts/$SCRIPT_NAME querylog"
+			fi
+			if [ "$STARTUPLINECOUNTFLUSHTODB" -eq 0 ]; then
+				cru a "$SCRIPT_NAME""_flushtodb" "4,9,14,19,24,29,34,39,44,49,54,59 * * * * /jffs/scripts/$SCRIPT_NAME flushtodb"
 			fi
 		;;
 		delete)
@@ -420,6 +427,7 @@ Auto_Cron(){
 			STARTUPLINECOUNTGENERATE=$(cru l | grep -c "$SCRIPT_NAME""_generate")
 			STARTUPLINECOUNTTRIM=$(cru l | grep -c "$SCRIPT_NAME""_trim")
 			STARTUPLINECOUNTQUERYLOG=$(cru l | grep -c "$SCRIPT_NAME""_querylog")
+			STARTUPLINECOUNTFLUSHTODB=$(cru l | grep -c "$SCRIPT_NAME""_flushtodb")
 			
 			if [ "$STARTUPLINECOUNTGENERATE" -gt 0 ]; then
 				cru d "$SCRIPT_NAME""_generate"
@@ -429,6 +437,9 @@ Auto_Cron(){
 			fi
 			if [ "$STARTUPLINECOUNTQUERYLOG" -gt 0 ]; then
 				cru d "$SCRIPT_NAME""_querylog"
+			fi
+			if [ "$STARTUPLINECOUNTFLUSHTODB" -eq 0 ]; then
+				cru d "$SCRIPT_NAME""_flushtodb"
 			fi
 		;;
 	esac
@@ -528,6 +539,28 @@ QueryMode(){
 		check)
 			QUERYMODE="$(grep "QUERYMODE" "$SCRIPT_CONF" | cut -f2 -d"=")"
 			echo "$QUERYMODE"
+		;;
+	esac
+}
+
+CacheMode(){
+	case "$1" in
+		none)
+			sed -i 's/^CACHEMODE.*$/CACHEMODE=none/' "$SCRIPT_CONF"
+			/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
+			sleep 5
+			Flush_Cache_To_DB
+			/opt/etc/init.d/S90taildns start >/dev/null 2>&1
+		;;
+		tmp)
+			sed -i 's/^CACHEMODE.*$/CACHEMODE=tmp/' "$SCRIPT_CONF"
+			/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
+			sleep 5
+			/opt/etc/init.d/S90taildns start >/dev/null 2>&1
+		;;
+		check)
+			CACHEMODE="$(grep "CACHEMODE" "$SCRIPT_CONF" | cut -f2 -d"=")"
+			echo "$CACHEMODE"
 		;;
 	esac
 }
@@ -719,22 +752,37 @@ Generate_NG(){
 	
 	echo "Stats last updated: $timenowfriendly" > "/tmp/uidivstatstitle.txt"
 	WriteStats_ToJS "/tmp/uidivstatstitle.txt" "$SCRIPT_DIR/SQLData.js" "SetuiDivStatsTitle" "statstitle"
-	Print_Output "false" "Stats updated successfully" "$PASS"
+	Print_Output "true" "Stats updated successfully" "$PASS"
 	rm -f "/tmpuidivstatstitle.txt"
 }
 
 Generate_Query_Log(){
+	recordcount=5000
+	if [ "$(CacheMode "check")" = "tmp" ]; then
+		if [ -f /tmp/cache-uiDivStats-SQL.tmp ]; then
+			sort -s -k 1,1 -n -r /tmp/cache-uiDivStats-SQL.tmp > /tmp/cache-uiDivStats-SQL.tmp.sorted
+			sed -i 's/,/|/g' /tmp/cache-uiDivStats-SQL.tmp.sorted
+			awk 'BEGIN{FS=OFS="|"} {t=$2; $2=$3; $3=t; print} ' /tmp/cache-uiDivStats-SQL.tmp.sorted > /tmp/cache-uiDivStats-SQL.tmp.ordered
+			recordcount="$((recordcount - $(wc -l < /tmp/cache-uiDivStats-SQL.tmp.ordered)))"
+		fi
+	fi
+	
 	{
 		echo ".mode csv"
 		echo ".headers off"
 		echo ".separator '|'"
-		echo ".output $CSV_OUTPUT_DIR/SQLQueryLog.htm"
-		echo "SELECT [Timestamp] Time, [ReqDmn] ReqDmn, [SrcIP] SrcIP, [QryType] QryType, [Result] Result FROM [dnsqueries] ORDER BY [Timestamp] DESC LIMIT 5000;"
+		echo ".output $CSV_OUTPUT_DIR/SQLQueryLog.tmp"
+		echo "SELECT [Timestamp] Time, [ReqDmn] ReqDmn, [SrcIP] SrcIP, [QryType] QryType, [Result] Result FROM [dnsqueries] ORDER BY [Timestamp] DESC LIMIT $recordcount;"
 	} > /tmp/uidivstats-query.sql
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-query.sql >/dev/null 2>&1; do
 		sleep 1
 	done
 	rm -f /tmp/uidivstats-query.sql
+	
+	cat /tmp/cache-uiDivStats-SQL.tmp.ordered "$CSV_OUTPUT_DIR/SQLQueryLog.tmp" > "$CSV_OUTPUT_DIR/SQLQueryLog.htm" 2> /dev/null
+	rm -f /tmp/cache-uiDivStats-SQL.tmp.sorted
+	rm -f /tmp/cache-uiDivStats-SQL.tmp.ordered
+	rm -f "$CSV_OUTPUT_DIR/SQLQueryLog.tmp"
 }
 
 Generate_KeyStats(){
@@ -946,6 +994,24 @@ Trim_DNS_DB(){
 	rm -f /tmp/uidivstats-trim.sql
 }
 
+Flush_Cache_To_DB(){
+	if [ -f /tmp/cache-uiDivStats-SQL.tmp ]; then
+		{
+			echo "CREATE TABLE IF NOT EXISTS [dnsqueries] ([QueryID] INTEGER PRIMARY KEY NOT NULL, [Timestamp] NUMERIC NOT NULL, [SrcIP] TEXT NOT NULL,[ReqDmn] TEXT NOT NULL,[QryType] Text NOT NULL,[Result] Text NOT NULL);"
+			echo "CREATE TABLE IF NOT EXISTS [dnsqueries_tmp] ([Timestamp] NUMERIC NOT NULL, [SrcIP] TEXT NOT NULL,[ReqDmn] TEXT NOT NULL,[QryType] Text NOT NULL,[Result] Text NOT NULL);"
+			echo ".mode csv"
+			echo ".import /tmp/cache-uiDivStats-SQL.tmp dnsqueries_tmp"
+			echo "INSERT INTO dnsqueries SELECT NULL,* FROM dnsqueries_tmp;"
+			echo "DROP TABLE dnsqueries_tmp;"
+		} > /tmp/cache-uiDivStats-SQL.sql
+		while ! /opt/bin/sqlite3 "/opt/share/uiDivStats.d/dnsqueries.db" < /tmp/cache-uiDivStats-SQL.sql >/dev/null 2>&1; do
+			sleep 1
+		done
+		rm -f /tmp/cache-uiDivStats-SQL.sql
+		rm -f /tmp/cache-uiDivStats-SQL.tmp
+	fi
+}
+
 Process_Upgrade(){
 	if [ ! -f "$SCRIPT_DIR/.upgraded" ] && [ ! -f "$SCRIPT_DIR/.upgraded2" ]; then
 		opkg update
@@ -1056,10 +1122,12 @@ ScriptHeader(){
 
 MainMenu(){
 	QUERYMODE_MENU="$(QueryMode "check")"
+	CACHEMODE_MENU="$(CacheMode "check")"
 	printf "1.    Update Diversion Statistics (daily only)\\n\\n"
 	printf "2.    Update Diversion Statistics (daily, weekly and monthly)\\n"
 	printf "      WARNING: THIS WILL TAKE A WHILE (>10 minutes)\\n\\n"
 	printf "q.    Toggle query mode\\n      Currently \\e[1m%s\\e[0m query types will be logged\\n\\n" "$QUERYMODE_MENU"
+	printf "c.    Toggle cache mode\\n      Currently \\e[1m%s\\e[0m being used to cache query records\\n\\n" "$CACHEMODE_MENU"
 	printf "u.    Check for updates\\n"
 	printf "uf.   Update %s with latest version (force update)\\n\\n" "$SCRIPT_NAME"
 	printf "e.    Exit %s\\n\\n" "$SCRIPT_NAME"
@@ -1092,6 +1160,13 @@ MainMenu(){
 				printf "\\n"
 				if Check_Lock "menu"; then
 					Menu_ToggleQueryMode
+				fi
+				break
+			;;
+			c)
+				printf "\\n"
+				if Check_Lock "menu"; then
+					Menu_ToggleCacheMode
 				fi
 				break
 			;;
@@ -1255,6 +1330,15 @@ Menu_ToggleQueryMode(){
 	Clear_Lock
 }
 
+Menu_ToggleCacheMode(){
+	if [ "$(CacheMode "check")" = "none" ]; then
+		CacheMode "tmp"
+	elif [ "$(CacheMode "check")" = "tmp" ]; then
+		CacheMode "none"
+	fi
+	Clear_Lock
+}
+
 Menu_Update(){
 	Update_Version
 	Clear_Lock
@@ -1377,7 +1461,7 @@ case "$1" in
 	;;
 	startup)
 		Check_Lock
-		sleep 9
+		sleep 20
 		Menu_Startup
 		exit 0
 	;;
@@ -1420,6 +1504,10 @@ case "$1" in
 	;;
 	querylog)
 		Generate_Query_Log
+		exit 0
+	;;
+	flushtodb)
+		Flush_Cache_To_DB
 		exit 0
 	;;
 	trimdb)
