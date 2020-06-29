@@ -969,16 +969,21 @@ Generate_Stats_From_SQLite(){
 	echo "var hostiparray =[" > "$CSV_OUTPUT_DIR/ipdistinctclients.js"
 	ARPDUMP="$(arp -a)"
 	for ipclient in $ipclients; do
-		GUEST_ARPINFO="$(echo "$ARPDUMP" | grep "$ipclient")"
-		GUEST_HOST="$(echo "$GUEST_ARPINFO" | awk '{print $1}' | cut -f1 -d ".")"
-		if [ "$GUEST_HOST" = "?" ]; then
-			GUEST_HOST=$(grep "$ipclient" /var/lib/misc/dnsmasq.leases | awk '{print $4}')
+		ARPINFO="$(echo "$ARPDUMP" | grep "$ipclient)")"
+		HOST="$(echo "$ARPINFO" | awk '{print $1}' | cut -f1 -d ".")"
+		MACADRR="$(echo "$ARPINFO" | awk '{print $4}' | cut -f1 -d ".")"
+		if [ "$HOST" = "?" ]; then
+			HOST=$(grep "$ipclient " /var/lib/misc/dnsmasq.leases | awk '{print $4}')
 		fi
 		
-		if [ "$GUEST_HOST" = "?" ] || [ "${#GUEST_HOST}" -le 1 ]; then
-			GUEST_HOST="$(dig +short +answer -x "$ipclient" '@'"$(nvram get lan_ipaddr)" | cut -f1 -d'.')"
+		if [ "$HOST" = "?" ] || [ "${#HOST}" -le 1 ]; then
+			HOST="$(nvram get custom_clientlist | grep -ioE "<.*>$MACADRR" | awk -F ">" '{print $(NF-1)}' | tr -d '<')" #thanks Adamm00
 		fi
-		echo '["'"$ipclient"'","'"$GUEST_HOST"'"],' >> "$CSV_OUTPUT_DIR/ipdistinctclients.js"
+		
+		if [ -z "$HOST" ]; then
+			HOST="$(dig +short +answer -x "$ipclient" '@'"$(nvram get lan_ipaddr)" | cut -f1 -d'.')"
+		fi
+		echo '["'"$ipclient"'","'"$HOST"'"],' >> "$CSV_OUTPUT_DIR/ipdistinctclients.js"
 	done
 	sed -i '$ s/,$//' "$CSV_OUTPUT_DIR/ipdistinctclients.js"
 	echo "];" >> "$CSV_OUTPUT_DIR/ipdistinctclients.js"
