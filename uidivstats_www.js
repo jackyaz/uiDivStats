@@ -420,6 +420,8 @@ function initial(){
 	Assign_EventHandlers();
 	
 	SetuiDivStatsTitle();
+	
+	loadDivStats();
 }
 
 function SetGlobalDataset(txtchartname,dataobject){
@@ -1026,4 +1028,17 @@ function stripedTable() {
 			}
 		}
 	}
+}
+
+function loadDivStats() {
+	$j.ajax({
+		url: '/ext/uiDivStats/DiversionStats.htm',
+		dataType: 'text',
+		error: function(xhr){
+			setTimeout("loadDivStats();", 5000);
+		},
+		success: function(data){
+			document.getElementById("DiversionStats").innerHTML=data;
+		}
+	});
 }
