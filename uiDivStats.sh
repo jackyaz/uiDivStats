@@ -967,9 +967,18 @@ Generate_Stats_From_SQLite(){
 	fi
 	
 	echo "var hostiparray =[" > "$CSV_OUTPUT_DIR/ipdistinctclients.js"
-	
+	ARPDUMP="$(arp -a)"
 	for ipclient in $ipclients; do
-		echo '["'"$ipclient"'","'"$(dig +short +answer -x "$ipclient" '@'"$(nvram get lan_ipaddr)" | cut -f1 -d'.')"'"],' >> "$CSV_OUTPUT_DIR/ipdistinctclients.js"
+		GUEST_ARPINFO="$(echo "$ARPDUMP" | grep "$ipclient")"
+		GUEST_HOST="$(echo "$GUEST_ARPINFO" | awk '{print $1}' | cut -f1 -d ".")"
+		if [ "$GUEST_HOST" = "?" ]; then
+			GUEST_HOST=$(grep "$ipclient" /var/lib/misc/dnsmasq.leases | awk '{print $4}')
+		fi
+		
+		if [ "$GUEST_HOST" = "?" ] || [ "${#GUEST_HOST}" -le 1 ]; then
+			GUEST_HOST='["'"$ipclient"'","'"$(dig +short +answer -x "$ipclient" '@'"$(nvram get lan_ipaddr)" | cut -f1 -d'.')"'"],'
+		fi
+		echo "$GUEST_HOST" >> "$CSV_OUTPUT_DIR/ipdistinctclients.js"
 	done
 	sed -i '$ s/,$//' "$CSV_OUTPUT_DIR/ipdistinctclients.js"
 	echo "];" >> "$CSV_OUTPUT_DIR/ipdistinctclients.js"
