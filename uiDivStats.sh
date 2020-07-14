@@ -973,7 +973,7 @@ Generate_Stats_From_SQLite(){
 		HOST="$(echo "$ARPINFO" | awk '{print $1}' | cut -f1 -d ".")"
 		MACADRR="$(echo "$ARPINFO" | awk '{print $4}' | cut -f1 -d ".")"
 		if [ "$HOST" = "?" ]; then
-			HOST=$(grep "$ipclient " /var/lib/misc/dnsmasq.leases | awk '{print $4}')
+			HOST="$(grep "$ipclient " /var/lib/misc/dnsmasq.leases | awk '{print $4}')"
 		fi
 		
 		if [ "$HOST" = "?" ] || [ "${#HOST}" -le 1 ]; then
