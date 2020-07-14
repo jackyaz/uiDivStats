@@ -983,6 +983,9 @@ Generate_Stats_From_SQLite(){
 		if [ -z "$HOST" ]; then
 			HOST="$(dig +short +answer -x "$ipclient" '@'"$(nvram get lan_ipaddr)" | cut -f1 -d'.')"
 		fi
+		
+		HOST="$(echo "$HOST" | tr -d '\n')"
+		
 		echo '["'"$ipclient"'","'"$HOST"'"],' >> "$CSV_OUTPUT_DIR/ipdistinctclients.js"
 	done
 	sed -i '$ s/,$//' "$CSV_OUTPUT_DIR/ipdistinctclients.js"
