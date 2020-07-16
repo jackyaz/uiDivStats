@@ -294,7 +294,7 @@ var $j=jQuery.noConflict(),maxNoChartsBlocked=6,currentNoChartsBlocked=0,maxNoCh
 </table>
 <!-- End Query Log -->
 <div style="line-height:10px;">&nbsp;</div>
-<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#4D595D" class="FormTable">
+<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#4D595D" class="FormTable" id="uidivstats_diversiontextstats">
 <thead class="collapsible-jquery" >
 <tr>
 <td colspan="2">Diversion Statistics Report (click to expand/collapse)</td>
