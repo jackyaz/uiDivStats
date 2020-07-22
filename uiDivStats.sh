@@ -15,7 +15,7 @@
 
 ### Start of script variables ###
 readonly SCRIPT_NAME="uiDivStats"
-readonly SCRIPT_VERSION="v2.2.0"
+readonly SCRIPT_VERSION="v2.2.1"
 readonly SCRIPT_BRANCH="master"
 readonly SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/""$SCRIPT_NAME""/""$SCRIPT_BRANCH"
 readonly SCRIPT_DIR="/jffs/addons/$SCRIPT_NAME.d"
@@ -298,6 +298,9 @@ Create_Symlinks(){
 	rm -f "$SCRIPT_WEB_DIR/"* 2>/dev/null
 	
 	ln -s "$SCRIPT_DIR/SQLData.js" "$SCRIPT_WEB_DIR/SQLData.js" 2>/dev/null
+	
+	diversionstatsfile="$(/usr/bin/find /opt/share/diversion/stats -name "Diversion_Stats*" | tail -n 1)"
+	ln -s "$diversionstatsfile" "$SCRIPT_WEB_DIR/DiversionStats.htm" 2>/dev/null
 	
 	if [ ! -d "$SCRIPT_WEB_DIR/csv" ]; then
 		ln -s "$CSV_OUTPUT_DIR" "$SCRIPT_WEB_DIR/csv" 2>/dev/null
@@ -964,9 +967,26 @@ Generate_Stats_From_SQLite(){
 	fi
 	
 	echo "var hostiparray =[" > "$CSV_OUTPUT_DIR/ipdistinctclients.js"
-	
+	ARPDUMP="$(arp -a)"
 	for ipclient in $ipclients; do
-		echo '["'"$ipclient"'","'"$(dig +short +answer -x "$ipclient" '@'"$(nvram get lan_ipaddr)" | cut -f1 -d'.')"'"],' >> "$CSV_OUTPUT_DIR/ipdistinctclients.js"
+		ARPINFO="$(echo "$ARPDUMP" | grep "$ipclient)")"
+		HOST="$(echo "$ARPINFO" | awk '{print $1}' | cut -f1 -d ".")"
+		MACADRR="$(echo "$ARPINFO" | awk '{print $4}' | cut -f1 -d ".")"
+		if echo "$HOST" | grep -q "?"; then
+			HOST="$(grep "$ipclient " /var/lib/misc/dnsmasq.leases | awk '{print $4}')"
+		fi
+		
+		if echo "$HOST" | grep -q "?" || [ "${#HOST}" -le 1 ]; then
+			HOST="$(nvram get custom_clientlist | grep -ioE "<.*>$MACADRR" | awk -F ">" '{print $(NF-1)}' | tr -d '<')" #thanks Adamm00
+		fi
+		
+		if [ -z "$HOST" ]; then
+			HOST="$(dig +short +answer -x "$ipclient" '@'"$(nvram get lan_ipaddr)" | cut -f1 -d'.')"
+		fi
+		
+		HOST="$(echo "$HOST" | tr -d '\n')"
+		
+		echo '["'"$ipclient"'","'"$HOST"'"],' >> "$CSV_OUTPUT_DIR/ipdistinctclients.js"
 	done
 	sed -i '$ s/,$//' "$CSV_OUTPUT_DIR/ipdistinctclients.js"
 	echo "];" >> "$CSV_OUTPUT_DIR/ipdistinctclients.js"
