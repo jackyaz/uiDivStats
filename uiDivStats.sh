@@ -299,7 +299,12 @@ Create_Symlinks(){
 	
 	ln -s "$SCRIPT_DIR/SQLData.js" "$SCRIPT_WEB_DIR/SQLData.js" 2>/dev/null
 	
-	diversionstatsfile="$(/usr/bin/find /opt/share/diversion/stats -name "Diversion_Stats*" | tail -n 1)"
+	if [ ! -f /opt/bin/find ]; then
+		opkg update
+		opkg install findutils
+	fi
+	
+	diversionstatsfile="$(/opt/bin/find /opt/share/diversion/stats -name "Diversion_Stats*" -printf "%C@ %p\n"| sort | tail -n 1 | cut -f2 -d' ')"
 	ln -s "$diversionstatsfile" "$SCRIPT_WEB_DIR/DiversionStats.htm" 2>/dev/null
 	
 	if [ ! -d "$SCRIPT_WEB_DIR/csv" ]; then
@@ -1278,6 +1283,7 @@ Check_Requirements(){
 		opkg install grep
 		opkg install sqlite3-cli
 		opkg install procps-ng-pkill
+		opkg install findutils
 		return 0
 	else
 		return 1
