@@ -15,7 +15,7 @@
 
 ### Start of script variables ###
 readonly SCRIPT_NAME="uiDivStats"
-readonly SCRIPT_VERSION="v2.2.1"
+readonly SCRIPT_VERSION="v2.2.2"
 readonly SCRIPT_BRANCH="master"
 readonly SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/""$SCRIPT_NAME""/""$SCRIPT_BRANCH"
 readonly SCRIPT_DIR="/jffs/addons/$SCRIPT_NAME.d"
@@ -304,8 +304,7 @@ Create_Symlinks(){
 		opkg install findutils
 	fi
 	
-	diversionstatsfile="$(/opt/bin/find /opt/share/diversion/stats -name "Diversion_Stats*" -printf "%C@ %p\n"| sort | tail -n 1 | cut -f2 -d' ')"
-	ln -s "$diversionstatsfile" "$SCRIPT_WEB_DIR/DiversionStats.htm" 2>/dev/null
+	UpdateDiversionWeeklyStatsFile
 	
 	if [ ! -d "$SCRIPT_WEB_DIR/csv" ]; then
 		ln -s "$CSV_OUTPUT_DIR" "$SCRIPT_WEB_DIR/csv" 2>/dev/null
@@ -592,6 +591,12 @@ BlockingFile(){
 		echo "$BLOCKINGFILE"
 		;;
 	esac
+}
+
+UpdateDiversionWeeklyStatsFile(){
+	rm -f "$SCRIPT_WEB_DIR/DiversionStats.htm" 2>/dev/null
+	diversionstatsfile="$(/opt/bin/find /opt/share/diversion/stats -name "Diversion_Stats*" -printf "%C@ %p\n"| sort | tail -n 1 | cut -f2 -d' ')"
+	ln -s "$diversionstatsfile" "$SCRIPT_WEB_DIR/DiversionStats.htm" 2>/dev/null
 }
 
 WriteStats_ToJS(){
@@ -1341,6 +1346,7 @@ Menu_Startup(){
 
 Menu_GenerateStats(){
 	if /opt/bin/grep -q 'log-facility=/opt/var/log/dnsmasq.log' /etc/dnsmasq.conf; then
+		UpdateDiversionWeeklyStatsFile
 		Generate_NG "$1"
 	else
 		Print_Output "true" "Diversion logging not enabled!" "$ERR"
