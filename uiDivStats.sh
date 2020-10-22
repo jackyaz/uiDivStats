@@ -62,6 +62,20 @@ Validate_Number(){
 	fi
 }
 
+Validate_IP(){
+	if expr "$1" : '[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$' >/dev/null; then
+		for i in 1 2 3 4; do
+			if [ "$(echo "$1" | cut -d. -f$i)" -gt 255 ]; then
+				Print_Output "false" "Octet $i ($(echo "$1" | cut -d. -f$i)) - is invalid, must be less than 255" "$ERR"
+				return 1
+			fi
+		done
+	else
+		Print_Output "false" "$1 - is not a valid IPv4 address, valid format is 1.2.3.4" "$ERR"
+		return 1
+	fi
+}
+
 Firmware_Version_Check(){
 	if nvram get rc_support | grep -qF "am_addons"; then
 		return 0
@@ -992,8 +1006,12 @@ Generate_Stats_From_SQLite(){
 			HOST="$(nvram get custom_clientlist | grep -ioE "<.*>$MACADRR" | awk -F ">" '{print $(NF-1)}' | tr -d '<')" #thanks Adamm00
 		fi
 		
-		if [ -z "$HOST" ]; then
-			HOST="$(dig +short +answer -x "$ipclient" '@'"$(nvram get lan_ipaddr)" | cut -f1 -d'.')"
+		if Validate_IP "$ipclient" >/dev/null 2>&1; then
+			if [ -z "$HOST" ]; then
+				HOST="$(dig +short +answer -x "$ipclient" '@'"$(nvram get lan_ipaddr)" | cut -f1 -d'.')"
+			fi
+		else
+			HOST="IPv6"
 		fi
 		
 		HOST="$(echo "$HOST" | tr -d '\n')"
