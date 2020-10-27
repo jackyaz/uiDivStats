@@ -1064,19 +1064,19 @@ function SortTable(sorttext){
 	sortname = sorttext.replace("↑","").replace("↓","").trim();
 	switch(sortname){
 		case "Time":
-			sortfield="Time"
+			sortfield="Time";
 		break;
 		case "Domain":
-			sortfield="ReqDmn"
+			sortfield="ReqDmn";
 		break;
 		case "Client":
-			sortfield="SrcIP"
+			sortfield="SrcIP";
 		break;
 		case "Type":
-			sortfield="QryType"
+			sortfield="QryType";
 		break;
 		case "Result":
-			sortfield="Result"
+			sortfield="Result";
 		break;
 	}
 	
