@@ -103,13 +103,15 @@ div.queryTableContainer {
 thead.queryTableHeader th {
   background-image: linear-gradient(rgb(146, 160, 165) 0%, rgb(102, 117, 124) 100%);
   border-top: none !important;
-	border-left: none !important;
-	border-right: none !important;
-	border-bottom: 1px solid #000 !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-bottom: 1px solid #000 !important;
   font-weight: bolder;
   padding: 2px;
   text-align: center;
   color: #fff;
+  position: sticky;
+  top: 0;
 }
 
 thead.queryTableHeader th:first-child,
