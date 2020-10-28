@@ -251,7 +251,6 @@ function Draw_Time_Chart(txtchartname){
 	}
 	
 	var chartData = dataobject.map(function(d){ return {x: d.Time, y: d.QueryCount}});
-	
 	var objchartname = window["Chart" + txtchartname + "time"];;
 	
 	factor=0;
