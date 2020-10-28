@@ -10,6 +10,7 @@ var originalarrayqueryloglines = [];
 var sortfield = "Time";
 var sortname = "Time";
 var sortdir = "desc";
+var tout;
 
 Chart.defaults.global.defaultFontColor = "#CCC";
 Chart.Tooltip.positioners.cursor = function(chartElements, coordinates){
@@ -917,12 +918,12 @@ function get_querylog_file(){
 		url: '/ext/uiDivStats/csv/SQLQueryLog.htm',
 		dataType: 'text',
 		error: function(xhr){
-			setTimeout(get_querylog_file, 1000);
+			tout = setTimeout(get_querylog_file, 1000);
 		},
 		success: function(data){
 			ParseQueryLog(data);
 			if(document.getElementById("auto_refresh").checked){
-				setTimeout("get_querylog_file();",60000);
+				tout = setTimeout("get_querylog_file();",60000);
 			}
 		}
 	});
@@ -1024,6 +1025,11 @@ function Assign_EventHandlers(){
 			FilterQueryLog();
 		}, 1000);
 	});
+	$("#auto_refresh")[0].addEventListener("click", function(){ToggleRefresh();});
+}
+
+function ToggleRefresh(){
+	$j("#auto_refresh").prop('checked', function(i, v) { if(v){get_querylog_file();} else{clearTimeout(tout);} });
 }
 
 /* http://www.alistapart.com/articles/zebratables/ */
