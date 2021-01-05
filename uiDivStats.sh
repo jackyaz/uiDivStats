@@ -17,7 +17,7 @@
 readonly SCRIPT_NAME="uiDivStats"
 readonly SCRIPT_VERSION="v2.2.3"
 readonly SCRIPT_BRANCH="develop"
-readonly SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/""$SCRIPT_NAME""/""$SCRIPT_BRANCH"
+readonly SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/$SCRIPT_NAME/$SCRIPT_BRANCH"
 readonly SCRIPT_DIR="/jffs/addons/$SCRIPT_NAME.d"
 readonly SCRIPT_CONF="$SCRIPT_DIR/config"
 readonly SCRIPT_USB_DIR="/opt/share/uiDivStats.d"
@@ -56,7 +56,7 @@ Validate_Number(){
 	else
 		formatted="$(echo "$1" | sed -e 's/|/ /g')"
 		if [ -z "$3" ]; then
-			Print_Output "false" "$formatted - $2 is not a number" "$ERR"
+			Print_Output false "$formatted - $2 is not a number" "$ERR"
 		fi
 		return 1
 	fi
@@ -66,12 +66,12 @@ Validate_IP(){
 	if expr "$1" : '[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$' >/dev/null; then
 		for i in 1 2 3 4; do
 			if [ "$(echo "$1" | cut -d. -f$i)" -gt 255 ]; then
-				Print_Output "false" "Octet $i ($(echo "$1" | cut -d. -f$i)) - is invalid, must be less than 255" "$ERR"
+				Print_Output false "Octet $i ($(echo "$1" | cut -d. -f$i)) - is invalid, must be less than 255" "$ERR"
 				return 1
 			fi
 		done
 	else
-		Print_Output "false" "$1 - is not a valid IPv4 address, valid format is 1.2.3.4" "$ERR"
+		Print_Output false "$1 - is not a valid IPv4 address, valid format is 1.2.3.4" "$ERR"
 		return 1
 	fi
 }
@@ -89,13 +89,13 @@ Check_Lock(){
 	if [ -f "/tmp/$SCRIPT_NAME.lock" ]; then
 		ageoflock=$(($(date +%s) - $(date +%s -r /tmp/$SCRIPT_NAME.lock)))
 		if [ "$ageoflock" -gt 600 ]; then
-			Print_Output "true" "Stale lock file found (>600 seconds old) - purging lock" "$ERR"
+			Print_Output true "Stale lock file found (>600 seconds old) - purging lock" "$ERR"
 			kill "$(sed -n '1p' /tmp/$SCRIPT_NAME.lock)" >/dev/null 2>&1
 			Clear_Lock
 			echo "$$" > "/tmp/$SCRIPT_NAME.lock"
 			return 0
 		else
-			Print_Output "true" "Lock file found (age: $ageoflock seconds) - statistic generation likely currently in progress" "$ERR"
+			Print_Output true "Lock file found (age: $ageoflock seconds) - statistic generation likely currently in progress" "$ERR"
 			if [ -z "$1" ]; then
 				exit 1
 			else
@@ -113,8 +113,10 @@ Clear_Lock(){
 	return 0
 }
 
+############################################################################
+
 Set_Version_Custom_Settings(){
-	SETTINGSFILE="/jffs/addons/custom_settings.txt"
+	SETTINGSFILE=/jffs/addons/custom_settings.txt
 	case "$1" in
 		local)
 			if [ -f "$SETTINGSFILE" ]; then
@@ -148,17 +150,17 @@ Set_Version_Custom_Settings(){
 Update_Check(){
 	doupdate="false"
 	localver=$(grep "SCRIPT_VERSION=" /jffs/scripts/"$SCRIPT_NAME" | grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})')
-	/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME.sh" | grep -qF "jackyaz" || { Print_Output "true" "404 error detected - stopping update" "$ERR"; return 1; }
+	/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME.sh" | grep -qF "jackyaz" || { Print_Output true "404 error detected - stopping update" "$ERR"; return 1; }
 	serverver=$(/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME.sh" | grep "SCRIPT_VERSION=" | grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})')
 	if [ "$localver" != "$serverver" ]; then
 		doupdate="version"
-		Set_Version_Custom_Settings "server" "$serverver"
+		Set_Version_Custom_Settings server "$serverver"
 	else
 		localmd5="$(md5sum "/jffs/scripts/$SCRIPT_NAME" | awk '{print $1}')"
 		remotemd5="$(curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME.sh" | md5sum | awk '{print $1}')"
 		if [ "$localmd5" != "$remotemd5" ]; then
 			doupdate="md5"
-			Set_Version_Custom_Settings "server" "$serverver-hotfix"
+			Set_Version_Custom_Settings server "$serverver-hotfix"
 		fi
 	fi
 	echo "$doupdate,$localver,$serverver"
@@ -172,51 +174,49 @@ Update_Version(){
 		serverver="$(echo "$updatecheckresult" | cut -f3 -d',')"
 		
 		if [ "$isupdate" = "version" ]; then
-			Print_Output "true" "New version of $SCRIPT_NAME available - updating to $serverver" "$PASS"
+			Print_Output true "New version of $SCRIPT_NAME available - updating to $serverver" "$PASS"
 		elif [ "$isupdate" = "md5" ]; then
-			Print_Output "true" "MD5 hash of $SCRIPT_NAME does not match - downloading updated $serverver" "$PASS"
+			Print_Output true "MD5 hash of $SCRIPT_NAME does not match - downloading updated $serverver" "$PASS"
 		fi
 		
-		Update_File "shared-jy.tar.gz"
+		Update_File shared-jy.tar.gz
 		
 		if [ "$isupdate" != "false" ]; then
-			Update_File "uidivstats_www.asp"
-			Update_File "taildns.tar.gz"
+			Update_File uidivstats_www.asp
+			Update_File taildns.tar.gz
 			
-			/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME.sh" -o "/jffs/scripts/$SCRIPT_NAME" && Print_Output "true" "$SCRIPT_NAME successfully updated"
+			/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME.sh" -o "/jffs/scripts/$SCRIPT_NAME" && Print_Output true "$SCRIPT_NAME successfully updated"
 			chmod 0755 /jffs/scripts/"$SCRIPT_NAME"
 			Clear_Lock
 			if [ -z "$1" ]; then
-				exec "$0" "setversion"
+				exec "$0" setversion
 			elif [ "$1" = "unattended" ]; then
-				exec "$0" "setversion" "unattended"
+				exec "$0" setversion unattended
 			fi
 			exit 0
 		else
-			Print_Output "true" "No new version - latest is $localver" "$WARN"
+			Print_Output true "No new version - latest is $localver" "$WARN"
 			Clear_Lock
 		fi
 	fi
 	
 	if [ "$1" = "force" ]; then
 		serverver=$(/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME.sh" | grep "SCRIPT_VERSION=" | grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})')
-		Print_Output "true" "Downloading latest version ($serverver) of $SCRIPT_NAME" "$PASS"
-		Update_File "uidivstats_www.asp"
-		Update_File "shared-jy.tar.gz"
-		Update_File "taildns.tar.gz"
-		/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME.sh" -o "/jffs/scripts/$SCRIPT_NAME" && Print_Output "true" "$SCRIPT_NAME successfully updated"
+		Print_Output true "Downloading latest version ($serverver) of $SCRIPT_NAME" "$PASS"
+		Update_File uidivstats_www.asp
+		Update_File shared-jy.tar.gz
+		Update_File taildns.tar.gz
+		/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME.sh" -o "/jffs/scripts/$SCRIPT_NAME" && Print_Output true "$SCRIPT_NAME successfully updated"
 		chmod 0755 /jffs/scripts/"$SCRIPT_NAME"
 		Clear_Lock
 		if [ -z "$2" ]; then
-			exec "$0" "setversion"
+			exec "$0" setversion
 		elif [ "$2" = "unattended" ]; then
-			exec "$0" "setversion" "unattended"
+			exec "$0" setversion unattended
 		fi
 		exit 0
 	fi
 }
-
-############################################################################
 
 Update_File(){
 	if [ "$1" = "uidivstats_www.asp" ]; then
@@ -229,7 +229,7 @@ Update_File(){
 				rm -f "$SCRIPT_WEBPAGE_DIR/$MyPage" 2>/dev/null
 			fi
 			Download_File "$SCRIPT_REPO/$1" "$SCRIPT_DIR/$1"
-			Print_Output "true" "New version of $1 downloaded" "$PASS"
+			Print_Output true "New version of $1 downloaded" "$PASS"
 			Mount_WebUI
 		fi
 		rm -f "$tmpfile"
@@ -245,7 +245,7 @@ Update_File(){
 			mv "$SCRIPT_DIR/taildns.d/S90taildns" /opt/etc/init.d/S90taildns
 			/opt/etc/init.d/S90taildns start >/dev/null 2>&1
 			rm -f "$SCRIPT_DIR/$1"
-			Print_Output "true" "New version of $1 downloaded" "$PASS"
+			Print_Output true "New version of $1 downloaded" "$PASS"
 		else
 			localmd5="$(cat "$SCRIPT_DIR/$1.md5")"
 			remotemd5="$(curl -fsL --retry 3 "$SCRIPT_REPO/$1.md5")"
@@ -260,7 +260,7 @@ Update_File(){
 				mv "$SCRIPT_DIR/taildns.d/S90taildns" /opt/etc/init.d/S90taildns
 				/opt/etc/init.d/S90taildns start >/dev/null 2>&1
 				rm -f "$SCRIPT_DIR/$1"
-				Print_Output "true" "New version of $1 downloaded" "$PASS"
+				Print_Output true "New version of $1 downloaded" "$PASS"
 			fi
 		fi
 	elif [ "$1" = "shared-jy.tar.gz" ]; then
@@ -269,7 +269,7 @@ Update_File(){
 			Download_File "$SHARED_REPO/$1.md5" "$SHARED_DIR/$1.md5"
 			tar -xzf "$SHARED_DIR/$1" -C "$SHARED_DIR"
 			rm -f "$SHARED_DIR/$1"
-			Print_Output "true" "New version of $1 downloaded" "$PASS"
+			Print_Output true "New version of $1 downloaded" "$PASS"
 		else
 			localmd5="$(cat "$SHARED_DIR/$1.md5")"
 			remotemd5="$(curl -fsL --retry 3 "$SHARED_REPO/$1.md5")"
@@ -278,7 +278,7 @@ Update_File(){
 				Download_File "$SHARED_REPO/$1.md5" "$SHARED_DIR/$1.md5"
 				tar -xzf "$SHARED_DIR/$1" -C "$SHARED_DIR"
 				rm -f "$SHARED_DIR/$1"
-				Print_Output "true" "New version of $1 downloaded" "$PASS"
+				Print_Output true "New version of $1 downloaded" "$PASS"
 			fi
 		fi
 	else
@@ -350,7 +350,7 @@ Auto_ServiceEvent(){
 			if [ -f /jffs/scripts/service-event ]; then
 				STARTUPLINECOUNT=$(grep -c '# '"$SCRIPT_NAME" /jffs/scripts/service-event)
 				# shellcheck disable=SC2016
-				STARTUPLINECOUNTEX=$(grep -cx '\[ "$(echo "$2" | grep -c "'"$SCRIPT_NAME"'")" -gt 0 \] && /jffs/scripts/'"$SCRIPT_NAME"' service_event "$1" "$2" & # '"$SCRIPT_NAME" /jffs/scripts/service-event)
+				STARTUPLINECOUNTEX=$(grep -cx "/jffs/scripts/$SCRIPT_NAME service_event"' "$@" & # '"$SCRIPT_NAME" /jffs/scripts/service-event)
 				
 				if [ "$STARTUPLINECOUNT" -gt 1 ] || { [ "$STARTUPLINECOUNTEX" -eq 0 ] && [ "$STARTUPLINECOUNT" -gt 0 ]; }; then
 					sed -i -e '/# '"$SCRIPT_NAME"'/d' /jffs/scripts/service-event
@@ -358,13 +358,13 @@ Auto_ServiceEvent(){
 				
 				if [ "$STARTUPLINECOUNTEX" -eq 0 ]; then
 					# shellcheck disable=SC2016
-					echo '[ "$(echo "$2" | grep -c "'"$SCRIPT_NAME"'")" -gt 0 ] && /jffs/scripts/'"$SCRIPT_NAME"' service_event "$1" "$2" & # '"$SCRIPT_NAME" >> /jffs/scripts/service-event
+					echo "/jffs/scripts/$SCRIPT_NAME service_event"' "$@" & # '"$SCRIPT_NAME" >> /jffs/scripts/service-event
 				fi
 			else
 				echo "#!/bin/sh" > /jffs/scripts/service-event
 				echo "" >> /jffs/scripts/service-event
 				# shellcheck disable=SC2016
-				echo '[ "$(echo "$2" | grep -c "'"$SCRIPT_NAME"'")" -gt 0 ] && /jffs/scripts/'"$SCRIPT_NAME"' service_event "$1" "$2" & # '"$SCRIPT_NAME" >> /jffs/scripts/service-event
+				echo "/jffs/scripts/$SCRIPT_NAME service_event"' "$@" & # '"$SCRIPT_NAME" >> /jffs/scripts/service-event
 				chmod 0755 /jffs/scripts/service-event
 			fi
 		;;
@@ -421,22 +421,22 @@ Auto_Cron(){
 				cru d "$SCRIPT_NAME"
 			fi
 			
-			STARTUPLINECOUNTGENERATE=$(cru l | grep -c "$SCRIPT_NAME""_generate")
-			STARTUPLINECOUNTTRIM=$(cru l | grep -c "$SCRIPT_NAME""_trim")
-			STARTUPLINECOUNTQUERYLOG=$(cru l | grep -c "$SCRIPT_NAME""_querylog")
-			STARTUPLINECOUNTFLUSHTODB=$(cru l | grep -c "$SCRIPT_NAME""_flushtodb")
+			STARTUPLINECOUNTGENERATE=$(cru l | grep -c "${SCRIPT_NAME}_generate")
+			STARTUPLINECOUNTTRIM=$(cru l | grep -c "${SCRIPT_NAME}_trim")
+			STARTUPLINECOUNTQUERYLOG=$(cru l | grep -c "${SCRIPT_NAME}_querylog")
+			STARTUPLINECOUNTFLUSHTODB=$(cru l | grep -c "${SCRIPT_NAME}_flushtodb")
 			
 			if [ "$STARTUPLINECOUNTGENERATE" -eq 0 ]; then
-				cru a "$SCRIPT_NAME""_generate" "0 * * * * /jffs/scripts/$SCRIPT_NAME generate"
+				cru a "${SCRIPT_NAME}_generate" "0 * * * * /jffs/scripts/$SCRIPT_NAME generate"
 			fi
 			if [ "$STARTUPLINECOUNTTRIM" -eq 0 ]; then
-				cru a "$SCRIPT_NAME""_trim" "3 0 * * * /jffs/scripts/$SCRIPT_NAME trimdb"
+				cru a "${SCRIPT_NAME}_trim" "3 0 * * * /jffs/scripts/$SCRIPT_NAME trimdb"
 			fi
 			if [ "$STARTUPLINECOUNTQUERYLOG" -eq 0 ]; then
-				cru a "$SCRIPT_NAME""_querylog" "* * * * * /jffs/scripts/$SCRIPT_NAME querylog"
+				cru a "${SCRIPT_NAME}_querylog" "* * * * * /jffs/scripts/$SCRIPT_NAME querylog"
 			fi
 			if [ "$STARTUPLINECOUNTFLUSHTODB" -eq 0 ]; then
-				cru a "$SCRIPT_NAME""_flushtodb" "4,9,14,19,24,29,34,39,44,49,54,59 * * * * /jffs/scripts/$SCRIPT_NAME flushtodb"
+				cru a "${SCRIPT_NAME}_flushtodb" "4,9,14,19,24,29,34,39,44,49,54,59 * * * * /jffs/scripts/$SCRIPT_NAME flushtodb"
 			fi
 		;;
 		delete)
@@ -445,22 +445,22 @@ Auto_Cron(){
 				cru d "$SCRIPT_NAME"
 			fi
 			
-			STARTUPLINECOUNTGENERATE=$(cru l | grep -c "$SCRIPT_NAME""_generate")
-			STARTUPLINECOUNTTRIM=$(cru l | grep -c "$SCRIPT_NAME""_trim")
-			STARTUPLINECOUNTQUERYLOG=$(cru l | grep -c "$SCRIPT_NAME""_querylog")
-			STARTUPLINECOUNTFLUSHTODB=$(cru l | grep -c "$SCRIPT_NAME""_flushtodb")
+			STARTUPLINECOUNTGENERATE=$(cru l | grep -c "${SCRIPT_NAME}_generate")
+			STARTUPLINECOUNTTRIM=$(cru l | grep -c "${SCRIPT_NAME}_trim")
+			STARTUPLINECOUNTQUERYLOG=$(cru l | grep -c "${SCRIPT_NAME}_querylog")
+			STARTUPLINECOUNTFLUSHTODB=$(cru l | grep -c "${SCRIPT_NAME}_flushtodb")
 			
 			if [ "$STARTUPLINECOUNTGENERATE" -gt 0 ]; then
-				cru d "$SCRIPT_NAME""_generate"
+				cru d "${SCRIPT_NAME}_generate"
 			fi
 			if [ "$STARTUPLINECOUNTTRIM" -gt 0 ]; then
-				cru d "$SCRIPT_NAME""_trim"
+				cru d "${SCRIPT_NAME}_trim"
 			fi
 			if [ "$STARTUPLINECOUNTQUERYLOG" -gt 0 ]; then
-				cru d "$SCRIPT_NAME""_querylog"
+				cru d "${SCRIPT_NAME}_querylog"
 			fi
 			if [ "$STARTUPLINECOUNTFLUSHTODB" -eq 0 ]; then
-				cru d "$SCRIPT_NAME""_flushtodb"
+				cru d "${SCRIPT_NAME}_flushtodb"
 			fi
 		;;
 	esac
@@ -519,18 +519,17 @@ Get_WebUI_Page(){
 Mount_WebUI(){
 	Get_WebUI_Page "$SCRIPT_DIR/uidivstats_www.asp"
 	if [ "$MyPage" = "none" ]; then
-		Print_Output "true" "Unable to mount $SCRIPT_NAME WebUI page, exiting" "$CRIT"
+		Print_Output true "Unable to mount $SCRIPT_NAME WebUI page, exiting" "$CRIT"
 		Clear_Lock
 		exit 1
 	fi
-	Print_Output "true" "Mounting $SCRIPT_NAME WebUI page as $MyPage" "$PASS"
+	Print_Output true "Mounting $SCRIPT_NAME WebUI page as $MyPage" "$PASS"
 	cp -f "$SCRIPT_DIR/uidivstats_www.asp" "$SCRIPT_WEBPAGE_DIR/$MyPage"
 	echo "uiDivStats" > "$SCRIPT_WEBPAGE_DIR/$(echo $MyPage | cut -f1 -d'.').title"
 	
 	if [ "$(uname -o)" = "ASUSWRT-Merlin" ]; then
-		
-		if [ ! -f "/tmp/menuTree.js" ]; then
-			cp -f "/www/require/modules/menuTree.js" "/tmp/"
+		if [ ! -f /tmp/menuTree.js ]; then
+			cp -f /www/require/modules/menuTree.js /tmp/
 		fi
 		
 		sed -i "\\~$MyPage~d" /tmp/menuTree.js
@@ -618,7 +617,7 @@ WriteStats_ToJS(){
 	{ echo ""; echo "function $3(){"; } >> "$2"
 	html='document.getElementById("'"$4"'").innerHTML="'
 	while IFS='' read -r line || [ -n "$line" ]; do
-		html="$html""$line""\\r\\n"
+		html="${html}${line}\\r\\n"
 	done < "$1"
 	html="$html"'"'
 	printf "%s\\r\\n}\\r\\n" "$html" >> "$2"
@@ -683,7 +682,7 @@ Write_Count_PerClient_Sql_ToFile(){
 	{
 		echo ".mode csv"
 		echo ".headers off"
-		echo ".output ""$4$5""clients.htm"
+		echo ".output $4${5}clients.htm"
 	} > "$6"
 	
 	if [ "$1" = "Total" ]; then
@@ -705,7 +704,7 @@ Write_Time_Sql_ToFile(){
 	{
 		echo ".mode csv"
 		echo ".headers off"
-		echo ".output $5$6""time.htm"
+		echo ".output $5${6}time.htm"
 	} > "$7"
 	
 	if [ "$4" = "1" ]; then
@@ -753,18 +752,18 @@ Generate_NG(){
 	rm -f /tmp/uidivstats.sql
 	
 	if [ -n "$1" ] && [ "$1" = "fullrefresh" ]; then
-		Write_View_Sql_ToFile "dnsqueries" "daily" 1 "/tmp/uidivstats.sql" "$timenow" "drop"
-		Write_View_Sql_ToFile "dnsqueries" "weekly" 7 "/tmp/uidivstats.sql" "$timenow" "drop"
-		Write_View_Sql_ToFile "dnsqueries" "monthly" 30 "/tmp/uidivstats.sql" "$timenow" "drop"
+		Write_View_Sql_ToFile dnsqueries daily 1 /tmp/uidivstats.sql "$timenow" drop
+		Write_View_Sql_ToFile dnsqueries weekly 7 /tmp/uidivstats.sql "$timenow" drop
+		Write_View_Sql_ToFile dnsqueries monthly 30 /tmp/uidivstats.sql "$timenow" drop
 		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 			sleep 1
 		done
 		rm -f /tmp/uidivstats.sql
 	fi
 	
-	Write_View_Sql_ToFile "dnsqueries" "daily" 1 "/tmp/uidivstats.sql" "$timenow" "create"
-	Write_View_Sql_ToFile "dnsqueries" "weekly" 7 "/tmp/uidivstats.sql" "$timenow" "create"
-	Write_View_Sql_ToFile "dnsqueries" "monthly" 30 "/tmp/uidivstats.sql" "$timenow" "create"
+	Write_View_Sql_ToFile dnsqueries daily 1 /tmp/uidivstats.sql "$timenow" create
+	Write_View_Sql_ToFile dnsqueries weekly 7 /tmp/uidivstats.sql "$timenow" create
+	Write_View_Sql_ToFile dnsqueries monthly 30 /tmp/uidivstats.sql "$timenow" create
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 		sleep 1
 	done
@@ -773,22 +772,22 @@ Generate_NG(){
 	Generate_Count_Blocklist_Domains
 	
 	if [ -n "$1" ] && [ "$1" = "fullrefresh" ]; then
-		Generate_KeyStats "$timenow" "fullrefresh"
-		Generate_Stats_From_SQLite "$timenow" "fullrefresh"
+		Generate_KeyStats "$timenow" fullrefresh
+		Generate_Stats_From_SQLite "$timenow" fullrefresh
 	else
 		Generate_KeyStats "$timenow"
 		Generate_Stats_From_SQLite "$timenow"
 	fi
 	
-	echo "Stats last updated: $timenowfriendly" > "/tmp/uidivstatstitle.txt"
-	WriteStats_ToJS "/tmp/uidivstatstitle.txt" "$SCRIPT_DIR/SQLData.js" "SetuiDivStatsTitle" "statstitle"
-	Print_Output "true" "Stats updated successfully" "$PASS"
+	echo "Stats last updated: $timenowfriendly" > /tmp/uidivstatstitle.txt
+	WriteStats_ToJS /tmp/uidivstatstitle.txt "$SCRIPT_DIR/SQLData.js" SetuiDivStatsTitle statstitle
+	Print_Output true "Stats updated successfully" "$PASS"
 	rm -f "/tmpuidivstatstitle.txt"
 }
 
 Generate_Query_Log(){
 	recordcount=5000
-	if [ "$(CacheMode "check")" = "tmp" ]; then
+	if [ "$(CacheMode check)" = "tmp" ]; then
 		if [ -f /tmp/cache-uiDivStats-SQL.tmp ]; then
 			sort -s -k 1,1 -n -r /tmp/cache-uiDivStats-SQL.tmp > /tmp/cache-uiDivStats-SQL.tmp.sorted
 			sed -i 's/,/|/g' /tmp/cache-uiDivStats-SQL.tmp.sorted
@@ -819,7 +818,7 @@ Generate_KeyStats(){
 	timenow="$1"
 	
 	#daily
-	Write_KeyStats_Sql_ToFile "Total" "dnsqueries" "daily" 1 "/tmp/uidivstats.sql" "$timenow"
+	Write_KeyStats_Sql_ToFile Total dnsqueries daily 1 /tmp/uidivstats.sql "$timenow"
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 		sleep 1
 	done
@@ -829,28 +828,28 @@ Generate_KeyStats(){
 		sleep 1
 	done
 	
-	queriesTotaldaily="$(cat "/tmp/queriesTotaldaily")"
-	queriesBlockeddaily="$(cat "/tmp/queriesBlockeddaily")"
-	if ! Validate_Number "" "$queriesBlockeddaily" "silent"; then queriesBlockeddaily=0; fi
+	queriesTotaldaily="$(cat /tmp/queriesTotaldaily)"
+	queriesBlockeddaily="$(cat /tmp/queriesBlockeddaily)"
+	if ! Validate_Number "" "$queriesBlockeddaily" silent; then queriesBlockeddaily=0; fi
 	queriesPercentagedaily="$(echo "$queriesBlockeddaily" "$queriesTotaldaily" | awk '{printf "%3.2f\n",$1/$2*100}')"
 	
 	WritePlainData_ToJS "$SCRIPT_DIR/SQLData.js" "QueriesTotaldaily,$queriesTotaldaily" "QueriesBlockeddaily,$queriesBlockeddaily" "BlockedPercentagedaily,$queriesPercentagedaily"
 	
 	#weekly
 	if [ -n "$2" ] && [ "$2" = "fullrefresh" ]; then
-		Write_KeyStats_Sql_ToFile "Total" "dnsqueries" "weekly" 7 "/tmp/uidivstats.sql" "$timenow"
+		Write_KeyStats_Sql_ToFile Total dnsqueries weekly 7 /tmp/uidivstats.sql "$timenow"
 		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 			sleep 1
 		done
 		
-		Write_KeyStats_Sql_ToFile "Blocked" "dnsqueries" "weekly" 7 "/tmp/uidivstats.sql" "$timenow"
+		Write_KeyStats_Sql_ToFile Blocked dnsqueries weekly 7 /tmp/uidivstats.sql "$timenow"
 		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 			sleep 1
 		done
 		
-		queriesTotalweekly="$(cat "/tmp/queriesTotalweekly")"
-		queriesBlockedweekly="$(cat "/tmp/queriesBlockedweekly")"
-		if ! Validate_Number "" "$queriesBlockedweekly" "silent"; then queriesBlockedweekly=0; fi
+		queriesTotalweekly="$(cat /tmp/queriesTotalweekly)"
+		queriesBlockedweekly="$(cat /tmp/queriesBlockedweekly)"
+		if ! Validate_Number "" "$queriesBlockedweekly" silent; then queriesBlockedweekly=0; fi
 		queriesPercentageweekly="$(echo "$queriesBlockedweekly" "$queriesTotalweekly" | awk '{printf "%3.2f\n",$1/$2*100}')"
 		
 		WritePlainData_ToJS "$SCRIPT_DIR/SQLData.js" "QueriesTotalweekly,$queriesTotalweekly" "QueriesBlockedweekly,$queriesBlockedweekly" "BlockedPercentageweekly,$queriesPercentageweekly"
@@ -858,19 +857,19 @@ Generate_KeyStats(){
 
 	#monthly
 	if [ -n "$2" ] && [ "$2" = "fullrefresh" ]; then
-		Write_KeyStats_Sql_ToFile "Total" "dnsqueries" "monthly" 30 "/tmp/uidivstats.sql" "$timenow"
+		Write_KeyStats_Sql_ToFile Total dnsqueries monthly 30 /tmp/uidivstats.sql "$timenow"
 		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 			sleep 1
 		done
 		
-		Write_KeyStats_Sql_ToFile "Blocked" "dnsqueries" "monthly" 30 "/tmp/uidivstats.sql" "$timenow"
+		Write_KeyStats_Sql_ToFile Blocked dnsqueries monthly 30 /tmp/uidivstats.sql "$timenow"
 		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 			sleep 1
 		done
 		
-		queriesTotalmonthly="$(cat "/tmp/queriesTotalmonthly")"
-		queriesBlockedmonthly="$(cat "/tmp/queriesBlockedmonthly")"
-		if ! Validate_Number "" "$queriesBlockedmonthly" "silent"; then queriesBlockedmonthly=0; fi
+		queriesTotalmonthly="$(cat /tmp/queriesTotalmonthly)"
+		queriesBlockedmonthly="$(cat /tmp/queriesBlockedmonthly)"
+		if ! Validate_Number "" "$queriesBlockedmonthly" silent; then queriesBlockedmonthly=0; fi
 		queriesPercentagemonthly="$(echo "$queriesBlockedmonthly" "$queriesTotalmonthly" | awk '{printf "%3.2f\n",$1/$2*100}')"
 		
 		WritePlainData_ToJS "$SCRIPT_DIR/SQLData.js" "QueriesTotalmonthly,$queriesTotalmonthly" "QueriesBlockedmonthly,$queriesBlockedmonthly" "BlockedPercentagemonthly,$queriesPercentagemonthly"
@@ -881,7 +880,7 @@ Generate_KeyStats(){
 }
 
 Generate_Count_Blocklist_Domains(){
-	blockinglistfile="$(BlockingFile "check")"
+	blockinglistfile="$(BlockingFile check)"
 	
 	blacklistfile="$DIVERSION_DIR/list/blacklist"
 	blacklistwcfile="$DIVERSION_DIR/list/wc_blacklist"
@@ -893,7 +892,7 @@ Generate_Count_Blocklist_Domains(){
 	[ "$(nvram get ipv6_service)" != "disabled" ] && BL="$((BL/2))"
 	WCBL="$(/opt/bin/grep "^[^#]" "$blacklistwcfile" | wc -l)"
 	blocklistdomains="$((BLL+BL+WCBL))"
-	if ! Validate_Number "" "$blocklistdomains" "silent"; then blocklistdomains=0; fi
+	if ! Validate_Number "" "$blocklistdomains" silent; then blocklistdomains=0; fi
 	
 	WritePlainData_ToJS "$SCRIPT_DIR/SQLData.js" "BlockedDomains,$blocklistdomains"
 }
@@ -906,42 +905,42 @@ Generate_Stats_From_SQLite(){
 	for metric in $metriclist; do
 		
 		#daily
-		Write_Time_Sql_ToFile "$metric" "dnsqueries" 0.25 1 "$CSV_OUTPUT_DIR/$metric" "daily" "/tmp/uidivstats.sql" "$timenow"
+		Write_Time_Sql_ToFile "$metric" dnsqueries 0.25 1 "$CSV_OUTPUT_DIR/$metric" daily /tmp/uidivstats.sql "$timenow"
 		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 			sleep 1
 		done
 		
-		Write_Count_Sql_ToFile "$metric" "dnsqueries" 1 "$CSV_OUTPUT_DIR/$metric" "daily" "/tmp/uidivstats.sql" "$timenow"
+		Write_Count_Sql_ToFile "$metric" dnsqueries 1 "$CSV_OUTPUT_DIR/$metric" daily /tmp/uidivstats.sql "$timenow"
 		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 			sleep 1
 		done
 		
-		Write_Count_PerClient_Sql_ToFile "$metric" "dnsqueries" 1 "$CSV_OUTPUT_DIR/$metric" "daily" "/tmp/uidivstats.sql" "$timenow"
+		Write_Count_PerClient_Sql_ToFile "$metric" dnsqueries 1 "$CSV_OUTPUT_DIR/$metric" daily /tmp/uidivstats.sql "$timenow"
 		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 			sleep 1
 		done
-		sed -i '1i Fieldname,SrcIP,ReqDmn,Count' "$CSV_OUTPUT_DIR/$metric""dailyclients.htm"
+		sed -i '1i Fieldname,SrcIP,ReqDmn,Count' "$CSV_OUTPUT_DIR/${metric}dailyclients.htm"
 		
 		cat "$CSV_OUTPUT_DIR/Totaldailytime.htm" "$CSV_OUTPUT_DIR/Blockeddailytime.htm" > "$CSV_OUTPUT_DIR/TotalBlockeddailytime.htm" 2> /dev/null
 		sed -i '1i Fieldname,Time,QueryCount' "$CSV_OUTPUT_DIR/TotalBlockeddailytime.htm"
 		
 		#weekly
 		if [ -n "$2" ] && [ "$2" = "fullrefresh" ]; then
-			Write_Time_Sql_ToFile "$metric" "dnsqueries" 1 7 "$CSV_OUTPUT_DIR/$metric" "weekly" "/tmp/uidivstats.sql" "$timenow"
+			Write_Time_Sql_ToFile "$metric" dnsqueries 1 7 "$CSV_OUTPUT_DIR/$metric" weekly /tmp/uidivstats.sql "$timenow"
 			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 				sleep 1
 			done
 			
-			Write_Count_Sql_ToFile "$metric" "dnsqueries" 7 "$CSV_OUTPUT_DIR/$metric" "weekly" "/tmp/uidivstats.sql" "$timenow"
+			Write_Count_Sql_ToFile "$metric" dnsqueries 7 "$CSV_OUTPUT_DIR/$metric" weekly /tmp/uidivstats.sql "$timenow"
 			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 				sleep 1
 			done
 			
-			Write_Count_PerClient_Sql_ToFile "$metric" "dnsqueries" 7 "$CSV_OUTPUT_DIR/$metric" "weekly" "/tmp/uidivstats.sql" "$timenow"
+			Write_Count_PerClient_Sql_ToFile "$metric" dnsqueries 7 "$CSV_OUTPUT_DIR/$metric" weekly /tmp/uidivstats.sql "$timenow"
 			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 				sleep 1
 			done
-			sed -i '1i Fieldname,SrcIP,ReqDmn,Count' "$CSV_OUTPUT_DIR/$metric""weeklyclients.htm"
+			sed -i '1i Fieldname,SrcIP,ReqDmn,Count' "$CSV_OUTPUT_DIR/${metric}weeklyclients.htm"
 			
 			cat "$CSV_OUTPUT_DIR/Totalweeklytime.htm" "$CSV_OUTPUT_DIR/Blockedweeklytime.htm" > "$CSV_OUTPUT_DIR/TotalBlockedweeklytime.htm" 2> /dev/null
 			sed -i '1i Fieldname,Time,QueryCount' "$CSV_OUTPUT_DIR/TotalBlockedweeklytime.htm"
@@ -949,21 +948,21 @@ Generate_Stats_From_SQLite(){
 		
 		#monthly
 		if [ -n "$2" ] && [ "$2" = "fullrefresh" ]; then
-			Write_Time_Sql_ToFile "$metric" "dnsqueries" 3 30 "$CSV_OUTPUT_DIR/$metric" "monthly" "/tmp/uidivstats.sql" "$timenow"
+			Write_Time_Sql_ToFile "$metric" dnsqueries 3 30 "$CSV_OUTPUT_DIR/$metric" monthly /tmp/uidivstats.sql "$timenow"
 			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 				sleep 1
 			done
 					
-			Write_Count_Sql_ToFile "$metric" "dnsqueries" 30 "$CSV_OUTPUT_DIR/$metric" "monthly" "/tmp/uidivstats.sql" "$timenow"
+			Write_Count_Sql_ToFile "$metric" dnsqueries 30 "$CSV_OUTPUT_DIR/$metric" monthly /tmp/uidivstats.sql "$timenow"
 			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 				sleep 1
 			done
 			
-			Write_Count_PerClient_Sql_ToFile "$metric" "dnsqueries" 30 "$CSV_OUTPUT_DIR/$metric" "monthly" "/tmp/uidivstats.sql" "$timenow"
+			Write_Count_PerClient_Sql_ToFile "$metric" dnsqueries 30 "$CSV_OUTPUT_DIR/$metric" monthly /tmp/uidivstats.sql "$timenow"
 			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 				sleep 1
 			done
-			sed -i '1i Fieldname,SrcIP,ReqDmn,Count' "$CSV_OUTPUT_DIR/$metric""monthlyclients.htm"
+			sed -i '1i Fieldname,SrcIP,ReqDmn,Count' "$CSV_OUTPUT_DIR/${metric}monthlyclients.htm"
 			
 			cat "$CSV_OUTPUT_DIR/Totalmonthlytime.htm" "$CSV_OUTPUT_DIR/Blockedmonthlytime.htm" > "$CSV_OUTPUT_DIR/TotalBlockedmonthlytime.htm" 2> /dev/null
 			sed -i '1i Fieldname,Time,QueryCount' "$CSV_OUTPUT_DIR/TotalBlockedmonthlytime.htm"
@@ -971,7 +970,7 @@ Generate_Stats_From_SQLite(){
 	done
 	
 	rm -f /tmp/uidivstats.sql
-	Write_View_Sql_ToFile "dnsqueries" "daily" 1 "/tmp/uidivstats.sql" "$timenow" "drop"
+	Write_View_Sql_ToFile dnsqueries daily 1 "/tmp/uidivstats.sql" "$timenow" drop
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 		sleep 1
 	done
@@ -1037,8 +1036,8 @@ Trim_DNS_DB(){
 	done
 	rm -f /tmp/uidivstats-trim.sql
 	
-	Write_View_Sql_ToFile "dnsqueries" "weekly" 7 "/tmp/uidivstats-trim.sql" "$timenow" "drop"
-	Write_View_Sql_ToFile "dnsqueries" "monthly" 30 "/tmp/uidivstats-trim.sql" "$timenow" "drop"
+	Write_View_Sql_ToFile dnsqueries weekly 7 /tmp/uidivstats-trim.sql "$timenow" drop
+	Write_View_Sql_ToFile dnsqueries monthly 30 /tmp/uidivstats-trim.sql "$timenow" drop
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-trim.sql >/dev/null 2>&1; do
 		sleep 1
 	done
@@ -1055,7 +1054,7 @@ Flush_Cache_To_DB(){
 			echo "INSERT INTO dnsqueries SELECT NULL,* FROM dnsqueries_tmp;"
 			echo "DROP TABLE dnsqueries_tmp;"
 		} > /tmp/cache-uiDivStats-SQL.sql
-		while ! /opt/bin/sqlite3 "/opt/share/uiDivStats.d/dnsqueries.db" < /tmp/cache-uiDivStats-SQL.sql >/dev/null 2>&1; do
+		while ! /opt/bin/sqlite3 /opt/share/uiDivStats.d/dnsqueries.db < /tmp/cache-uiDivStats-SQL.sql >/dev/null 2>&1; do
 			sleep 1
 		done
 		rm -f /tmp/cache-uiDivStats-SQL.sql
@@ -1070,7 +1069,7 @@ Process_Upgrade(){
 		opkg install sqlite3-cli
 		opkg install procps-ng-pkill
 		Auto_Cron delete 2>/dev/null
-		Print_Output "true" "Creating database table and enabling write-ahead logging..." "$PASS"
+		Print_Output true "Creating database table and enabling write-ahead logging..." "$PASS"
 		{
 			echo "PRAGMA journal_mode=WAL;"
 			echo "CREATE TABLE IF NOT EXISTS [dnsqueries] ([QueryID] INTEGER PRIMARY KEY NOT NULL, [Timestamp] NUMERIC NOT NULL, [SrcIP] TEXT NOT NULL,[ReqDmn] TEXT NOT NULL,[QryType] Text NOT NULL,[Result] Text NOT NULL);"
@@ -1079,7 +1078,7 @@ Process_Upgrade(){
 			sleep 1
 		done
 		
-		Print_Output "true" "Creating database table indexes..." "$PASS"
+		Print_Output true "Creating database table indexes..." "$PASS"
 		echo "create index idx_dns_domains on dnsqueries (ReqDmn,Timestamp);" > /tmp/uidivstats-upgrade.sql
 		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
 		echo "create index idx_dns_time on dnsqueries (Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
@@ -1088,25 +1087,25 @@ Process_Upgrade(){
 		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
 		
 		rm -f /tmp/uidivstats-upgrade.sql
-		Print_Output "true" "Database ready, starting services..." "$PASS"
+		Print_Output true "Database ready, starting services..." "$PASS"
 		Auto_Cron create 2>/dev/null
-		Update_File "taildns.tar.gz"
+		Update_File taildns.tar.gz
 		touch "$SCRIPT_DIR/.upgraded"
 		touch "$SCRIPT_DIR/.upgraded2"
-		Print_Output "true" "Starting first run of stat generation..." "$PASS"
-		Menu_GenerateStats "fullrefresh"
+		Print_Output true "Starting first run of stat generation..." "$PASS"
+		Menu_GenerateStats fullrefresh
 	elif [ ! -f "$SCRIPT_DIR/.upgraded2" ]; then
 		/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
 		sleep 5
 		Auto_Cron delete 2>/dev/null
 		
-		Print_Output "true" "Deleting older database table indexes..." "$PASS"
+		Print_Output true "Deleting older database table indexes..." "$PASS"
 		echo "drop index idx_dns;" > /tmp/uidivstats-upgrade.sql
 		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
 		echo "drop index idx_dns_clients;" > /tmp/uidivstats-upgrade.sql
 		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
 		
-		Print_Output "true" "Creating new database table indexes..." "$PASS"
+		Print_Output true "Creating new database table indexes..." "$PASS"
 		echo "create index idx_dns_domains on dnsqueries (ReqDmn,Timestamp);" > /tmp/uidivstats-upgrade.sql
 		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
 		echo "create index idx_dns_time on dnsqueries (Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
@@ -1118,14 +1117,14 @@ Process_Upgrade(){
 		Auto_Cron create 2>/dev/null
 		/opt/etc/init.d/S90taildns start >/dev/null 2>&1
 		touch "$SCRIPT_DIR/.upgraded2"
-		Menu_GenerateStats "fullrefresh"
+		Menu_GenerateStats fullrefresh
 	fi
 }
 
 Shortcut_script(){
 	case $1 in
 		create)
-			if [ -d "/opt/bin" ] && [ ! -f "/opt/bin/$SCRIPT_NAME" ] && [ -f "/jffs/scripts/$SCRIPT_NAME" ]; then
+			if [ -d /opt/bin ] && [ ! -f "/opt/bin/$SCRIPT_NAME" ] && [ -f "/jffs/scripts/$SCRIPT_NAME" ]; then
 				ln -s /jffs/scripts/"$SCRIPT_NAME" /opt/bin
 				chmod 0755 /opt/bin/"$SCRIPT_NAME"
 			fi
@@ -1141,7 +1140,7 @@ Shortcut_script(){
 PressEnter(){
 	while true; do
 		printf "Press enter to continue..."
-		read -r "key"
+		read -r key
 		case "$key" in
 			*)
 				break
@@ -1172,13 +1171,11 @@ ScriptHeader(){
 }
 
 MainMenu(){
-	QUERYMODE_MENU="$(QueryMode "check")"
-	CACHEMODE_MENU="$(CacheMode "check")"
 	printf "1.    Update Diversion Statistics (daily only)\\n\\n"
 	printf "2.    Update Diversion Statistics (daily, weekly and monthly)\\n"
 	printf "      WARNING: THIS WILL TAKE A WHILE (>10 minutes)\\n\\n"
-	printf "q.    Toggle query mode\\n      Currently \\e[1m%s\\e[0m query types will be logged\\n\\n" "$QUERYMODE_MENU"
-	printf "c.    Toggle cache mode\\n      Currently \\e[1m%s\\e[0m being used to cache query records\\n\\n" "$CACHEMODE_MENU"
+	printf "q.    Toggle query mode\\n      Currently \\e[1m%s\\e[0m query types will be logged\\n\\n" "$(QueryMode check)"
+	printf "c.    Toggle cache mode\\n      Currently \\e[1m%s\\e[0m being used to cache query records\\n\\n" "$(CacheMode check)"
 	printf "u.    Check for updates\\n"
 	printf "uf.   Update %s with latest version (force update)\\n\\n" "$SCRIPT_NAME"
 	printf "e.    Exit %s\\n\\n" "$SCRIPT_NAME"
@@ -1189,11 +1186,11 @@ MainMenu(){
 	
 	while true; do
 		printf "Choose an option:    "
-		read -r "menu"
+		read -r menu
 		case "$menu" in
 			1)
 				printf "\\n"
-				if Check_Lock "menu"; then
+				if Check_Lock menu; then
 					Menu_GenerateStats
 				fi
 				PressEnter
@@ -1201,29 +1198,29 @@ MainMenu(){
 			;;
 			2)
 				printf "\\n"
-				if Check_Lock "menu"; then
-					Menu_GenerateStats "fullrefresh"
+				if Check_Lock menu; then
+					Menu_GenerateStats fullrefresh
 				fi
 				PressEnter
 				break
 			;;
 			q)
 				printf "\\n"
-				if Check_Lock "menu"; then
+				if Check_Lock menu; then
 					Menu_ToggleQueryMode
 				fi
 				break
 			;;
 			c)
 				printf "\\n"
-				if Check_Lock "menu"; then
+				if Check_Lock menu; then
 					Menu_ToggleCacheMode
 				fi
 				break
 			;;
 			u)
 				printf "\\n"
-				if Check_Lock "menu"; then
+				if Check_Lock menu; then
 					Menu_Update
 				fi
 				PressEnter
@@ -1231,7 +1228,7 @@ MainMenu(){
 			;;
 			uf)
 				printf "\\n"
-				if Check_Lock "menu"; then
+				if Check_Lock menu; then
 					Menu_ForceUpdate
 				fi
 				PressEnter
@@ -1245,7 +1242,7 @@ MainMenu(){
 			z)
 				while true; do
 					printf "\\n\\e[1mAre you sure you want to uninstall %s? (y/n)\\e[0m\\n" "$SCRIPT_NAME"
-					read -r "confirm"
+					read -r confirm
 					case "$confirm" in
 						y|Y)
 							Menu_Uninstall
@@ -1274,33 +1271,33 @@ Check_Requirements(){
 	if [ "$(nvram get jffs2_scripts)" -ne 1 ]; then
 		nvram set jffs2_scripts=1
 		nvram commit
-		Print_Output "true" "Custom JFFS Scripts enabled" "$WARN"
+		Print_Output true "Custom JFFS Scripts enabled" "$WARN"
 	fi
 	
-	if [ ! -f "/opt/bin/opkg" ]; then
-		Print_Output "true" "Entware not detected!" "$ERR"
+	if [ ! -f /opt/bin/opkg ]; then
+		Print_Output true "Entware not detected!" "$ERR"
 		CHECKSFAILED="true"
 	fi
 	
-	if [ ! -f "/opt/bin/diversion" ]; then
-		Print_Output "true" "Diversion not installed!" "$ERR"
+	if [ ! -f /opt/bin/diversion ]; then
+		Print_Output true "Diversion not installed!" "$ERR"
 		CHECKSFAILED="true"
 	else
 		if ! /opt/bin/grep -qm1 'div_lock_ac' /opt/bin/diversion; then
-			Print_Output "true" "Diversion update required!" "$ERR"
-			Print_Output "true" "Open Diversion and use option u to update" ""
+			Print_Output true "Diversion update required!" "$ERR"
+			Print_Output true "Open Diversion and use option u to update"
 			CHECKSFAILED="true"
 		fi
 		
 		if ! /opt/bin/grep -q 'log-facility=/opt/var/log/dnsmasq.log' /etc/dnsmasq.conf; then
-			Print_Output "true" "Diversion logging not enabled!" "$ERR"
-			Print_Output "true" "Open Diversion and use option l to enable logging" ""
+			Print_Output true "Diversion logging not enabled!" "$ERR"
+			Print_Output true "Open Diversion and use option l to enable logging"
 			CHECKSFAILED="true"
 		fi
 	fi
 	
-	if ! Firmware_Version_Check "install"; then
-		Print_Output "true" "Unsupported firmware version detected, 384.XX required" "$ERR"
+	if ! Firmware_Version_Check; then
+		Print_Output true "Unsupported firmware version detected, 384.XX required" "$ERR"
 		CHECKSFAILED="true"
 	fi
 	
@@ -1317,13 +1314,13 @@ Check_Requirements(){
 }
 
 Menu_Install(){
-	Print_Output "true" "Welcome to $SCRIPT_NAME $SCRIPT_VERSION, a script by JackYaz"
+	Print_Output true "Welcome to $SCRIPT_NAME $SCRIPT_VERSION, a script by JackYaz"
 	sleep 1
 	
-	Print_Output "true" "Checking your router meets the requirements for $SCRIPT_NAME"
+	Print_Output true "Checking your router meets the requirements for $SCRIPT_NAME"
 	
 	if ! Check_Requirements; then
-		Print_Output "true" "Requirements for $SCRIPT_NAME not met, please see above for the reason(s)" "$CRIT"
+		Print_Output true "Requirements for $SCRIPT_NAME not met, please see above for the reason(s)" "$CRIT"
 		PressEnter
 		Clear_Lock
 		rm -f "/jffs/scripts/$SCRIPT_NAME" 2>/dev/null
@@ -1334,9 +1331,9 @@ Menu_Install(){
 	Conf_Exists
 	Create_Symlinks
 	
-	Update_File "uidivstats_www.asp"
-	Update_File "shared-jy.tar.gz"
-	Update_File "taildns.tar.gz"
+	Update_File uidivstats_www.asp
+	Update_File shared-jy.tar.gz
+	Update_File taildns.tar.gz
 	
 	Auto_Startup create 2>/dev/null
 	Auto_DNSMASQ_Postconf create 2>/dev/null
@@ -1368,26 +1365,26 @@ Menu_GenerateStats(){
 		UpdateDiversionWeeklyStatsFile
 		Generate_NG "$1"
 	else
-		Print_Output "true" "Diversion logging not enabled!" "$ERR"
-		Print_Output "true" "Open Diversion and use option l to enable logging" ""
+		Print_Output true "Diversion logging not enabled!" "$ERR"
+		Print_Output true "Open Diversion and use option l to enable logging"
 	fi
 	Clear_Lock
 }
 
 Menu_ToggleQueryMode(){
-	if [ "$(QueryMode "check")" = "all" ]; then
+	if [ "$(QueryMode check)" = "all" ]; then
 		QueryMode "A+AAAA"
-	elif [ "$(QueryMode "check")" = "A+AAAA" ]; then
-		QueryMode "all"
+	elif [ "$(QueryMode check)" = "A+AAAA" ]; then
+		QueryMode all
 	fi
 	Clear_Lock
 }
 
 Menu_ToggleCacheMode(){
-	if [ "$(CacheMode "check")" = "none" ]; then
-		CacheMode "tmp"
-	elif [ "$(CacheMode "check")" = "tmp" ]; then
-		CacheMode "none"
+	if [ "$(CacheMode check)" = "none" ]; then
+		CacheMode tmp
+	elif [ "$(CacheMode check)" = "tmp" ]; then
+		CacheMode none
 	fi
 	Clear_Lock
 }
@@ -1403,7 +1400,7 @@ Menu_ForceUpdate(){
 }
 
 Menu_Uninstall(){
-	Print_Output "true" "Removing $SCRIPT_NAME..." "$PASS"
+	Print_Output true "Removing $SCRIPT_NAME..." "$PASS"
 	Auto_Startup delete 2>/dev/null
 	Auto_DNSMASQ_Postconf delete 2>/dev/null
 	Auto_Cron delete 2>/dev/null
@@ -1423,14 +1420,14 @@ Menu_Uninstall(){
 	
 	/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
 	sleep 5
-	rm -f "/opt/etc/init.d/S90taildns" 2>/dev/null
+	rm -f /opt/etc/init.d/S90taildns 2>/dev/null
 	rm -rf "$SCRIPT_DIR/taildns.d" 2>/dev/null
 	
 	rm -rf "$SCRIPT_DIR" 2>/dev/null
 	
 	rm -f "/jffs/scripts/$SCRIPT_NAME" 2>/dev/null
 	Clear_Lock
-	Print_Output "true" "Uninstall completed" "$PASS"
+	Print_Output true "Uninstall completed" "$PASS"
 }
 
 NTP_Ready(){
@@ -1445,16 +1442,16 @@ NTP_Ready(){
 		while [ "$(nvram get ntp_ready)" = "0" ] && [ "$ntpwaitcount" -lt "300" ]; do
 			ntpwaitcount="$((ntpwaitcount + 1))"
 			if [ "$ntpwaitcount" = "60" ]; then
-				Print_Output "true" "Waiting for NTP to sync..." "$WARN"
+				Print_Output true "Waiting for NTP to sync..." "$WARN"
 			fi
 			sleep 1
 		done
 		if [ "$ntpwaitcount" -ge "300" ]; then
-			Print_Output "true" "NTP failed to sync after 5 minutes. Please resolve!" "$CRIT"
+			Print_Output true "NTP failed to sync after 5 minutes. Please resolve!" "$CRIT"
 			Clear_Lock
 			exit 1
 		else
-			Print_Output "true" "NTP synced, $SCRIPT_NAME will now continue" "$PASS"
+			Print_Output true "NTP synced, $SCRIPT_NAME will now continue" "$PASS"
 			Clear_Lock
 		fi
 	fi
@@ -1472,24 +1469,21 @@ Entware_Ready(){
 		Check_Lock
 		sleepcount=1
 		while [ ! -f "/opt/bin/opkg" ] && [ "$sleepcount" -le 10 ]; do
-			Print_Output "true" "Entware not found, sleeping for 10s (attempt $sleepcount of 10)" "$ERR"
+			Print_Output true "Entware not found, sleeping for 10s (attempt $sleepcount of 10)" "$ERR"
 			sleepcount="$((sleepcount + 1))"
 			sleep 10
 		done
 		if [ ! -f "/opt/bin/opkg" ]; then
-			Print_Output "true" "Entware not found and is required for $SCRIPT_NAME to run, please resolve" "$CRIT"
+			Print_Output true "Entware not found and is required for $SCRIPT_NAME to run, please resolve" "$CRIT"
 			Clear_Lock
 			exit 1
 		else
-			Print_Output "true" "Entware found, $SCRIPT_NAME will now continue" "$PASS"
+			Print_Output true "Entware found, $SCRIPT_NAME will now continue" "$PASS"
 			Clear_Lock
 		fi
 	fi
 }
 ### ###
-
-NTP_Ready "$@"
-Entware_Ready "$@"
 
 if [ -z "$1" ]; then
 	Create_Dirs
@@ -1513,9 +1507,7 @@ case "$1" in
 		exit 0
 	;;
 	startup)
-		Check_Lock
-		sleep 20
-		Menu_Startup
+		Menu_Startup "$2"
 		exit 0
 	;;
 	generate)
@@ -1525,25 +1517,21 @@ case "$1" in
 	;;
 	service_event)
 		if [ "$2" = "start" ] && [ "$3" = "$SCRIPT_NAME" ]; then
-			Check_Lock
+			Check_Lock webui
 			Menu_GenerateStats
 			exit 0
-		elif [ "$2" = "start" ] && [ "$3" = "$SCRIPT_NAME""checkupdate" ]; then
-			Check_Lock
-			updatecheckresult="$(Update_Check)"
-			Clear_Lock
+		elif [ "$2" = "start" ] && [ "$3" = "${SCRIPT_NAME}checkupdate" ]; then
+			Update_Check
 			exit 0
-		elif [ "$2" = "start" ] && [ "$3" = "$SCRIPT_NAME""doupdate" ]; then
-			Check_Lock
-			Update_Version "force" "unattended"
-			Clear_Lock
+		elif [ "$2" = "start" ] && [ "$3" = "${SCRIPT_NAME}doupdate" ]; then
+			Update_Version force unattended
 			exit 0
 		fi
 		exit 0
 	;;
 	dnsmasq)
 		if grep -q 'log-facility' /etc/dnsmasq.conf; then
-			Print_Output "true" "dnsmasq has restarted, restarting taildns" "$PASS"
+			Print_Output true "dnsmasq has restarted, restarting taildns" "$PASS"
 			/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
 			sleep 5
 			/opt/etc/init.d/S90taildns start >/dev/null 2>&1
@@ -1552,7 +1540,7 @@ case "$1" in
 	;;
 	fullrefresh)
 		Check_Lock
-		Menu_GenerateStats "fullrefresh"
+		Menu_GenerateStats fullrefresh
 		exit 0
 	;;
 	querylog)
@@ -1566,64 +1554,46 @@ case "$1" in
 	trimdb)
 		Trim_DNS_DB
 		Check_Lock
-		Menu_GenerateStats "fullrefresh"
+		Menu_GenerateStats fullrefresh
 		Clear_Lock
 		exit 0
 	;;
 	develop)
-		Check_Lock
 		sed -i 's/^readonly SCRIPT_BRANCH.*$/readonly SCRIPT_BRANCH="develop"/' "/jffs/scripts/$SCRIPT_NAME"
-		Clear_Lock
-		exec "$0" "update"
+		Update_Version force
 		exit 0
 	;;
 	stable)
-		Check_Lock
 		sed -i 's/^readonly SCRIPT_BRANCH.*$/readonly SCRIPT_BRANCH="master"/' "/jffs/scripts/$SCRIPT_NAME"
-		Clear_Lock
-		exec "$0" "update"
+		Update_Version force
 		exit 0
 	;;
 	update)
-		Check_Lock
-		Menu_Update
-		Update_Version "unattended"
-		Clear_Lock
+		Update_Version unattended
 		exit 0
 	;;
 	forceupdate)
-		Check_Lock
-		Menu_ForceUpdate
-		Update_Version "force" "unattended"
-		Clear_Lock
+		Update_Version force unattended
 		exit 0
 	;;
 	setversion)
-		Check_Lock
-		Set_Version_Custom_Settings "local"
-		Set_Version_Custom_Settings "server" "$SCRIPT_VERSION"
-		Clear_Lock
+		Set_Version_Custom_Settings local
+		Set_Version_Custom_Settings server "$SCRIPT_VERSION"
 		if [ -z "$2" ]; then
 			exec "$0"
 		fi
 		exit 0
 	;;
 	checkupdate)
-		Check_Lock
-		#shellcheck disable=SC2034
-		updatecheckresult="$(Update_Check)"
-		Clear_Lock
+		Update_Check
 		exit 0
 	;;
 	uninstall)
-		Check_Lock
 		Menu_Uninstall
 		exit 0
 	;;
 	*)
-		Check_Lock
 		echo "Command not recognised, please try again"
-		Clear_Lock
 		exit 1
 	;;
 esac
