@@ -294,7 +294,8 @@ var tout,$j=jQuery.noConflict(),maxNoChartsBlocked=6,currentNoChartsBlocked=0,ma
 </thead>
 <tr>
 <td style="padding: 0px;">
-<textarea cols="75" rows="35" wrap="off" readonly="readonly" id="DiversionStats" class="textarea_log_table" style="font-family:'Courier New', Courier, mono; font-size:11px;border: none;padding: 0px;">"Stats will show here"</textarea>
+<textarea cols="75" rows="35" wrap="off" readonly="readonly" id="DiversionStats" class="textarea_log_table" style="font-family:'Courier New', Courier, mono; font-size:11px;border: none;padding: 0px;">If you are seeing this message, it means you don't have a weekly stats file from Diversion present on your router.
+Please check that weekly stats are enabled in Diversion, menu options c 2</textarea>
 </td>
 </tr>
 </table>
