@@ -18,7 +18,7 @@ Chart.Tooltip.positioners.cursor = function(chartElements, coordinates){
 };
 
 function keyHandler(e){
-	if (e.keyCode == 27){
+	if(e.keyCode == 27){
 		$j(document).off("keydown");
 		ResetZoom();
 	}
@@ -68,7 +68,7 @@ function Draw_Chart(txtchartname){
 		dataobject = window[txtchartname+chartperiod+"clients"];
 	}
 	if(typeof dataobject === 'undefined' || dataobject === null){ Draw_Chart_NoData(txtchartname); return; }
-	if (dataobject.length == 0){ Draw_Chart_NoData(txtchartname); return; }
+	if(dataobject.length == 0){ Draw_Chart_NoData(txtchartname); return; }
 	
 	var chartData,chartLabels;
 	
@@ -91,7 +91,7 @@ function Draw_Chart(txtchartname){
 	
 	var objchartname = window["Chart" + txtchartname];;
 	
-	if (objchartname != undefined) objchartname.destroy();
+	if(objchartname != undefined) objchartname.destroy();
 	var ctx = document.getElementById("canvasChart" + txtchartname).getContext("2d");
 	var chartOptions = {
 		segmentShowStroke: false,
@@ -222,7 +222,7 @@ function Draw_Chart(txtchartname){
 		plugins: [{
 			beforeInit: function(chart){
 				chart.data.labels.forEach(function(e, i, a){
-					if (/\n/.test(e)){
+					if(/\n/.test(e)){
 						a[i] = e.split(/\n/);
 					}
 				});
@@ -240,7 +240,7 @@ function Draw_Time_Chart(txtchartname){
 	var dataobject = window[txtchartname+chartperiod+"time"];
 	
 	if(typeof dataobject === 'undefined' || dataobject === null){ Draw_Chart_NoData(txtchartname+"time"); return; }
-	if (dataobject.length == 0){ Draw_Chart_NoData(txtchartname+"time"); return; }
+	if(dataobject.length == 0){ Draw_Chart_NoData(txtchartname+"time"); return; }
 	
 	var unique = [];
 	var chartQueryTypes = [];
@@ -255,13 +255,13 @@ function Draw_Time_Chart(txtchartname){
 	var objchartname = window["Chart" + txtchartname + "time"];;
 	
 	factor=0;
-	if (txtunitx=="hour"){
+	if(txtunitx=="hour"){
 		factor=60*60*1000;
 	}
-	else if (txtunitx=="day"){
+	else if(txtunitx=="day"){
 		factor=60*60*24*1000;
 	}
-	if (objchartname != undefined) objchartname.destroy();
+	if(objchartname != undefined) objchartname.destroy();
 	var ctx = document.getElementById("canvasChart"+txtchartname+"time").getContext("2d");
 	var lineOptions = {
 		segmentShowStroke : false,
@@ -271,7 +271,7 @@ function Draw_Time_Chart(txtchartname){
 		maintainAspectRatio: false,
 		animateScale : true,
 		hover: { mode: "point" },
-		legend: { display: true, position: "top"},//, onClick: null },
+		legend: { display: true, position: "top"},
 		title: { display: true, text: txttitle },
 		tooltips: {
 			callbacks: {
@@ -377,7 +377,7 @@ function chunk(str, n){
 
 function GetCookie(cookiename,returntype){
 	var s;
-	if ((s = cookie.get("uidivstats_"+cookiename)) != null){
+	if((s = cookie.get("uidivstats_"+cookiename)) != null){
 		return cookie.get("uidivstats_"+cookiename);
 	}
 	else{
@@ -448,7 +448,7 @@ function SetGlobalDataset(txtchartname,dataobject){
 			Draw_Chart("Blocked");
 		}
 	}
-	else if (txtchartname.indexOf("Total") != -1){
+	else if(txtchartname.indexOf("Total") != -1){
 		currentNoChartsTotal++;
 		if(currentNoChartsTotal == maxNoChartsTotal){
 			SetClients("Total");
@@ -566,25 +566,25 @@ function poolColors(a){
 
 function getChartType(layout){
 	var charttype = "horizontalBar";
-	if (layout == 0) charttype = "horizontalBar";
-	else if (layout == 1) charttype = "bar";
-	else if (layout == 2) charttype = "pie";
+	if(layout == 0) charttype = "horizontalBar";
+	else if(layout == 1) charttype = "bar";
+	else if(layout == 2) charttype = "pie";
 	return charttype;
 }
 
 function getChartPeriod(period){
 	var chartperiod = "daily";
-	if (period == 0) chartperiod = "daily";
-	else if (period == 1) chartperiod = "weekly";
-	else if (period == 2) chartperiod = "monthly";
+	if(period == 0) chartperiod = "daily";
+	else if(period == 1) chartperiod = "weekly";
+	else if(period == 2) chartperiod = "monthly";
 	return chartperiod;
 }
 
 function ZoomPanEnabled(charttype){
-	if (charttype == "bar"){
+	if(charttype == "bar"){
 		return 'y';
 	}
-	else if (charttype == "horizontalBar"){
+	else if(charttype == "horizontalBar"){
 		return 'x';
 	}
 	else{
@@ -593,22 +593,22 @@ function ZoomPanEnabled(charttype){
 }
 
 function ZoomPanMax(charttype, axis, datasetname){
-	if (axis == "x"){
-		if (charttype == "bar"){
+	if(axis == "x"){
+		if(charttype == "bar"){
 			return null;
 		}
-		else if (charttype == "horizontalBar"){
+		else if(charttype == "horizontalBar"){
 			return getMax(datasetname);
 		}
 		else{
 			return null;
 		}
 	}
-	else if (axis == "y"){
-		if (charttype == "bar"){
+	else if(axis == "y"){
+		if(charttype == "bar"){
 			return getMax(datasetname);
 		}
-		else if (charttype == "horizontalBar"){
+		else if(charttype == "horizontalBar"){
 			return null;
 		}
 		else{
@@ -656,10 +656,10 @@ function DragZoom(button){
 }
 
 function showGrid(e, axis){
-	if (e == null){
-			return true;
+	if(e == null){
+		return true;
 	}
-	else if (e == "pie"){
+	else if(e == "pie"){
 		return false;
 	}
 	else{
@@ -668,14 +668,14 @@ function showGrid(e, axis){
 }
 
 function showAxis(e, axis){
-	if (e == "bar" && axis == "x"){
-			return true;
+	if(e == "bar" && axis == "x"){
+		return true;
 	}
 	else{
-		if (e == null){
+		if(e == null){
 			return true;
 		}
-		else if (e == "pie"){
+		else if(e == "pie"){
 			return false;
 		}
 		else{
@@ -685,14 +685,14 @@ function showAxis(e, axis){
 }
 
 function showTicks(e, axis){
-	if (e == "bar" && axis == "x"){
+	if(e == "bar" && axis == "x"){
 		return false;
 	}
 	else{
-		if (e == null){
+		if(e == null){
 			return true;
 		}
-		else if (e == "pie"){
+		else if(e == "pie"){
 			return false;
 		}
 		else{
@@ -702,7 +702,7 @@ function showTicks(e, axis){
 }
 
 function showLegend(e){
-	if (e == "pie"){
+	if(e == "pie"){
 		return true;
 	}
 	else{
@@ -711,7 +711,7 @@ function showLegend(e){
 }
 
 function showTitle(e){
-	if (e == "pie"){
+	if(e == "pie"){
 		return true;
 	}
 	else{
@@ -731,17 +731,17 @@ function getChartLegendTitle(){
 
 function getAxisLabel(type, axis){
 	var axislabel = "";
-	if (axis == "x"){
-		if (type == "horizontalBar") axislabel = "Hits";
-			else if (type == "bar"){
+	if(axis == "x"){
+		if(type == "horizontalBar") axislabel = "Hits";
+			else if(type == "bar"){
 				axislabel = "";
-			} else if (type == "pie") axislabel = "";
+			} else if(type == "pie") axislabel = "";
 			return axislabel;
-	} else if (axis == "y"){
-		if (type == "horizontalBar"){
+	} else if(axis == "y"){
+		if(type == "horizontalBar"){
 			axislabel = "";
-		} else if (type == "bar") axislabel = "Hits";
-		else if (type == "pie") axislabel = "";
+		} else if(type == "bar") axislabel = "Hits";
+		else if(type == "pie") axislabel = "";
 		return axislabel;
 	}
 }
@@ -794,11 +794,11 @@ function BuildChartHtml(txttitle, txtbase, istime, perip){
 	charthtml += '</select>';
 	charthtml += '</td>';
 	charthtml += '</tr>';
-	if (istime == "false"){
+	if(istime == "false"){
 		charthtml += '<tr class="even">';
 		charthtml += '<th width="40%">Layout for chart</th>';
 		charthtml += '<td>';
-		charthtml += '<select style="width:100px" class="input_option" onchange="changeChart(this)" id="' + txtbase + '_Type">';
+		charthtml += '<select style="width:100px" class="input_option" onchange="ChartScaleOptions(this);changeChart(this)" id="' + txtbase + '_Type">';
 		charthtml += '<option value=0>Horizontal</option>';
 		charthtml += '<option value=1>Vertical</option>';
 		charthtml += '<option value=2>Pie</option>';
@@ -806,15 +806,15 @@ function BuildChartHtml(txttitle, txtbase, istime, perip){
 		charthtml += '</td>';
 		charthtml += '</tr>';
 	}
-	if (perip == "true"){
-			charthtml += '<tr class="even">';
-			charthtml += '<th width="40%">Client to display</th>';
-			charthtml += '<td>';
-			charthtml += '<select style="width:250px" class="input_option" onchange="changeChart(this)" id="' + txtbase + '_Clients">';
-			charthtml += '<option value=0>All (*)</option>';
-			charthtml += '</select>';
-			charthtml += '</td>';
-			charthtml += '</tr>';
+	if(perip == "true"){
+		charthtml += '<tr class="even">';
+		charthtml += '<th width="40%">Client to display</th>';
+		charthtml += '<td>';
+		charthtml += '<select style="width:250px" class="input_option" onchange="changeChart(this)" id="' + txtbase + '_Clients">';
+		charthtml += '<option value=0>All (*)</option>';
+		charthtml += '</select>';
+		charthtml += '</td>';
+		charthtml += '</tr>';
 	}
 	charthtml += '<tr>';
 	charthtml += '<td colspan="2" style="padding: 2px;">';
@@ -918,12 +918,12 @@ function get_querylog_file(){
 		url: '/ext/uiDivStats/csv/SQLQueryLog.htm',
 		dataType: 'text',
 		error: function(xhr){
-			tout = setTimeout(get_querylog_file, 1000);
+			tout = setTimeout(get_querylog_file,1000);
 		},
 		success: function(data){
 			ParseQueryLog(data);
 			if(document.getElementById("auto_refresh").checked){
-				tout = setTimeout("get_querylog_file();",60000);
+				tout = setTimeout(get_querylog_file,60000);
 			}
 		}
 	});
@@ -1025,7 +1025,7 @@ function Assign_EventHandlers(){
 			FilterQueryLog();
 		}, 1000);
 	});
-	$("#auto_refresh")[0].addEventListener("click", function(){ToggleRefresh();});
+	$j("#auto_refresh")[0].addEventListener("click", function(){ToggleRefresh();});
 }
 
 function ToggleRefresh(){
@@ -1034,9 +1034,9 @@ function ToggleRefresh(){
 
 /* http://www.alistapart.com/articles/zebratables/ */
 function stripedTable(){
-	if (document.getElementById && document.getElementsByTagName){
+	if(document.getElementById && document.getElementsByTagName){
 		var allTables = document.getElementsByClassName('queryTable');
-		if (!allTables){ return; }
+		if(!allTables){ return; }
 		
 		for (var i = 0; i < allTables.length; i++){
 			var trs = allTables[i].getElementsByTagName("tr");
@@ -1057,7 +1057,7 @@ function loadDivStats(){
 		url: '/ext/uiDivStats/DiversionStats.htm',
 		dataType: 'text',
 		error: function(xhr){
-			setTimeout("loadDivStats();", 5000);
+			setTimeout(loadDivStats, 5000);
 		},
 		success: function(data){
 			document.getElementById("DiversionStats").innerHTML=data;
