@@ -108,6 +108,11 @@ function Draw_Chart(txtchartname){
 				fontColor: "#ffffff"
 			}
 		},
+		layout: {
+			padding: {
+				top: getChartPadding(charttype)
+			}
+		},
 		title: {
 			display: showTitle(charttype),
 			text: getChartLegendTitle(),
@@ -129,6 +134,7 @@ function Draw_Chart(txtchartname){
 		scales: {
 			xAxes: [{
 				display: showAxis(charttype, "x"),
+				type: getChartScale($j("#" + txtchartname + "_Scale option:selected").val(),charttype,"x"),
 				gridLines: {
 					display: showGrid(charttype, "x"),
 					color: "#282828"
@@ -140,17 +146,16 @@ function Draw_Chart(txtchartname){
 				ticks: {
 					display: showTicks(charttype, "x"),
 					beginAtZero: true,
-					callback: function (value, index, values){
-						if(! isNaN(value)){
-							return round(value,0).toFixed(0);
-						} else{
-							return value;
-						}
-					}
+					labels: {
+						index:  ['min', 'max'],
+						removeEmptyLines: true,
+					},
+					userCallback: LogarithmicFormatter
 				}
 			}],
 			yAxes: [{
 				display: showAxis(charttype, "y"),
+				type: getChartScale($j("#" + txtchartname + "_Scale option:selected").val(),charttype,"y"),
 				gridLines: {
 					display: false,
 					color: "#282828"
@@ -161,17 +166,15 @@ function Draw_Chart(txtchartname){
 				},
 				ticks: {
 					display: showTicks(charttype, "y"),
-					beginAtZero: false,
+					beginAtZero: true,
 					autoSkip: false,
 					lineHeight: 0.8,
 					padding: -5,
-					callback: function (value, index, values){
-						if(! isNaN(value)){
-							return round(value,0).toFixed(0);
-						} else{
-							return value;
-						}
-					}
+					labels: {
+						index:  ['min', 'max'],
+						removeEmptyLines: true,
+					},
+					userCallback: LogarithmicFormatter
 				}
 			}]
 		},
@@ -293,13 +296,16 @@ function Draw_Time_Chart(txtchartname){
 				time: { parser: "X", unit: txtunitx, stepSize: 1 }
 			}],
 			yAxes: [{
+				type: getChartScale($j("#" + txtchartname + "time_Scale option:selected").val(),"time","y"),
 				gridLines: { display: false, color: "#282828" },
 				scaleLabel: { display: false, labelString: txttitle },
 				ticks: {
 					display: true,
-					callback: function (value, index, values){
-						return round(value,0).toFixed(0);
-					}
+					labels: {
+						index:  ['min', 'max'],
+						removeEmptyLines: true,
+					},
+					userCallback: LogarithmicFormatter
 				},
 			}]
 		},
@@ -375,6 +381,45 @@ function chunk(str, n){
 	return ret;
 };
 
+function LogarithmicFormatter(tickValue, index, ticks) {
+	if(this.type != "logarithmic"){
+		if(! isNaN(tickValue)){
+			return round(tickValue,0).toFixed(0);
+		}
+		else{
+			return tickValue;
+		}
+	}
+	else{
+		var labelOpts =  this.options.ticks.labels || {};
+		var labelIndex = labelOpts.index || ['min', 'max'];
+		var labelSignificand = labelOpts.significand || [1,2,5];
+		var significand = tickValue / (Math.pow(10, Math.floor(Chart.helpers.log10(tickValue))));
+		var emptyTick = labelOpts.removeEmptyLines === true ? undefined : '';
+		var namedIndex = '';
+		if(index === 0){
+			namedIndex = 'min';
+		}
+		else if(index === ticks.length - 1){
+			namedIndex = 'max';
+		}
+		if(labelOpts === 'all' || labelSignificand.indexOf(significand) !== -1 || labelIndex.indexOf(index) !== -1 || labelIndex.indexOf(namedIndex) !== -1){
+			if(tickValue === 0){
+				return '0';
+			}
+			else{
+				if(! isNaN(tickValue)){
+					return round(tickValue,0).toFixed(0);
+				}
+				else{
+					return tickValue;
+				}
+			}
+		}
+		return emptyTick;
+	}
+};
+
 function GetCookie(cookiename,returntype){
 	var s;
 	if((s = cookie.get("uidivstats_"+cookiename)) != null){
@@ -411,6 +456,7 @@ function initial(){
 	for (i = 0; i < metriclist.length; i++){
 		$j("#"+metriclist[i]+"_Period").val(GetCookie(metriclist[i]+"_Period","number"));
 		$j("#"+metriclist[i]+"_Type").val(GetCookie(metriclist[i]+"_Type","number"));
+		ChartScaleOptions($j("#"+metriclist[i]+"_Type")[0]);
 		for (i2 = 0; i2 < chartlist.length; i2++){
 			d3.csv('/ext/uiDivStats/csv/'+metriclist[i]+chartlist[i2]+'.htm').then(SetGlobalDataset.bind(null,metriclist[i]+chartlist[i2]));
 			d3.csv('/ext/uiDivStats/csv/'+metriclist[i]+chartlist[i2]+'clients.htm').then(SetGlobalDataset.bind(null,metriclist[i]+chartlist[i2]+"clients"));
@@ -418,6 +464,7 @@ function initial(){
 	}
 	for (i = 0; i < chartlist.length; i++){
 		$j("#TotalBlockedtime_Period").val(GetCookie("TotalBlockedtime_Period","number"));
+		$j("#TotalBlockedtime_Scale").val(GetCookie("TotalBlockedtime_Scale","number"));
 		d3.csv('/ext/uiDivStats/csv/TotalBlocked'+chartlist[i]+'time.htm').then(SetGlobalDataset.bind(null,"TotalBlocked"+chartlist[i]+"time"));
 	}
 	
@@ -580,6 +627,41 @@ function getChartPeriod(period){
 	return chartperiod;
 }
 
+function getChartScale(scale,charttype,axis){
+	var chartscale = "category";
+	if(scale == 0){
+		if((charttype == "horizontalBar" && axis == "x") || (charttype == "bar" && axis == "y") || (charttype == "time" && axis == "y")){
+			chartscale = "linear";
+		}
+	}
+	else if(scale == 1){
+		if((charttype == "horizontalBar" && axis == "x") || (charttype == "bar" && axis == "y") || (charttype == "time" && axis == "y")){
+			chartscale = "logarithmic";
+		}
+	}
+	return chartscale;
+}
+
+function ChartScaleOptions(e){
+	var chartname = e.id.substring(0, e.id.indexOf("_"));
+	let dropdown = $j('#'+chartname+'_Scale');
+	if($j("#" + chartname + "_Type option:selected").val() != 2){
+		if(dropdown[0].length == 1){
+			dropdown.empty();
+			dropdown.append($j('<option></option>').attr('value', 0).text('Linear'));
+			dropdown.append($j('<option></option>').attr('value', 1).text('Logarithmic'));
+			dropdown.prop('selectedIndex', 0);
+		}
+	}
+	else{
+		if(dropdown[0].length == 2){
+			dropdown.empty();
+			dropdown.append($j('<option></option>').attr('value', 0).text('Linear'));
+			dropdown.prop('selectedIndex', 0);
+		}
+	}
+}
+
 function ZoomPanEnabled(charttype){
 	if(charttype == "bar"){
 		return 'y';
@@ -719,6 +801,15 @@ function showTitle(e){
 	}
 }
 
+function getChartPadding(e){
+	if(e == "bar"){
+		return 10;
+	}
+	else{
+		return 0;
+	}
+}
+
 function getChartLegendTitle(){
 	var chartlegendtitlelabel = "Domain name";
 	
@@ -806,6 +897,15 @@ function BuildChartHtml(txttitle, txtbase, istime, perip){
 		charthtml += '</td>';
 		charthtml += '</tr>';
 	}
+	charthtml += '<tr class="even">';
+	charthtml += '<th width="40%">Scale type</th>';
+	charthtml += '<td>';
+	charthtml += '<select style="width:150px" class="input_option" onchange="changeChart(this)" id="' + txtbase + '_Scale">';
+	charthtml += '<option value=0>Linear</option>';
+	charthtml += '<option value=1>Logarithmic</option>';
+	charthtml += '</select>';
+	charthtml += '</td>';
+	charthtml += '</tr>';
 	if(perip == "true"){
 		charthtml += '<tr class="even">';
 		charthtml += '<th width="40%">Client to display</th>';
