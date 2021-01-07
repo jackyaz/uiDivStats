@@ -148,6 +148,7 @@ Set_Version_Custom_Settings(){
 }
 
 Update_Check(){
+	echo 'var updatestatus = "InProgress";' > "$SCRIPT_WEB_DIR/detect_update.js"
 	doupdate="false"
 	localver=$(grep "SCRIPT_VERSION=" /jffs/scripts/"$SCRIPT_NAME" | grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})')
 	/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME.sh" | grep -qF "jackyaz" || { Print_Output true "404 error detected - stopping update" "$ERR"; return 1; }
@@ -155,13 +156,18 @@ Update_Check(){
 	if [ "$localver" != "$serverver" ]; then
 		doupdate="version"
 		Set_Version_Custom_Settings server "$serverver"
+		echo 'var updatestatus = "'"$serverver"'";'  > "$SCRIPT_WEB_DIR/detect_update.js"
 	else
 		localmd5="$(md5sum "/jffs/scripts/$SCRIPT_NAME" | awk '{print $1}')"
 		remotemd5="$(curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME.sh" | md5sum | awk '{print $1}')"
 		if [ "$localmd5" != "$remotemd5" ]; then
 			doupdate="md5"
 			Set_Version_Custom_Settings server "$serverver-hotfix"
+			echo 'var updatestatus = "'"$serverver-hotfix"'";'  > "$SCRIPT_WEB_DIR/detect_update.js"
 		fi
+	fi
+	if [ "$doupdate" = "false" ]; then
+		echo 'var updatestatus = "None";'  > "$SCRIPT_WEB_DIR/detect_update.js"
 	fi
 	echo "$doupdate,$localver,$serverver"
 }
@@ -765,6 +771,8 @@ Generate_NG(){
 	
 	rm -f /tmp/uidivstats.sql
 	
+	echo 'var uidivstatsstatus = "InProgress";' > /tmp/detect_uidivstats.js
+	
 	if [ -n "$1" ] && [ "$1" = "fullrefresh" ]; then
 		Write_View_Sql_ToFile dnsqueries daily 1 /tmp/uidivstats.sql "$timenow" drop
 		Write_View_Sql_ToFile dnsqueries weekly 7 /tmp/uidivstats.sql "$timenow" drop
@@ -1343,6 +1351,7 @@ Menu_Install(){
 	
 	Create_Dirs
 	Conf_Exists
+	Set_Version_Custom_Settings local
 	Create_Symlinks
 	
 	Update_File uidivstats_www.asp
@@ -1384,6 +1393,7 @@ Menu_Startup(){
 	
 	Create_Dirs
 	Conf_Exists
+	Set_Version_Custom_Settings local
 	Create_Symlinks
 	Auto_Startup create 2>/dev/null
 	Auto_DNSMASQ_Postconf create 2>/dev/null
@@ -1513,6 +1523,7 @@ if [ -z "$1" ]; then
 	Entware_Ready
 	Create_Dirs
 	Conf_Exists
+	Set_Version_Custom_Settings local
 	Create_Symlinks
 	Auto_Startup create 2>/dev/null
 	Auto_DNSMASQ_Postconf create 2>/dev/null
@@ -1546,6 +1557,9 @@ case "$1" in
 		if [ "$2" = "start" ] && [ "$3" = "$SCRIPT_NAME" ]; then
 			Check_Lock webui
 			Menu_GenerateStats
+			exit 0
+		elif [ "$2" = "start" ] && [ "$3" = "${SCRIPT_NAME}config" ]; then
+			Conf_FromSettings
 			exit 0
 		elif [ "$2" = "start" ] && [ "$3" = "${SCRIPT_NAME}checkupdate" ]; then
 			Update_Check
