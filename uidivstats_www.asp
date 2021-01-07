@@ -235,7 +235,6 @@ var tout,$j=jQuery.noConflict(),maxNoChartsBlocked=6,currentNoChartsBlocked=0,ma
 <thead>
 <tr><td colspan="5">Filters</td></tr>
 </thead>
-
 <tr class="even">
 <th>&nbsp;</th>
 <th>Domain</th>
@@ -257,6 +256,7 @@ var tout,$j=jQuery.noConflict(),maxNoChartsBlocked=6,currentNoChartsBlocked=0,ma
 <option value="5">SOA</option>
 <option value="6">PTR</option>
 <option value="7">TXT</option>
+<option value="8">type=65</option>
 </select>
 </td>
 <td>
