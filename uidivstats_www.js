@@ -337,10 +337,7 @@ function Draw_Time_Chart(txtchartname){
 					},
 					speed: 0.1
 				},
-			},
-			deferred: {
-				delay: 250
-			},
+			}
 		}
 	};
 	var lineDataset = {
