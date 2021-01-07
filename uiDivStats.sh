@@ -1135,7 +1135,7 @@ Process_Upgrade(){
 	fi
 }
 
-Shortcut_script(){
+Shortcut_Script(){
 	case $1 in
 		create)
 			if [ -d /opt/bin ] && [ ! -f "/opt/bin/$SCRIPT_NAME" ] && [ -f "/jffs/scripts/$SCRIPT_NAME" ]; then
@@ -1353,7 +1353,7 @@ Menu_Install(){
 	Auto_DNSMASQ_Postconf create 2>/dev/null
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
-	Shortcut_script create
+	Shortcut_Script create
 	
 	Process_Upgrade
 	/opt/etc/init.d/S90taildns start >/dev/null 2>&1
@@ -1366,10 +1366,10 @@ Menu_Startup(){
 	Auto_DNSMASQ_Postconf create 2>/dev/null
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
-	Shortcut_script create
 	Create_Dirs
 	Conf_Exists
 	Create_Symlinks
+	Shortcut_Script create
 	Mount_WebUI
 	Clear_Lock
 }
@@ -1420,7 +1420,7 @@ Menu_Uninstall(){
 	Auto_Cron delete 2>/dev/null
 	Auto_ServiceEvent delete 2>/dev/null
 	
-	Shortcut_script delete
+	Shortcut_Script delete
 	
 	Get_WebUI_Page "$SCRIPT_DIR/uidivstats_www.asp"
 	if [ -n "$MyPage" ] && [ "$MyPage" != "none" ] && [ -f "/tmp/menuTree.js" ]; then
@@ -1507,7 +1507,7 @@ if [ -z "$1" ]; then
 	Auto_DNSMASQ_Postconf create 2>/dev/null
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
-	Shortcut_script create
+	Shortcut_Script create
 	Process_Upgrade
 	ScriptHeader
 	MainMenu
