@@ -443,10 +443,11 @@ function SetCurrentPage(){
 
 function initial(){
 	SetCurrentPage();
-	
+	LoadCustomSettings();
 	show_menu();
+	get_conf_file();
 	
-	$j("#formfontdesc").after(BuildKeyStatsTableHtml("Key Stats", "keystats"));
+	$j("#table_config").after(BuildKeyStatsTableHtml("Key Stats", "keystats"));
 	$j("#uidivstats_table_keystats").after(BuildChartHtml("Top requested domains", "Total", "false", "true"));
 	$j("#uidivstats_table_keystats").after(BuildChartHtml("Top blocked domains", "Blocked", "false", "true"));
 	$j("#uidivstats_table_keystats").after(BuildChartHtml("DNS Queries", "TotalBlockedtime", "true", "false"));
@@ -468,12 +469,28 @@ function initial(){
 	$j("#keystats_Period").val(GetCookie("keystats_Period","number")).change();
 	
 	get_querylog_file();
-	
+	ScriptUpdateLayout();
 	Assign_EventHandlers();
-	
 	SetuiDivStatsTitle();
-	
 	loadDivStats();
+}
+
+function get_conf_file(){
+	$j.ajax({
+		url: '/ext/uiDivStats/config.htm',
+		dataType: 'text',
+		error: function(xhr){
+			setTimeout(get_conf_file, 1000);
+		},
+		success: function(data){
+			var configdata=data.split("\n");
+			configdata = configdata.filter(Boolean);
+			
+			for (var i = 0; i < configdata.length; i++){
+				eval("document.form.uidivstats_"+configdata[i].split("=")[0].toLowerCase()).value = configdata[i].split("=")[1].replace(/(\r\n|\n|\r)/gm,"");
+			}
+		}
+	});
 }
 
 function SetGlobalDataset(txtchartname,dataobject){
@@ -524,6 +541,33 @@ function SetClients(txtchartname){
 		}));
 	}
 }
+
+
+function SaveConfig(){
+	document.getElementById('amng_custom').value = JSON.stringify($j('form').serializeObject())
+	var action_script_tmp = "start_uiDivStatsconfig";
+	document.form.action_script.value = action_script_tmp;
+	var restart_time = 5;
+	document.form.action_wait.value = restart_time;
+	showLoading();
+	document.form.submit();
+}
+
+$j.fn.serializeObject = function(){
+	var o = custom_settings;
+	var a = this.serializeArray();
+	$j.each(a, function(){
+		if (o[this.name] !== undefined && this.name.indexOf("uidivstats") != -1 && this.name.indexOf("version") == -1){
+			if (!o[this.name].push){
+				o[this.name] = [o[this.name]];
+			}
+			o[this.name].push(this.value || '');
+		} else if (this.name.indexOf("uidivstats") != -1 && this.name.indexOf("version") == -1){
+			o[this.name] = this.value || '';
+		}
+	});
+	return o;
+};
 
 function reload(){
 	location.reload(true);
