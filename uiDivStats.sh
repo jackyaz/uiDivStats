@@ -838,6 +838,7 @@ Generate_NG(){
 }
 
 Generate_Query_Log(){
+	#shellcheck disable=SC2009
 	for pid in $(ps | grep -v $$ | grep -v "{" | grep -i "$SCRIPT_NAME" | grep "querylog" | awk '{print $1}'); do
 		Print_Output true "Killing stale querylog process - PID $pid" "$WARN"
 		kill -9 "$pid"
