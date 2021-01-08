@@ -292,6 +292,37 @@ Update_File(){
 	fi
 }
 
+Conf_FromSettings(){
+	SETTINGSFILE="/jffs/addons/custom_settings.txt"
+	TMPFILE="/tmp/uidivstats_settings.txt"
+	if [ -f "$SETTINGSFILE" ]; then
+		if [ "$(grep "uidivstats_" $SETTINGSFILE | grep -v "version" -c)" -gt 0 ]; then
+			Print_Output true "Updated settings from WebUI found, merging into $SCRIPT_CONF" "$PASS"
+			cp -a "$SCRIPT_CONF" "$SCRIPT_CONF.bak"
+			grep "uidivstats_" "$SETTINGSFILE" | grep -v "version" > "$TMPFILE"
+			sed -i "s/uidivstats_//g;s/ /=/g" "$TMPFILE"
+			while IFS='' read -r line || [ -n "$line" ]; do
+				SETTINGNAME="$(echo "$line" | cut -f1 -d'=' | awk '{ print toupper($1) }')"
+				SETTINGVALUE="$(echo "$line" | cut -f2 -d'=')"
+				sed -i "s/$SETTINGNAME=.*/$SETTINGNAME=$SETTINGVALUE/" "$SCRIPT_CONF"
+			done < "$TMPFILE"
+			grep 'uidivstats_version' "$SETTINGSFILE" > "$TMPFILE"
+			sed -i "\\~uidivstats_~d" "$SETTINGSFILE"
+			mv "$SETTINGSFILE" "$SETTINGSFILE.bak"
+			cat "$SETTINGSFILE.bak" "$TMPFILE" > "$SETTINGSFILE"
+			rm -f "$TMPFILE"
+			rm -f "$SETTINGSFILE.bak"
+			
+			QueryMode "$(QueryMode check)"
+			CacheMode "$(CacheMode check)"
+			
+			Print_Output true "Merge of updated settings from WebUI completed successfully" "$PASS"
+		else
+			Print_Output false "No updated settings from WebUI found, no merge into $SCRIPT_CONF necessary" "$PASS"
+		fi
+	fi
+}
+
 Create_Dirs(){
 	if [ ! -d "$SCRIPT_DIR" ]; then
 		mkdir -p "$SCRIPT_DIR"
