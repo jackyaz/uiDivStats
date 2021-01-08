@@ -808,6 +808,11 @@ Generate_NG(){
 }
 
 Generate_Query_Log(){
+	for pid in $(ps | grep -v $$ | grep -v "{" | grep -i "$SCRIPT_NAME" | grep "querylog" | awk '{print $1}'); do
+		Print_Output true "Killing stale querylog process - PID $pid" "$WARN"
+		kill -9 "$pid"
+	done
+	
 	recordcount=5000
 	if [ "$(CacheMode check)" = "tmp" ]; then
 		if [ -f /tmp/cache-uiDivStats-SQL.tmp ]; then
