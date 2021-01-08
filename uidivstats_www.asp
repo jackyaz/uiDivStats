@@ -140,6 +140,15 @@ tbody.queryTableContent tr.queryAlternateRow td {
   overflow: hidden !important;
   white-space: nowrap !important;
 }
+
+input.settingvalue {
+  margin-left: 3px !important;
+}
+
+label.settingvalue {
+  margin-right: 10px !important;
+  vertical-align: top !important;
+}
 </style>
 <script language="JavaScript" type="text/javascript" src="/ext/shared-jy/jquery.js"></script>
 <script language="JavaScript" type="text/javascript" src="/ext/shared-jy/moment.js"></script>
@@ -199,6 +208,56 @@ var tout,$j=jQuery.noConflict(),maxNoChartsBlocked=6,currentNoChartsBlocked=0,ma
 <div id="statstitle" style="text-align:center;">Stats last updated:</div>
 <div style="margin:10px 0 10px 5px;" class="splitLine"></div>
 <div id="formfontdesc" class="formfontdesc">uiDivStats is a graphical representation of domain blocking performed by Diversion.</div>
+<table width="100%" border="1" align="center" cellpadding="2" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" style="border:0px;" id="table_buttons">
+<thead class="collapsible-jquery" id="scripttools">
+<tr><td colspan="2">Utilities (click to expand/collapse)</td></tr>
+</thead>
+<tr>
+<th width="20%">Version information</th>
+<td>
+<span id="uidivstats_version_local" style="color:#FFFFFF;"></span>
+&nbsp;&nbsp;&nbsp;
+<span id="uidivstats_version_server" style="display:none;">Update version</span>
+&nbsp;&nbsp;&nbsp;
+<input type="button" class="button_gen" onclick="CheckUpdate();" value="Check" id="btnChkUpdate">
+<img id="imgChkUpdate" style="display:none;vertical-align:middle;" src="images/InternetScan.gif"/>
+<input type="button" class="button_gen" onclick="DoUpdate();" value="Update" id="btnDoUpdate" style="display:none;">
+&nbsp;&nbsp;&nbsp;
+</td>
+</tr>
+</table>
+<div style="line-height:10px;">&nbsp;</div>
+<table width="100%" border="1" align="center" cellpadding="2" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" style="border:0px;" id="table_config">
+<thead class="collapsible-jquery" id="scriptconfig">
+<tr><td colspan="2">Configuration (click to expand/collapse)</td></tr>
+</thead>
+
+<tr class="even" id="rowquerymode">
+<th width="40%">Query Mode<br/><span style="color:#FFCC00;">(DNS query types for logging)</span></th>
+<td class="settingvalue">
+<input type="radio" name="uidivstats_querymode" id="uidivstats_query_all" class="input" value="all" checked>
+<label for="uidivstats_query_all" class="settingvalue">All</label>
+<input type="radio" name="uidivstats_querymode" id="uidivstats_query_aaaaa" class="input" value="A+AAAA">
+<label for="uidivstats_query_aaaaa" class="settingvalue">A+AAAA only</label>
+</td>
+</tr>
+
+<tr class="even" id="rowcachemode">
+<th width="40%">Cache Mode<br/><span style="color:#FFCC00;">(use tmpfs instead of direct write to disk)</span></th>
+<td class="settingvalue">
+<input type="radio" name="uidivstats_cachemode" id="uidivstats_cache_none" class="input" value="none" checked>
+<label for="uidivstats_cache_none" class="settingvalue">Disabled</label>
+<input type="radio" name="uidivstats_cachemode" id="uidivstats_cache_tmp" class="input" value="tmp">
+<label for="uidivstats_cache_tmp" class="settingvalue">Enabled</label>
+</td>
+</tr>
+
+<tr class="apply_gen" valign="top" height="35px">
+<td colspan="2" style="background-color:rgb(77, 89, 93);">
+<input type="button" onclick="SaveConfig();" value="Save" class="button_gen" name="button">
+</td>
+</tr>
+</table>
 
 <!-- Keystats table -->
 
@@ -308,6 +367,14 @@ Please check that weekly stats are enabled in Diversion, menu options c 2</texta
 </td>
 </tr>
 </table>
+</form>
+<form method="post" name="formScriptActions" action="/start_apply.htm" target="hidden_frame">
+<input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
+<input type="hidden" name="current_page" value="">
+<input type="hidden" name="next_page" value="">
+<input type="hidden" name="action_mode" value="apply">
+<input type="hidden" name="action_script" value="">
+<input type="hidden" name="action_wait" value="">
 </form>
 <div id="footer">
 </div>

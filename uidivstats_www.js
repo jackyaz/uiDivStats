@@ -542,6 +542,65 @@ function SetClients(txtchartname){
 	}
 }
 
+function ScriptUpdateLayout(){
+	var localver = GetVersionNumber("local");
+	var serverver = GetVersionNumber("server");
+	$j("#uidivstats_version_local").text(localver);
+	
+	if (localver != serverver && serverver != "N/A"){
+		$j("#uidivstats_version_server").text("Updated version available: "+serverver);
+		showhide("btnChkUpdate", false);
+		showhide("uidivstats_version_server", true);
+		showhide("btnDoUpdate", true);
+	}
+}
+
+function update_status(){
+	$j.ajax({
+		url: '/ext/uiDivStats/detect_update.js',
+		dataType: 'script',
+		timeout: 3000,
+		error: function(xhr){
+			setTimeout(update_status, 1000);
+		},
+		success: function(){
+			if (updatestatus == "InProgress"){
+				setTimeout(update_status, 1000);
+			}
+			else{
+				document.getElementById("imgChkUpdate").style.display = "none";
+				showhide("uidivstats_version_server", true);
+				if(updatestatus != "None"){
+					$j("#uidivstats_version_server").text("Updated version available: "+updatestatus);
+					showhide("btnChkUpdate", false);
+					showhide("btnDoUpdate", true);
+				}
+				else{
+					$j("#uidivstats_version_server").text("No update available");
+					showhide("btnChkUpdate", true);
+					showhide("btnDoUpdate", false);
+				}
+			}
+		}
+	});
+}
+
+function CheckUpdate(){
+	showhide("btnChkUpdate", false);
+	document.formScriptActions.action_script.value="start_uiDivStatscheckupdate"
+	document.formScriptActions.submit();
+	document.getElementById("imgChkUpdate").style.display = "";
+	setTimeout(update_status, 2000);
+}
+
+function DoUpdate(){
+	var action_script_tmp = "start_uiDivStatsdoupdate";
+	document.form.action_script.value = action_script_tmp;
+	var restart_time = 10;
+	document.form.action_wait.value = restart_time;
+	showLoading();
+	document.form.submit();
+}
 
 function SaveConfig(){
 	document.getElementById('amng_custom').value = JSON.stringify($j('form').serializeObject())
@@ -568,6 +627,23 @@ $j.fn.serializeObject = function(){
 	});
 	return o;
 };
+
+function GetVersionNumber(versiontype){
+	var versionprop;
+	if(versiontype == "local"){
+		versionprop = custom_settings.uidivstats_version_local;
+	}
+	else if(versiontype == "server"){
+		versionprop = custom_settings.uidivstats_version_server;
+	}
+	
+	if(typeof versionprop == 'undefined' || versionprop == null){
+		return "N/A";
+	}
+	else{
+		return versionprop;
+	}
+}
 
 function reload(){
 	location.reload(true);
