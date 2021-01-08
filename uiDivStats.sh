@@ -315,9 +315,10 @@ Create_Dirs(){
 }
 
 Create_Symlinks(){
-	rm -f "$SCRIPT_WEB_DIR/"* 2>/dev/null
+	rm -rf "${SCRIPT_WEB_DIR:?}/"* 2>/dev/null
 	
 	ln -s "$SCRIPT_DIR/SQLData.js" "$SCRIPT_WEB_DIR/SQLData.js" 2>/dev/null
+	ln -s "$SCRIPT_CONF" "$SCRIPT_WEB_DIR/config.htm" 2>/dev/null
 	
 	if [ ! -f /opt/bin/find ]; then
 		opkg update
@@ -326,9 +327,7 @@ Create_Symlinks(){
 	
 	UpdateDiversionWeeklyStatsFile
 	
-	if [ ! -d "$SCRIPT_WEB_DIR/csv" ]; then
-		ln -s "$CSV_OUTPUT_DIR" "$SCRIPT_WEB_DIR/csv" 2>/dev/null
-	fi
+	ln -s "$CSV_OUTPUT_DIR" "$SCRIPT_WEB_DIR/csv" 2>/dev/null
 	
 	if [ ! -d "$SHARED_WEB_DIR" ]; then
 		ln -s "$SHARED_DIR" "$SHARED_WEB_DIR" 2>/dev/null
