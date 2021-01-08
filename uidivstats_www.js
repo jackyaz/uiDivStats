@@ -609,10 +609,10 @@ function getLimit(datasetname,axis,maxmin,isannotation){
 	}
 	
 	if(maxmin == "max"){
-		limit=Math.max.apply(Math, values);
+		limit = Math.max.apply(Math, values);
 	}
 	else{
-		limit=Math.min.apply(Math, values);
+		limit = Math.min.apply(Math, values);
 	}
 	if(maxmin == "max" && limit == 0 && isannotation == false){
 		limit = 1;
