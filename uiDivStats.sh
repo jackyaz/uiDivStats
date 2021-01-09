@@ -1144,11 +1144,11 @@ Process_Upgrade(){
 		done
 		
 		Print_Output true "Creating database table indexes..." "$PASS"
-		echo "create index idx_dns_domains on dnsqueries (ReqDmn,Timestamp);" > /tmp/uidivstats-upgrade.sql
+		echo "CREATE INDEX idx_dns_domains ON dnsqueries (ReqDmn,Timestamp);" > /tmp/uidivstats-upgrade.sql
 		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
-		echo "create index idx_dns_time on dnsqueries (Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
+		echo "CREATE INDEX idx_dns_time ON dnsqueries (Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
 		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
-		echo "create index idx_dns_clients on dnsqueries (SrcIP,Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
+		echo "CREATE INDEX idx_dns_clients ON dnsqueries (SrcIP,Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
 		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
 		
 		rm -f /tmp/uidivstats-upgrade.sql
