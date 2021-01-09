@@ -1182,7 +1182,23 @@ Process_Upgrade(){
 		Auto_Cron create 2>/dev/null
 		/opt/etc/init.d/S90taildns start >/dev/null 2>&1
 		touch "$SCRIPT_DIR/.upgraded2"
-		Menu_GenerateStats fullrefresh
+	fi
+	
+	if [ ! -f "$SCRIPT_DIR/.upgraded3" ]; then
+		Print_Output true "Creating new database table index for clients, this may take a few minutes..." "$WARN"
+		
+		/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
+		sleep 5
+		Auto_Cron delete 2>/dev/null
+		
+		echo "CREATE INDEX idx_clients ON dnsqueries (SrcIP);" > /tmp/uidivstats-upgrade.sql
+		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
+		
+		rm -f /tmp/uidivstats-upgrade.sql
+		
+		Auto_Cron create 2>/dev/null
+		/opt/etc/init.d/S90taildns start >/dev/null 2>&1
+		touch "$SCRIPT_DIR/.upgraded3"
 	fi
 }
 
