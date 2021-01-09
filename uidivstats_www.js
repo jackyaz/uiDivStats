@@ -456,6 +456,7 @@ function initial(){
 	for (i = 0; i < metriclist.length; i++){
 		$j("#"+metriclist[i]+"_Period").val(GetCookie(metriclist[i]+"_Period","number"));
 		$j("#"+metriclist[i]+"_Type").val(GetCookie(metriclist[i]+"_Type","number"));
+		$j("#"+metriclist[i]+"_Scale").val(GetCookie(metriclist[i]+"_Scale","number"));
 		ChartScaleOptions($j("#"+metriclist[i]+"_Type")[0]);
 		for (i2 = 0; i2 < chartlist.length; i2++){
 			d3.csv('/ext/uiDivStats/csv/'+metriclist[i]+chartlist[i2]+'.htm').then(SetGlobalDataset.bind(null,metriclist[i]+chartlist[i2]));
@@ -664,6 +665,7 @@ function RedrawAllCharts(){
 	for (i = 0; i < metriclist.length; i++){
 		$j("#"+metriclist[i]+"_Period").val(GetCookie(metriclist[i]+"_Period","number"));
 		$j("#"+metriclist[i]+"_Type").val(GetCookie(metriclist[i]+"_Type","number"));
+		$j("#"+metriclist[i]+"_Scale").val(GetCookie(metriclist[i]+"_Scale","number"));
 		ChartScaleOptions($j("#"+metriclist[i]+"_Type")[0]);
 		for (i2 = 0; i2 < chartlist.length; i2++){
 			d3.csv('/ext/uiDivStats/csv/'+metriclist[i]+chartlist[i2]+'.htm').then(SetGlobalDataset.bind(null,metriclist[i]+chartlist[i2]));
