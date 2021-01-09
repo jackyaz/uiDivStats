@@ -99,6 +99,10 @@ Check_Lock(){
 			if [ -z "$1" ]; then
 				exit 1
 			else
+				if [ "$1" = "webui" ]; then
+					echo 'var uidivstatsstatus = "LOCKED";' > /tmp/detect_uidivstats.js
+					exit 1
+				fi
 				return 1
 			fi
 		fi
@@ -349,6 +353,7 @@ Create_Dirs(){
 Create_Symlinks(){
 	rm -rf "${SCRIPT_WEB_DIR:?}/"* 2>/dev/null
 	
+	ln -s /tmp/detect_uidivstats.js "$SCRIPT_WEB_DIR/detect_uidivstats.js" 2>/dev/null
 	ln -s "$SCRIPT_DIR/SQLData.js" "$SCRIPT_WEB_DIR/SQLData.js" 2>/dev/null
 	ln -s "$SCRIPT_CONF" "$SCRIPT_WEB_DIR/config.htm" 2>/dev/null
 	
@@ -834,6 +839,7 @@ Generate_NG(){
 	
 	echo "Stats last updated: $timenowfriendly" > /tmp/uidivstatstitle.txt
 	WriteStats_ToJS /tmp/uidivstatstitle.txt "$SCRIPT_DIR/SQLData.js" SetuiDivStatsTitle statstitle
+	echo 'var uidivstatsstatus = "Done";' > /tmp/detect_uidivstats.js
 	Print_Output true "Stats updated successfully" "$PASS"
 	rm -f "/tmpuidivstatstitle.txt"
 }
@@ -887,12 +893,10 @@ Generate_KeyStats(){
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 		sleep 1
 	done
-	
 	Write_KeyStats_Sql_ToFile "Blocked" "dnsqueries" "daily" 1 "/tmp/uidivstats.sql" "$timenow"
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 		sleep 1
 	done
-	
 	queriesTotaldaily="$(cat /tmp/queriesTotaldaily)"
 	queriesBlockeddaily="$(cat /tmp/queriesBlockeddaily)"
 	if ! Validate_Number "" "$queriesBlockeddaily" silent; then queriesBlockeddaily=0; fi
@@ -984,6 +988,7 @@ Generate_Stats_From_SQLite(){
 		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 			sleep 1
 		done
+		
 		sed -i '1i Fieldname,SrcIP,ReqDmn,Count' "$CSV_OUTPUT_DIR/${metric}dailyclients.htm"
 		
 		cat "$CSV_OUTPUT_DIR/Totaldailytime.htm" "$CSV_OUTPUT_DIR/Blockeddailytime.htm" > "$CSV_OUTPUT_DIR/TotalBlockeddailytime.htm" 2> /dev/null
@@ -1048,6 +1053,7 @@ Generate_Stats_From_SQLite(){
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/ipdistinctclients.sql >/dev/null 2>&1; do
 		sleep 1
 	done
+	
 	rm -f /tmp/ipdistinctclients.sql
 	ipclients="$(cat /tmp/ipdistinctclients)"
 	rm -f /tmp/ipdistinctclients
