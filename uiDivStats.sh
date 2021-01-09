@@ -839,10 +839,15 @@ Generate_NG(){
 
 Generate_Query_Log(){
 	#shellcheck disable=SC2009
-	for pid in $(ps | grep -v $$ | grep -v "{" | grep -i "$SCRIPT_NAME" | grep "querylog" | awk '{print $1}'); do
-		Print_Output true "Killing stale querylog process - PID $pid" "$WARN"
-		kill -9 "$pid"
-	done
+	if [ -n "$PPID" ]; then
+		ps | grep -v grep | grep -v $$ | grep -v "$PPID" | grep -i "$SCRIPT_NAME" | grep querylog | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
+	else
+		ps | grep -v grep | grep -v $$ | grep -i "$SCRIPT_NAME" | grep querylog | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
+	fi
+	
+	if [ $? -eq 0 ]; then
+		Print_Output true "Stale query log processes were killed" "$WARN"
+	fi
 	
 	recordcount=5000
 	if [ "$(CacheMode check)" = "tmp" ]; then
