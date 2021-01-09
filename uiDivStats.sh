@@ -314,6 +314,7 @@ Conf_FromSettings(){
 			rm -f "$SETTINGSFILE.bak"
 			
 			QueryMode "$(QueryMode check)"
+			sleep 5
 			CacheMode "$(CacheMode check)"
 			
 			Print_Output true "Merge of updated settings from WebUI completed successfully" "$PASS"
