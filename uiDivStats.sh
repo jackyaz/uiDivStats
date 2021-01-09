@@ -1157,8 +1157,6 @@ Process_Upgrade(){
 		/opt/etc/init.d/S90taildns start >/dev/null 2>&1
 		touch "$SCRIPT_DIR/.upgraded"
 		touch "$SCRIPT_DIR/.upgraded2"
-		Print_Output true "Starting first run of stat generation..." "$PASS"
-		Menu_GenerateStats fullrefresh
 	elif [ ! -f "$SCRIPT_DIR/.upgraded2" ]; then
 		/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
 		sleep 5
@@ -1425,6 +1423,9 @@ Menu_Install(){
 	
 	Process_Upgrade
 	/opt/etc/init.d/S90taildns start >/dev/null 2>&1
+	
+	Print_Output true "Starting first run of stat generation..." "$PASS"
+	Menu_GenerateStats fullrefresh
 	
 	Clear_Lock
 }
