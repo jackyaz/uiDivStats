@@ -32,6 +32,7 @@ Using your preferred SSH client/terminal, copy and paste the following command, 
 ### WebUI
 uiDivStats can be configured via the WebUI, in the LAN section.
 
+### CLI
 To launch the uiDivStats menu after installation, use:
 ```sh
 uiDivStats
