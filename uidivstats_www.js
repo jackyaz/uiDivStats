@@ -5,6 +5,8 @@ var maxNoChartsTotal = 6;
 var currentNoChartsTotal = 0;
 var maxNoChartsTotalBlocked = 3;
 var currentNoChartsTotalBlocked = 0;
+var maxNoChartsOverall = 15;
+var currentNoChartsOverall = 0;
 var arrayqueryloglines = [];
 var originalarrayqueryloglines = [];
 var sortfield = "Time";
@@ -498,12 +500,14 @@ function SetGlobalDataset(txtchartname,dataobject){
 	
 	if(txtchartname.indexOf("TotalBlocked") != -1){
 		currentNoChartsTotalBlocked++;
+		currentNoChartsOverall++;
 		if(currentNoChartsTotalBlocked == maxNoChartsTotalBlocked){
 			Draw_Time_Chart("TotalBlocked");
 		}
 	}
 	else if(txtchartname.indexOf("Blocked") != -1){
 		currentNoChartsBlocked++;
+		currentNoChartsOverall++;
 		if(currentNoChartsBlocked == maxNoChartsBlocked){
 			SetClients("Blocked");
 			Draw_Chart("Blocked");
@@ -511,10 +515,17 @@ function SetGlobalDataset(txtchartname,dataobject){
 	}
 	else if(txtchartname.indexOf("Total") != -1){
 		currentNoChartsTotal++;
+		currentNoChartsOverall++;
 		if(currentNoChartsTotal == maxNoChartsTotal){
 			SetClients("Total");
 			Draw_Chart("Total");
 		}
+	}
+	
+	if(currentNoChartsOverall == maxNoChartsOverall){
+		showhide("imgUpdateStats", false);
+		showhide("uidivstats_text", false);
+		showhide("btnUpdateStats", true);
 	}
 }
 
@@ -645,16 +656,100 @@ function GetVersionNumber(versiontype){
 	}
 }
 
-function reload(){
-	location.reload(true);
+function RedrawAllCharts(){
+	$j("#table_config").after(BuildKeyStatsTableHtml("Key Stats", "keystats"));
+	$j("#uidivstats_table_keystats").after(BuildChartHtml("Top requested domains", "Total", "false", "true"));
+	$j("#uidivstats_table_keystats").after(BuildChartHtml("Top blocked domains", "Blocked", "false", "true"));
+	$j("#uidivstats_table_keystats").after(BuildChartHtml("DNS Queries", "TotalBlockedtime", "true", "false"));
+	for (i = 0; i < metriclist.length; i++){
+		$j("#"+metriclist[i]+"_Period").val(GetCookie(metriclist[i]+"_Period","number"));
+		$j("#"+metriclist[i]+"_Type").val(GetCookie(metriclist[i]+"_Type","number"));
+		ChartScaleOptions($j("#"+metriclist[i]+"_Type")[0]);
+		for (i2 = 0; i2 < chartlist.length; i2++){
+			d3.csv('/ext/uiDivStats/csv/'+metriclist[i]+chartlist[i2]+'.htm').then(SetGlobalDataset.bind(null,metriclist[i]+chartlist[i2]));
+			d3.csv('/ext/uiDivStats/csv/'+metriclist[i]+chartlist[i2]+'clients.htm').then(SetGlobalDataset.bind(null,metriclist[i]+chartlist[i2]+"clients"));
+		}
+	}
+	for (i = 0; i < chartlist.length; i++){
+		$j("#TotalBlockedtime_Period").val(GetCookie("TotalBlockedtime_Period","number"));
+		$j("#TotalBlockedtime_Scale").val(GetCookie("TotalBlockedtime_Scale","number"));
+		d3.csv('/ext/uiDivStats/csv/TotalBlocked'+chartlist[i]+'time.htm').then(SetGlobalDataset.bind(null,"TotalBlocked"+chartlist[i]+"time"));
+	}
+	
+	$j("#keystats_Period").val(GetCookie("keystats_Period","number")).change();
+	
+	Assign_EventHandlers();
 }
 
-function applyRule(){
-	var action_script_tmp = "start_uiDivStats";
-	document.form.action_script.value = action_script_tmp;
-	var restart_time = document.form.action_wait.value*1;
-	showLoading();
-	document.form.submit();
+function PostStatUpdate(){
+	currentNoChartsBlocked = 0;
+	currentNoChartsTotal = 0;
+	currentNoChartsTotalBlocked = 0;
+	currentNoChartsOverall = 0;
+	$j("#uidivstats_table_keystats").remove();
+	$j("#uidivstats_chart_TotalBlockedtime").remove();
+	$j("#uidivstats_chart_Blocked").remove();
+	$j("#uidivstats_chart_Total").remove();
+	reload_js('/ext/uiDivStats/SQLData.js');
+	reload_js('/ext/uiDivStats/csv/ipdistinctclients.js');
+	SetuiDivStatsTitle();
+	setTimeout(RedrawAllCharts, 3000);
+}
+
+function updateStats(){
+	showhide("btnUpdateStats", false);
+	document.formScriptActions.action_script.value="start_uiDivStats";
+	document.formScriptActions.submit();
+	showhide("imgUpdateStats", true);
+	showhide("uidivstats_text", false);
+	setTimeout(StartUpdateStatsInterval, 2000);
+}
+
+var myinterval;
+function StartUpdateStatsInterval(){
+	myinterval = setInterval(update_uidivstats, 1000);
+}
+
+var statcount=2;
+function update_uidivstats(){
+	statcount++;
+	$j.ajax({
+		url: '/ext/uiDivStats/detect_uidivstats.js',
+		dataType: 'script',
+		timeout: 1000,
+		error: function(xhr){
+			//do nothing
+		},
+		success: function(){
+			if (uidivstatsstatus == "InProgress"){
+				showhide("imgUpdateStats", true);
+				showhide("uidivstats_text", true);
+				document.getElementById("uidivstats_text").innerHTML = "Stat update in progress - " + statcount + "s elapsed";
+			}
+			else if (uidivstatsstatus == "Done"){
+				document.getElementById("uidivstats_text").innerHTML = "Refreshing charts...";
+				statcount=2;
+				clearInterval(myinterval);
+				PostStatUpdate();
+			}
+			else if (uidivstatsstatus == "LOCKED"){
+				showhide("imgUpdateStats", false);
+				document.getElementById("uidivstats_text").innerHTML = "Stat update already running!";
+				showhide("uidivstats_text", true);
+				showhide("btnUpdateStats", true);
+				clearInterval(myinterval);
+			}
+		}
+	});
+}
+
+function reload_js(src){
+	$j('script[src="' + src + '"]').remove();
+	$j('<script>').attr('src', src+'?cachebuster='+ new Date().getTime()).appendTo('head');
+}
+
+function reload(){
+	location.reload(true);
 }
 
 function ToggleFill(){
