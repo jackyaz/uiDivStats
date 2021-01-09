@@ -1133,15 +1133,15 @@ Process_Upgrade(){
 		opkg install grep
 		opkg install sqlite3-cli
 		opkg install procps-ng-pkill
+		/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
+		sleep 5
 		Auto_Cron delete 2>/dev/null
 		Print_Output true "Creating database table and enabling write-ahead logging..." "$PASS"
 		{
 			echo "PRAGMA journal_mode=WAL;"
 			echo "CREATE TABLE IF NOT EXISTS [dnsqueries] ([QueryID] INTEGER PRIMARY KEY NOT NULL, [Timestamp] NUMERIC NOT NULL, [SrcIP] TEXT NOT NULL,[ReqDmn] TEXT NOT NULL,[QryType] Text NOT NULL,[Result] Text NOT NULL);"
 		}  > /tmp/uidivstats-upgrade.sql
-		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
-			sleep 1
-		done
+		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
 		
 		Print_Output true "Creating database table indexes..." "$PASS"
 		echo "CREATE INDEX idx_dns_domains ON dnsqueries (ReqDmn,Timestamp);" > /tmp/uidivstats-upgrade.sql
@@ -1154,7 +1154,7 @@ Process_Upgrade(){
 		rm -f /tmp/uidivstats-upgrade.sql
 		Print_Output true "Database ready, starting services..." "$PASS"
 		Auto_Cron create 2>/dev/null
-		Update_File taildns.tar.gz
+		/opt/etc/init.d/S90taildns start >/dev/null 2>&1
 		touch "$SCRIPT_DIR/.upgraded"
 		touch "$SCRIPT_DIR/.upgraded2"
 		Print_Output true "Starting first run of stat generation..." "$PASS"
