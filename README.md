@@ -29,6 +29,9 @@ Using your preferred SSH client/terminal, copy and paste the following command, 
 ```
 
 ## Usage
+### WebUI
+uiDivStats can be configured via the WebUI, in the LAN section.
+
 To launch the uiDivStats menu after installation, use:
 ```sh
 uiDivStats
@@ -38,9 +41,6 @@ If this does not work, you will need to use the full path:
 ```sh
 /jffs/scripts/uiDivStats
 ```
-
-## Updating
-Launch uiDivStats and select option u
 
 ## Help
 Please post about any issues and problems here: [uiDivStats on SNBForums](https://www.snbforums.com/threads/uidivstats-webui-for-diversion-statistics.56393/)
