@@ -545,8 +545,8 @@ function SetClients(txtchartname){
 	chartClients.sort();
 	for (i = 0; i < chartClients.length; i++){
 		var arrclient = hostiparray.filter(function(item){
-				return item[0] == chartClients[i];
-			})[0];
+			return item[0] == chartClients[i];
+		})[0];
 		$j('#'+txtchartname+'_Clients').append($j('<option>', {
 			value: i+1,
 			text: arrclient[1] + " (" + arrclient[0] + ")"
@@ -599,7 +599,7 @@ function update_status(){
 
 function CheckUpdate(){
 	showhide("btnChkUpdate", false);
-	document.formScriptActions.action_script.value="start_uiDivStatscheckupdate"
+	document.formScriptActions.action_script.value="start_uiDivStatscheckupdate";
 	document.formScriptActions.submit();
 	document.getElementById("imgChkUpdate").style.display = "";
 	setTimeout(update_status, 2000);
@@ -615,7 +615,7 @@ function DoUpdate(){
 }
 
 function SaveConfig(){
-	document.getElementById('amng_custom').value = JSON.stringify($j('form').serializeObject())
+	document.getElementById('amng_custom').value = JSON.stringify($j('form').serializeObject());
 	var action_script_tmp = "start_uiDivStatsconfig";
 	document.form.action_script.value = action_script_tmp;
 	var restart_time = 15;
