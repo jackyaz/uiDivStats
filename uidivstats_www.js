@@ -303,6 +303,7 @@ function Draw_Time_Chart(txtchartname){
 				scaleLabel: { display: false, labelString: txttitle },
 				ticks: {
 					display: true,
+					beginAtZero: true,
 					labels: {
 						index:  ['min', 'max'],
 						removeEmptyLines: true,
