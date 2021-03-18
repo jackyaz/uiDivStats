@@ -809,6 +809,13 @@ Generate_NG(){
 	
 	echo 'var uidivstatsstatus = "InProgress";' > /tmp/detect_uidivstats.js
 	
+	echo "DELETE FROM [dnsqueries] WHERE [Timestamp] > $timenow;" > /tmp/uidivstats-trim.sql
+	
+	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-trim.sql >/dev/null 2>&1; do
+		sleep 1
+	done
+	rm -f /tmp/uidivstats-trim.sql
+	
 	if [ -n "$1" ] && [ "$1" = "fullrefresh" ]; then
 		Write_View_Sql_ToFile dnsqueries daily 1 /tmp/uidivstats.sql "$timenow" drop
 		Write_View_Sql_ToFile dnsqueries weekly 7 /tmp/uidivstats.sql "$timenow" drop
