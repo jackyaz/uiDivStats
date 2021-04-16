@@ -568,7 +568,7 @@ Mount_WebUI(){
 	fi
 	Print_Output true "Mounting $SCRIPT_NAME WebUI page as $MyPage" "$PASS"
 	cp -f "$SCRIPT_DIR/uidivstats_www.asp" "$SCRIPT_WEBPAGE_DIR/$MyPage"
-	echo "uiDivStats" > "$SCRIPT_WEBPAGE_DIR/$(echo $MyPage | cut -f1 -d'.').title"
+	echo "$SCRIPT_NAME" > "$SCRIPT_WEBPAGE_DIR/$(echo $MyPage | cut -f1 -d'.').title"
 	
 	if [ "$(uname -o)" = "ASUSWRT-Merlin" ]; then
 		if [ ! -f /tmp/menuTree.js ]; then
@@ -578,9 +578,9 @@ Mount_WebUI(){
 		sed -i "\\~$MyPage~d" /tmp/menuTree.js
 		
 		if /bin/grep 'tabName: \"Diversion\"},' /tmp/menuTree.js >/dev/null 2>&1; then
-			sed -i "/tabName: \"Diversion\"/a {url: \"$MyPage\", tabName: \"uiDivStats\"}," /tmp/menuTree.js
+			sed -i "/tabName: \"Diversion\"/a {url: \"$MyPage\", tabName: \"$SCRIPT_NAME\"}," /tmp/menuTree.js
 		else
-			sed -i "/url: \"Advanced_SwitchCtrl_Content.asp\", tabName:/a {url: \"$MyPage\", tabName: \"uiDivStats\"}," /tmp/menuTree.js
+			sed -i "/url: \"Advanced_SwitchCtrl_Content.asp\", tabName:/a {url: \"$MyPage\", tabName: \"$SCRIPT_NAME\"}," /tmp/menuTree.js
 		fi
 		
 		umount /www/require/modules/menuTree.js 2>/dev/null
