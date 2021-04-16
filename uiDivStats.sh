@@ -857,11 +857,6 @@ Generate_Query_Log(){
 		ps | grep -v grep | grep -v $$ | grep -i "$SCRIPT_NAME" | grep querylog | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
 	fi
 	
-	#shellcheck disable=SC2181
-	if [ $? -eq 0 ]; then
-		Print_Output true "Stale query log processes were killed" "$WARN"
-	fi
-	
 	recordcount=5000
 	if [ "$(CacheMode check)" = "tmp" ]; then
 		if [ -f /tmp/cache-uiDivStats-SQL.tmp ]; then
