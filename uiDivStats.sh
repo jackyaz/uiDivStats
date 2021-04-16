@@ -1137,79 +1137,6 @@ Flush_Cache_To_DB(){
 	fi
 }
 
-Process_Upgrade(){
-	if [ ! -f "$SCRIPT_DIR/.upgraded" ] && [ ! -f "$SCRIPT_DIR/.upgraded2" ]; then
-		opkg update
-		opkg install grep
-		opkg install sqlite3-cli
-		opkg install procps-ng-pkill
-		/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
-		sleep 5
-		Auto_Cron delete 2>/dev/null
-		Print_Output true "Creating database table and enabling write-ahead logging..." "$PASS"
-		{
-			echo "PRAGMA journal_mode=WAL;"
-			echo "CREATE TABLE IF NOT EXISTS [dnsqueries] ([QueryID] INTEGER PRIMARY KEY NOT NULL, [Timestamp] NUMERIC NOT NULL, [SrcIP] TEXT NOT NULL,[ReqDmn] TEXT NOT NULL,[QryType] Text NOT NULL,[Result] Text NOT NULL);"
-		}  > /tmp/uidivstats-upgrade.sql
-		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
-		
-		Print_Output true "Creating database table indexes..." "$PASS"
-		echo "CREATE INDEX idx_dns_domains ON dnsqueries (ReqDmn,Timestamp);" > /tmp/uidivstats-upgrade.sql
-		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
-		echo "CREATE INDEX idx_dns_time ON dnsqueries (Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
-		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
-		echo "CREATE INDEX idx_dns_clients ON dnsqueries (SrcIP,Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
-		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
-		
-		rm -f /tmp/uidivstats-upgrade.sql
-		Print_Output true "Database ready, starting services..." "$PASS"
-		Auto_Cron create 2>/dev/null
-		/opt/etc/init.d/S90taildns start >/dev/null 2>&1
-		touch "$SCRIPT_DIR/.upgraded"
-		touch "$SCRIPT_DIR/.upgraded2"
-	elif [ ! -f "$SCRIPT_DIR/.upgraded2" ]; then
-		/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
-		sleep 5
-		Auto_Cron delete 2>/dev/null
-		
-		Print_Output true "Deleting older database table indexes..." "$PASS"
-		echo "drop index idx_dns;" > /tmp/uidivstats-upgrade.sql
-		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
-		echo "drop index idx_dns_clients;" > /tmp/uidivstats-upgrade.sql
-		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
-		
-		Print_Output true "Creating new database table indexes..." "$PASS"
-		echo "create index idx_dns_domains on dnsqueries (ReqDmn,Timestamp);" > /tmp/uidivstats-upgrade.sql
-		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
-		echo "create index idx_dns_time on dnsqueries (Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
-		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
-		echo "create index idx_dns_clients on dnsqueries (SrcIP,Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
-		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
-		rm -f /tmp/uidivstats-upgrade.sql
-		
-		Auto_Cron create 2>/dev/null
-		/opt/etc/init.d/S90taildns start >/dev/null 2>&1
-		touch "$SCRIPT_DIR/.upgraded2"
-	fi
-	
-	if [ ! -f "$SCRIPT_DIR/.upgraded3" ]; then
-		Print_Output true "Creating new database table index for clients, this may take a few minutes..." "$WARN"
-		
-		/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
-		sleep 5
-		Auto_Cron delete 2>/dev/null
-		
-		echo "CREATE INDEX idx_clients ON dnsqueries (SrcIP);" > /tmp/uidivstats-upgrade.sql
-		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
-		
-		rm -f /tmp/uidivstats-upgrade.sql
-		
-		Auto_Cron create 2>/dev/null
-		/opt/etc/init.d/S90taildns start >/dev/null 2>&1
-		touch "$SCRIPT_DIR/.upgraded3"
-	fi
-}
-
 Shortcut_Script(){
 	case $1 in
 		create)
@@ -1425,13 +1352,34 @@ Menu_Install(){
 	Update_File shared-jy.tar.gz
 	Update_File taildns.tar.gz
 	
+	/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
+	sleep 5
+	Auto_Cron delete 2>/dev/null
+	Print_Output true "Creating database table and enabling write-ahead logging..." "$PASS"
+	{
+		echo "PRAGMA journal_mode=WAL;"
+		echo "CREATE TABLE IF NOT EXISTS [dnsqueries] ([QueryID] INTEGER PRIMARY KEY NOT NULL, [Timestamp] NUMERIC NOT NULL, [SrcIP] TEXT NOT NULL,[ReqDmn] TEXT NOT NULL,[QryType] Text NOT NULL,[Result] Text NOT NULL);"
+	}  > /tmp/uidivstats-upgrade.sql
+	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
+	
+	Print_Output true "Creating database table indexes..." "$PASS"
+	echo "CREATE INDEX idx_dns_domains ON dnsqueries (ReqDmn,Timestamp);" > /tmp/uidivstats-upgrade.sql
+	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
+	echo "CREATE INDEX idx_dns_time ON dnsqueries (Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
+	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
+	echo "CREATE INDEX idx_dns_clients ON dnsqueries (SrcIP,Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
+	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
+	echo "CREATE INDEX idx_clients ON dnsqueries (SrcIP);" > /tmp/uidivstats-upgrade.sql
+	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
+	
+	rm -f /tmp/uidivstats-upgrade.sql
+	Print_Output true "Database ready, starting services..." "$PASS"
+	
 	Auto_Startup create 2>/dev/null
 	Auto_DNSMASQ_Postconf create 2>/dev/null
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
 	Shortcut_Script create
-	
-	Process_Upgrade
 	/opt/etc/init.d/S90taildns start >/dev/null 2>&1
 	
 	Print_Output true "Starting first run of stat generation..." "$PASS"
@@ -1600,7 +1548,6 @@ if [ -z "$1" ]; then
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
 	Shortcut_Script create
-	Process_Upgrade
 	ScriptHeader
 	MainMenu
 	exit 0
