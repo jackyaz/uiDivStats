@@ -692,9 +692,9 @@ WritePlainData_ToJS(){
 Write_View_Sql_ToFile(){
 	if [ "$6" = "create" ]; then
 		timenow="$5"
-		echo "CREATE VIEW IF NOT EXISTS [$1$2] AS SELECT * FROM $1 WHERE ([Timestamp] >= $timenow - (86400*$3)) AND ([Timestamp] <= $timenow);" >> "$4"
+		echo "CREATE VIEW IF NOT EXISTS [$1$2] AS SELECT * FROM $1 WHERE ([Timestamp] >= $timenow - (86400*$3)) AND ([Timestamp] <= $timenow);" > "$4"
 	elif [ "$6" = "drop" ]; then
-		echo "DROP VIEW IF EXISTS [$1$2];" >> "$4"
+		echo "DROP VIEW IF EXISTS [$1$2];" > "$4"
 	fi
 }
 
@@ -725,10 +725,10 @@ Write_Count_PerClient_Sql_ToFile(){
 	elif [ "$1" = "Blocked" ]; then
 		echo "SELECT DISTINCT [SrcIP] SrcIP FROM $2$5 WHERE ([Result] LIKE 'blocked%');" >> "$6"
 	fi
-	
 	while ! "$SQLITE3_PATH" "$DNS_DB" < "$6" >/dev/null 2>&1; do
-		sleep 1
+		:
 	done
+	
 	clients="$(cat /tmp/distinctclients)"
 	rm -f /tmp/distinctclients
 	
@@ -807,27 +807,38 @@ Generate_NG(){
 	echo 'var uidivstatsstatus = "InProgress";' > /tmp/detect_uidivstats.js
 	
 	echo "DELETE FROM [dnsqueries] WHERE [Timestamp] > $timenow;" > /tmp/uidivstats-trim.sql
-	
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-trim.sql >/dev/null 2>&1; do
-		sleep 1
+		:
 	done
 	rm -f /tmp/uidivstats-trim.sql
 	
 	if [ -n "$1" ] && [ "$1" = "fullrefresh" ]; then
 		Write_View_Sql_ToFile dnsqueries daily 1 /tmp/uidivstats.sql "$timenow" drop
+		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+			:
+		done
 		Write_View_Sql_ToFile dnsqueries weekly 7 /tmp/uidivstats.sql "$timenow" drop
+		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+			:
+		done
 		Write_View_Sql_ToFile dnsqueries monthly 30 /tmp/uidivstats.sql "$timenow" drop
 		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
-			sleep 1
+			:
 		done
 		rm -f /tmp/uidivstats.sql
 	fi
 	
 	Write_View_Sql_ToFile dnsqueries daily 1 /tmp/uidivstats.sql "$timenow" create
+	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+		:
+	done
 	Write_View_Sql_ToFile dnsqueries weekly 7 /tmp/uidivstats.sql "$timenow" create
+	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+		:
+	done
 	Write_View_Sql_ToFile dnsqueries monthly 30 /tmp/uidivstats.sql "$timenow" create
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
-		sleep 1
+		:
 	done
 	rm -f /tmp/uidivstats.sql
 	
@@ -845,7 +856,7 @@ Generate_NG(){
 	WriteStats_ToJS /tmp/uidivstatstitle.txt "$SCRIPT_DIR/SQLData.js" SetuiDivStatsTitle statstitle
 	echo 'var uidivstatsstatus = "Done";' > /tmp/detect_uidivstats.js
 	Print_Output true "Stats updated successfully" "$PASS"
-	rm -f "/tmpuidivstatstitle.txt"
+	rm -f /tmpuidivstatstitle.txt
 }
 
 Generate_Query_Log(){
@@ -879,7 +890,7 @@ Generate_Query_Log(){
 		echo "SELECT [Timestamp] Time, [ReqDmn] ReqDmn, [SrcIP] SrcIP, [QryType] QryType, [Result] Result FROM [dnsqueries] ORDER BY [Timestamp] DESC LIMIT $recordcount;"
 	} > /tmp/uidivstats-query.sql
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-query.sql >/dev/null 2>&1; do
-		sleep 1
+		:
 	done
 	rm -f /tmp/uidivstats-query.sql
 	
@@ -895,11 +906,11 @@ Generate_KeyStats(){
 	#daily
 	Write_KeyStats_Sql_ToFile Total dnsqueries daily 1 /tmp/uidivstats.sql "$timenow"
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
-		sleep 1
+		:
 	done
-	Write_KeyStats_Sql_ToFile "Blocked" "dnsqueries" "daily" 1 "/tmp/uidivstats.sql" "$timenow"
+	Write_KeyStats_Sql_ToFile Blocked dnsqueries daily 1 /tmp/uidivstats.sql "$timenow"
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
-		sleep 1
+		:
 	done
 	queriesTotaldaily="$(cat /tmp/queriesTotaldaily)"
 	queriesBlockeddaily="$(cat /tmp/queriesBlockeddaily)"
@@ -912,12 +923,11 @@ Generate_KeyStats(){
 	if [ -n "$2" ] && [ "$2" = "fullrefresh" ]; then
 		Write_KeyStats_Sql_ToFile Total dnsqueries weekly 7 /tmp/uidivstats.sql "$timenow"
 		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
-			sleep 1
+			:
 		done
-		
 		Write_KeyStats_Sql_ToFile Blocked dnsqueries weekly 7 /tmp/uidivstats.sql "$timenow"
 		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
-			sleep 1
+			:
 		done
 		
 		queriesTotalweekly="$(cat /tmp/queriesTotalweekly)"
@@ -932,12 +942,11 @@ Generate_KeyStats(){
 	if [ -n "$2" ] && [ "$2" = "fullrefresh" ]; then
 		Write_KeyStats_Sql_ToFile Total dnsqueries monthly 30 /tmp/uidivstats.sql "$timenow"
 		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
-			sleep 1
+			:
 		done
-		
 		Write_KeyStats_Sql_ToFile Blocked dnsqueries monthly 30 /tmp/uidivstats.sql "$timenow"
 		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
-			sleep 1
+			:
 		done
 		
 		queriesTotalmonthly="$(cat /tmp/queriesTotalmonthly)"
@@ -954,7 +963,6 @@ Generate_KeyStats(){
 
 Generate_Count_Blocklist_Domains(){
 	blockinglistfile="$(BlockingFile check)"
-	
 	blacklistfile="$DIVERSION_DIR/list/blacklist"
 	blacklistwcfile="$DIVERSION_DIR/list/wc_blacklist"
 	
@@ -980,17 +988,15 @@ Generate_Stats_From_SQLite(){
 		#daily
 		Write_Time_Sql_ToFile "$metric" dnsqueries 0.25 1 "$CSV_OUTPUT_DIR/$metric" daily /tmp/uidivstats.sql "$timenow"
 		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
-			sleep 1
+			:
 		done
-		
 		Write_Count_Sql_ToFile "$metric" dnsqueries 1 "$CSV_OUTPUT_DIR/$metric" daily /tmp/uidivstats.sql "$timenow"
 		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
-			sleep 1
+			:
 		done
-		
 		Write_Count_PerClient_Sql_ToFile "$metric" dnsqueries 1 "$CSV_OUTPUT_DIR/$metric" daily /tmp/uidivstats.sql "$timenow"
 		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
-			sleep 1
+			:
 		done
 		
 		sed -i '1i Fieldname,SrcIP,ReqDmn,Count' "$CSV_OUTPUT_DIR/${metric}dailyclients.htm"
@@ -1002,20 +1008,18 @@ Generate_Stats_From_SQLite(){
 		if [ -n "$2" ] && [ "$2" = "fullrefresh" ]; then
 			Write_Time_Sql_ToFile "$metric" dnsqueries 1 7 "$CSV_OUTPUT_DIR/$metric" weekly /tmp/uidivstats.sql "$timenow"
 			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
-				sleep 1
+				:
 			done
-			
 			Write_Count_Sql_ToFile "$metric" dnsqueries 7 "$CSV_OUTPUT_DIR/$metric" weekly /tmp/uidivstats.sql "$timenow"
 			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
-				sleep 1
+				:
 			done
-			
 			Write_Count_PerClient_Sql_ToFile "$metric" dnsqueries 7 "$CSV_OUTPUT_DIR/$metric" weekly /tmp/uidivstats.sql "$timenow"
 			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
-				sleep 1
+				:
 			done
-			sed -i '1i Fieldname,SrcIP,ReqDmn,Count' "$CSV_OUTPUT_DIR/${metric}weeklyclients.htm"
 			
+			sed -i '1i Fieldname,SrcIP,ReqDmn,Count' "$CSV_OUTPUT_DIR/${metric}weeklyclients.htm"
 			cat "$CSV_OUTPUT_DIR/Totalweeklytime.htm" "$CSV_OUTPUT_DIR/Blockedweeklytime.htm" > "$CSV_OUTPUT_DIR/TotalBlockedweeklytime.htm" 2> /dev/null
 			sed -i '1i Fieldname,Time,QueryCount' "$CSV_OUTPUT_DIR/TotalBlockedweeklytime.htm"
 		fi
@@ -1024,41 +1028,39 @@ Generate_Stats_From_SQLite(){
 		if [ -n "$2" ] && [ "$2" = "fullrefresh" ]; then
 			Write_Time_Sql_ToFile "$metric" dnsqueries 3 30 "$CSV_OUTPUT_DIR/$metric" monthly /tmp/uidivstats.sql "$timenow"
 			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
-				sleep 1
+				:
 			done
-					
 			Write_Count_Sql_ToFile "$metric" dnsqueries 30 "$CSV_OUTPUT_DIR/$metric" monthly /tmp/uidivstats.sql "$timenow"
 			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
-				sleep 1
+				:
 			done
-			
 			Write_Count_PerClient_Sql_ToFile "$metric" dnsqueries 30 "$CSV_OUTPUT_DIR/$metric" monthly /tmp/uidivstats.sql "$timenow"
 			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
-				sleep 1
+				:
 			done
-			sed -i '1i Fieldname,SrcIP,ReqDmn,Count' "$CSV_OUTPUT_DIR/${metric}monthlyclients.htm"
 			
+			sed -i '1i Fieldname,SrcIP,ReqDmn,Count' "$CSV_OUTPUT_DIR/${metric}monthlyclients.htm"
 			cat "$CSV_OUTPUT_DIR/Totalmonthlytime.htm" "$CSV_OUTPUT_DIR/Blockedmonthlytime.htm" > "$CSV_OUTPUT_DIR/TotalBlockedmonthlytime.htm" 2> /dev/null
 			sed -i '1i Fieldname,Time,QueryCount' "$CSV_OUTPUT_DIR/TotalBlockedmonthlytime.htm"
 		fi
 	done
 	
-	rm -f /tmp/uidivstats.sql
-	Write_View_Sql_ToFile dnsqueries daily 1 "/tmp/uidivstats.sql" "$timenow" drop
+	Write_View_Sql_ToFile dnsqueries daily 1 /tmp/uidivstats.sql "$timenow" drop
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
-		sleep 1
+		:
 	done
 	rm -f /tmp/uidivstats.sql
 	
-	echo ".mode list" > /tmp/ipdistinctclients.sql
-	echo ".output /tmp/ipdistinctclients" >> /tmp/ipdistinctclients.sql
-	echo "SELECT DISTINCT [SrcIP] SrcIP FROM dnsqueries;" >> /tmp/ipdistinctclients.sql
-	
+	{
+		echo ".mode list"
+		echo ".output /tmp/ipdistinctclients"
+		echo "SELECT DISTINCT [SrcIP] SrcIP FROM dnsqueries;"
+	} > /tmp/ipdistinctclients.sql
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/ipdistinctclients.sql >/dev/null 2>&1; do
-		sleep 1
+		:
 	done
-	
 	rm -f /tmp/ipdistinctclients.sql
+	
 	ipclients="$(cat /tmp/ipdistinctclients)"
 	rm -f /tmp/ipdistinctclients
 	
@@ -1102,19 +1104,17 @@ Trim_DNS_DB(){
 	export TZ
 	timenow=$(date +"%s")
 	
-	{
-		echo "DELETE FROM [dnsqueries] WHERE [Timestamp] < ($timenow - (86400*30));"
-	} > /tmp/uidivstats-trim.sql
-	
+	echo "DELETE FROM [dnsqueries] WHERE [Timestamp] < ($timenow - (86400*30));" > /tmp/uidivstats-trim.sql
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-trim.sql >/dev/null 2>&1; do
-		sleep 1
+		:
 	done
-	rm -f /tmp/uidivstats-trim.sql
-	
 	Write_View_Sql_ToFile dnsqueries weekly 7 /tmp/uidivstats-trim.sql "$timenow" drop
+	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+		:
+	done
 	Write_View_Sql_ToFile dnsqueries monthly 30 /tmp/uidivstats-trim.sql "$timenow" drop
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-trim.sql >/dev/null 2>&1; do
-		sleep 1
+		:
 	done
 	rm -f /tmp/uidivstats-trim.sql
 }
@@ -1129,8 +1129,8 @@ Flush_Cache_To_DB(){
 			echo "INSERT INTO dnsqueries SELECT NULL,* FROM dnsqueries_tmp;"
 			echo "DROP TABLE dnsqueries_tmp;"
 		} > /tmp/cache-uiDivStats-SQL.sql
-		while ! /opt/bin/sqlite3 /opt/share/uiDivStats.d/dnsqueries.db < /tmp/cache-uiDivStats-SQL.sql >/dev/null 2>&1; do
-			sleep 1
+		while ! "$SQLITE3_PATH" /opt/share/uiDivStats.d/dnsqueries.db < /tmp/cache-uiDivStats-SQL.sql >/dev/null 2>&1; do
+			:
 		done
 		rm -f /tmp/cache-uiDivStats-SQL.sql
 		rm -f /tmp/cache-uiDivStats-SQL.tmp
@@ -1141,13 +1141,13 @@ Shortcut_Script(){
 	case $1 in
 		create)
 			if [ -d /opt/bin ] && [ ! -f "/opt/bin/$SCRIPT_NAME" ] && [ -f "/jffs/scripts/$SCRIPT_NAME" ]; then
-				ln -s /jffs/scripts/"$SCRIPT_NAME" /opt/bin
-				chmod 0755 /opt/bin/"$SCRIPT_NAME"
+				ln -s "/jffs/scripts/$SCRIPT_NAME" /opt/bin
+				chmod 0755 "/opt/bin/$SCRIPT_NAME"
 			fi
 		;;
 		delete)
 			if [ -f "/opt/bin/$SCRIPT_NAME" ]; then
-				rm -f /opt/bin/"$SCRIPT_NAME"
+				rm -f "/opt/bin/$SCRIPT_NAME"
 			fi
 		;;
 	esac
