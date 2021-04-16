@@ -376,12 +376,9 @@ Conf_Exists(){
 		dos2unix "$SCRIPT_CONF"
 		chmod 0644 "$SCRIPT_CONF"
 		sed -i -e 's/"//g' "$SCRIPT_CONF"
-		if [ "$(wc -l < "$SCRIPT_CONF")" -eq 1 ]; then
-			echo "CACHEMODE=none" >> "$SCRIPT_CONF"
-		fi
 		return 0
 	else
-		{ echo "QUERYMODE=all"; echo "CACHEMODE=none"; } > "$SCRIPT_CONF"
+		{ echo "QUERYMODE=all"; echo "CACHEMODE=tmp"; } > "$SCRIPT_CONF"
 		return 1
 	fi
 }
