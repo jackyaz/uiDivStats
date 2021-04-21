@@ -1085,6 +1085,7 @@ Generate_Stats_From_SQLite(){
 }
 
 Trim_DNS_DB(){
+	renice 15 $$
 	TZ=$(cat /etc/TZ)
 	export TZ
 	timenow=$(date +"%s")
@@ -1102,6 +1103,7 @@ Trim_DNS_DB(){
 		:
 	done
 	rm -f /tmp/uidivstats-trim.sql
+	renice 0 $$
 }
 
 Flush_Cache_To_DB(){
@@ -1409,8 +1411,10 @@ Menu_Startup(){
 
 Menu_GenerateStats(){
 	if /opt/bin/grep -q 'log-facility=/opt/var/log/dnsmasq.log' /etc/dnsmasq.conf; then
+		renice 15 $$
 		UpdateDiversionWeeklyStatsFile
 		Generate_NG "$1"
+		renice 0 $$
 	else
 		Print_Output true "Diversion logging not enabled!" "$ERR"
 		Print_Output true "Open Diversion and use option l to enable logging"
