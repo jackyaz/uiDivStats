@@ -1094,7 +1094,7 @@ Trim_DNS_DB(){
 		:
 	done
 	Write_View_Sql_ToFile dnsqueries weekly 7 /tmp/uidivstats-trim.sql "$timenow" drop
-	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-trim.sql >/dev/null 2>&1; do
 		:
 	done
 	Write_View_Sql_ToFile dnsqueries monthly 30 /tmp/uidivstats-trim.sql "$timenow" drop
