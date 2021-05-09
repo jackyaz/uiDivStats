@@ -482,6 +482,11 @@ Auto_Cron(){
 			STARTUPLINECOUNTQUERYLOG=$(cru l | grep -c "${SCRIPT_NAME}_querylog")
 			STARTUPLINECOUNTFLUSHTODB=$(cru l | grep -c "${SCRIPT_NAME}_flushtodb")
 			
+			STARTUPLINECOUNTEXFLUSHTODB=$(cru l | grep "${SCRIPT_NAME}_flushtodb" | grep -c "4-59/5" )
+			if [ "$STARTUPLINECOUNTFLUSHTODB" -ne 0 ] && [ "$STARTUPLINECOUNTEXFLUSHTODB" -eq 0 ]; then
+				cru d "${SCRIPT_NAME}_flushtodb"
+			fi
+			
 			if [ "$STARTUPLINECOUNTGENERATE" -eq 0 ]; then
 				cru a "${SCRIPT_NAME}_generate" "0 * * * * /jffs/scripts/$SCRIPT_NAME generate"
 			fi
@@ -492,7 +497,7 @@ Auto_Cron(){
 				cru a "${SCRIPT_NAME}_querylog" "* * * * * /jffs/scripts/$SCRIPT_NAME querylog"
 			fi
 			if [ "$STARTUPLINECOUNTFLUSHTODB" -eq 0 ]; then
-				cru a "${SCRIPT_NAME}_flushtodb" "4,9,14,19,24,29,34,39,44,49,54,59 * * * * /jffs/scripts/$SCRIPT_NAME flushtodb"
+				cru a "${SCRIPT_NAME}_flushtodb" "4-59/5 * * * * /jffs/scripts/$SCRIPT_NAME flushtodb"
 			fi
 		;;
 		delete)
