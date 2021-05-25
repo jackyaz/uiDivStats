@@ -683,9 +683,9 @@ WritePlainData_ToJS(){
 Write_View_Sql_ToFile(){
 	if [ "$6" = "create" ]; then
 		timenow="$5"
-		echo "CREATE VIEW IF NOT EXISTS [$1$2] AS SELECT * FROM $1 WHERE ([Timestamp] >= $timenow - (86400*$3)) AND ([Timestamp] <= $timenow);" > "$4"
+		echo "CREATE VIEW IF NOT EXISTS ${1}${2} AS SELECT * FROM $1 WHERE ([Timestamp] >= $timenow - (86400*$3)) AND ([Timestamp] <= $timenow);" > "$4"
 	elif [ "$6" = "drop" ]; then
-		echo "DROP VIEW IF EXISTS [$1$2];" > "$4"
+		echo "DROP VIEW IF EXISTS ${1}${2};" > "$4"
 	fi
 }
 
@@ -696,7 +696,7 @@ Write_Count_Sql_ToFile(){
 	{
 		echo ".mode csv"
 		echo ".headers on"
-		echo ".output $4$5.htm"
+		echo ".output ${4}${5}.htm"
 	} > "$6"
 	
 	if [ "$1" = "Total" ]; then
@@ -726,7 +726,7 @@ Write_Count_PerClient_Sql_ToFile(){
 	{
 		echo ".mode csv"
 		echo ".headers off"
-		echo ".output $4${5}clients.htm"
+		echo ".output ${4}${5}clients.htm"
 	} > "$6"
 	
 	if [ "$1" = "Total" ]; then
@@ -748,10 +748,10 @@ Write_Time_Sql_ToFile(){
 	{
 		echo ".mode csv"
 		echo ".headers off"
-		echo ".output $5${6}time.htm"
+		echo ".output ${5}${6}time.htm"
 	} > "$7"
 	
-	if [ "$4" = "1" ]; then
+	if [ "$4" -eq 1 ]; then
 		maxcount="$(echo "$multiplier" | awk '{printf (60*60*24/$1)}')"
 		currentcount=0
 		while [ "$currentcount" -lt "$maxcount" ]; do
@@ -873,7 +873,7 @@ Generate_Query_Log(){
 		echo ".headers off"
 		echo ".separator '|'"
 		echo ".output $CSV_OUTPUT_DIR/SQLQueryLog.tmp"
-		echo "SELECT [Timestamp] Time, [ReqDmn] ReqDmn, [SrcIP] SrcIP, [QryType] QryType, [Result] Result FROM [dnsqueries] ORDER BY [Timestamp] DESC LIMIT $recordcount;"
+		echo "SELECT [Timestamp] Time,[ReqDmn] ReqDmn,[SrcIP] SrcIP,[QryType] QryType,[Result] Result FROM [dnsqueries] ORDER BY [Timestamp] DESC LIMIT $recordcount;"
 	} > /tmp/uidivstats-query.sql
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-query.sql >/dev/null 2>&1; do
 		sleep 1
