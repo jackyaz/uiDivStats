@@ -15,6 +15,8 @@ else
 	tailfile="/jffs/addons/uiDivStats.d/taildns.d/dnsmasqtotal$tailfilesuffix.awk"
 fi
 
+renice 15 $$
+
 tail -F /opt/var/log/dnsmasq.log /opt/var/log/dnsmasq.log3 | "$tailfile" | \
 
 while read line; do \
@@ -30,3 +32,5 @@ INSERT INTO dnsqueries ([Timestamp],[SrcIP],[ReqDmn],[QryType],[Result]) values(
 while ! /opt/bin/sqlite3 "/opt/share/uiDivStats.d/dnsqueries.db" < /opt/share/uiDivStats.d/dnsqueriestotal.sql >/dev/null 2>&1; do sleep 1; done \
 
 done
+
+renice 0 $$
