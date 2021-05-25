@@ -1245,7 +1245,7 @@ ScriptHeader(){
 	printf "\\e[1m##  | |_| || || |__| || | \ V /  ____) || |_| (_| || |_ \__ \  ##\\e[0m\\n"
 	printf "\\e[1m##   \__,_||_||_____/ |_|  \_/  |_____/  \__|\__,_| \__||___/  ##\\e[0m\\n"
 	printf "\\e[1m##                                                             ##\\e[0m\\n"
-	printf "\\e[1m##                      %s on %-9s                    ##\\e[0m\\n" "$SCRIPT_VERSION" "$ROUTER_MODEL"
+	printf "\\e[1m##                      %s on %-11s                  ##\\e[0m\\n" "$SCRIPT_VERSION" "$ROUTER_MODEL"
 	printf "\\e[1m##                                                             ##\\e[0m\\n"
 	printf "\\e[1m##             https://github.com/jackyaz/uiDivStats           ##\\e[0m\\n"
 	printf "\\e[1m##                                                             ##\\e[0m\\n"
