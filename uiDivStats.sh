@@ -876,9 +876,7 @@ Generate_Query_Log(){
 	recordcount=5000
 	if [ "$(CacheMode check)" = "tmp" ]; then
 		if [ -f /tmp/cache-uiDivStats-SQL.tmp ]; then
-			sort -s -k 1,1 -n -r /tmp/cache-uiDivStats-SQL.tmp > /tmp/cache-uiDivStats-SQL.tmp.sorted
-			sed -i 's/,/|/g' /tmp/cache-uiDivStats-SQL.tmp.sorted
-			awk 'BEGIN{FS=OFS="|"} {t=$2; $2=$3; $3=t; print} ' /tmp/cache-uiDivStats-SQL.tmp.sorted > /tmp/cache-uiDivStats-SQL.tmp.ordered
+			sort -s -k 1,1 -n -r /tmp/cache-uiDivStats-SQL.tmp | sed 's/,/|/g' | awk 'BEGIN{FS=OFS="|"} {t=$2; $2=$3; $3=t; print}' > /tmp/cache-uiDivStats-SQL.tmp.ordered
 			recordcount="$((recordcount - $(wc -l < /tmp/cache-uiDivStats-SQL.tmp.ordered)))"
 		fi
 	fi
@@ -896,7 +894,6 @@ Generate_Query_Log(){
 	rm -f /tmp/uidivstats-query.sql
 	
 	cat /tmp/cache-uiDivStats-SQL.tmp.ordered "$CSV_OUTPUT_DIR/SQLQueryLog.tmp" > "$CSV_OUTPUT_DIR/SQLQueryLog.htm" 2> /dev/null
-	rm -f /tmp/cache-uiDivStats-SQL.tmp.sorted
 	rm -f /tmp/cache-uiDivStats-SQL.tmp.ordered
 	rm -f "$CSV_OUTPUT_DIR/SQLQueryLog.tmp"
 }
