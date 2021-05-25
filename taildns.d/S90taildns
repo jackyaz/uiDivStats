@@ -1,5 +1,5 @@
 #!/bin/sh
-#shellcheck disable=SC2034
+# shellcheck disable=SC2034
 ln -s /jffs/addons/uiDivStats.d/taildns.d/taildns /opt/bin 2>/dev/null
 chmod 0755 /opt/bin/taildns
 
@@ -10,14 +10,14 @@ if [ "$cachemode" = "tmp" ]; then
 fi
 
 if [ "$1" = "stop" ] || [ "$1" = "kill" ]; then
-	killall -q taildnstotal"$taildnsfilesuffix"
+	killall -q "taildnstotal$taildnsfilesuffix"
 	/opt/bin/pkill -f "tail -F /opt/var/log/dnsmasq.log /opt/var/log/dnsmasq.log3"
 	rm -f /opt/share/uiDivStats.d/dnsqueriestotal.sql
 fi
 
 if [ "$1" = "start" ] || [ "$1" = "restart" ]; then
-	if ! grep -q 'log-facility' /etc/dnsmasq.conf; then
-		logger -st "uiDivStats" "taildns not started: dnsmasq logging is disabled"
+	if ! grep -q "log-facility" /etc/dnsmasq.conf; then
+		logger -st uiDivStats "taildns not started: dnsmasq logging is disabled"
 		exit 1
 	fi
 fi
