@@ -810,7 +810,11 @@ Generate_NG(){
 	
 	echo "DELETE FROM [dnsqueries] WHERE [Timestamp] > $timenow;" > /tmp/uidivstats-trim.sql
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-trim.sql >/dev/null 2>&1; do
-		:
+		sleep 1
+	done
+	echo "DELETE FROM [dnsqueries] WHERE [SrcIP] = 'from';" > /tmp/uidivstats-trim.sql
+	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-trim.sql >/dev/null 2>&1; do
+		sleep 1
 	done
 	rm -f /tmp/uidivstats-trim.sql
 	
@@ -1105,7 +1109,15 @@ Trim_DNS_DB(){
 	
 	echo "DELETE FROM [dnsqueries] WHERE [Timestamp] < ($timenow - (86400*30));" > /tmp/uidivstats-trim.sql
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-trim.sql >/dev/null 2>&1; do
-		:
+		sleep 1
+	done
+	echo "DELETE FROM [dnsqueries] WHERE [Timestamp] > $timenow;" > /tmp/uidivstats-trim.sql
+	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-trim.sql >/dev/null 2>&1; do
+		sleep 1
+	done
+	echo "DELETE FROM [dnsqueries] WHERE [SrcIP] = 'from';" > /tmp/uidivstats-trim.sql
+	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-trim.sql >/dev/null 2>&1; do
+		sleep 1
 	done
 	Write_View_Sql_ToFile dnsqueries weekly 7 /tmp/uidivstats-trim.sql "$timenow" drop
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-trim.sql >/dev/null 2>&1; do
