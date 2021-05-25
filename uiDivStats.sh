@@ -700,9 +700,11 @@ Write_Count_Sql_ToFile(){
 	} > "$6"
 	
 	if [ "$1" = "Total" ]; then
-		echo "SELECT '$1' Fieldname, [ReqDmn] ReqDmn, Count([ReqDmn]) Count FROM $2$5 GROUP BY [ReqDmn] ORDER BY COUNT([ReqDmn]) DESC LIMIT 20;" >> "$6"
-	elif [ "$1" = "Blocked" ]; then
-		echo "SELECT '$1' Fieldname, [ReqDmn] ReqDmn, Count([ReqDmn]) Count FROM $2$5 WHERE ([Result] LIKE 'blocked%') GROUP BY [ReqDmn] ORDER BY COUNT([ReqDmn]) DESC LIMIT 20;" >> "$6"
+		# --SEARCH TABLE dnsqueries USING COVERING INDEX idx_time_domains (Timestamp>? AND Timestamp<?)
+		echo "SELECT '$1' Fieldname, [ReqDmn] ReqDmn, Count([ReqDmn]) Count FROM ${2}${5} GROUP BY [ReqDmn] ORDER BY COUNT([ReqDmn]) DESC LIMIT 20;" >> "$6"
+	elif [ "$1" = "Blocked" ]; then # covering index idx_results_domains
+		# --SEARCH TABLE dnsqueries USING COVERING INDEX idx_results_time_domains (Result>? AND Result<?)
+		echo "SELECT '$1' Fieldname, [ReqDmn] ReqDmn, Count([ReqDmn]) Count FROM ${2}${5} WHERE ([Result] LIKE 'blocked%') GROUP BY [ReqDmn] ORDER BY COUNT([ReqDmn]) DESC LIMIT 20;" >> "$6"
 	fi
 }
 
@@ -712,9 +714,11 @@ Write_Count_PerClient_Sql_ToFile(){
 	echo ".mode list" > "$6"
 	echo ".output /tmp/distinctclients" >> "$6"
 	if [ "$1" = "Total" ]; then
-		echo "SELECT DISTINCT [SrcIP] SrcIP FROM $2$5;" >> "$6"
+		# --SEARCH TABLE dnsqueries USING COVERING INDEX idx_time_clients (Timestamp>? AND Timestamp<?)
+		echo "SELECT DISTINCT [SrcIP] SrcIP FROM ${2}${5};" >> "$6"
 	elif [ "$1" = "Blocked" ]; then
-		echo "SELECT DISTINCT [SrcIP] SrcIP FROM $2$5 WHERE ([Result] LIKE 'blocked%');" >> "$6"
+		# --SEARCH TABLE dnsqueries USING COVERING INDEX idx_results_time_clients (Result>? AND Result<?)
+		echo "SELECT DISTINCT [SrcIP] SrcIP FROM ${2}${5} WHERE ([Result] LIKE 'blocked%');" >> "$6"
 	fi
 	while ! "$SQLITE3_PATH" "$DNS_DB" < "$6" >/dev/null 2>&1; do
 		sleep 1
@@ -731,11 +735,13 @@ Write_Count_PerClient_Sql_ToFile(){
 	
 	if [ "$1" = "Total" ]; then
 		for client in $clients; do
-			echo "SELECT '$1' Fieldname, [SrcIP] SrcIP, [ReqDmn] ReqDmn, Count([ReqDmn]) Count FROM $2$5 WHERE ([SrcIP] = '$client') GROUP BY [ReqDmn] ORDER BY COUNT([ReqDmn]) DESC LIMIT 20;" >> "$6"
+			# --SEARCH TABLE dnsqueries USING COVERING INDEX idx_clients_time_domains (SrcIP=? AND Timestamp>? AND Timestamp<?)
+			echo "SELECT '$1' Fieldname, [SrcIP] SrcIP, [ReqDmn] ReqDmn, Count([ReqDmn]) Count FROM ${2}${5} WHERE ([SrcIP] = '$client') GROUP BY [ReqDmn] ORDER BY COUNT([ReqDmn]) DESC LIMIT 20;" >> "$6"
 		done
 	elif [ "$1" = "Blocked" ]; then
 		for client in $clients; do
-			echo "SELECT '$1' Fieldname, [SrcIP] SrcIP, [ReqDmn] ReqDmn, Count([ReqDmn]) Count FROM $2$5 WHERE ([SrcIP] = '$client') AND ([Result] LIKE 'blocked%') GROUP BY [ReqDmn] ORDER BY COUNT([ReqDmn]) DESC LIMIT 20;" >> "$6"
+			# --SEARCH TABLE dnsqueries USING COVERING INDEX idx_clients_results_time_domains (SrcIP=? AND Result>? AND Result<?)
+			echo "SELECT '$1' Fieldname, [SrcIP] SrcIP, [ReqDmn] ReqDmn, Count([ReqDmn]) Count FROM ${2}${5} WHERE ([SrcIP] = '$client') AND ([Result] LIKE 'blocked%') GROUP BY [ReqDmn] ORDER BY COUNT([ReqDmn]) DESC LIMIT 20;" >> "$6"
 		done
 	fi
 }
@@ -756,33 +762,38 @@ Write_Time_Sql_ToFile(){
 		currentcount=0
 		while [ "$currentcount" -lt "$maxcount" ]; do
 			if [ "$1" = "Total" ]; then
-				echo "SELECT '$1' Fieldname, $timenow - ($multiplier*$currentcount) Time, COUNT([QueryID]) QueryCount FROM $2$6 WHERE ([Timestamp] >= $timenow - ($multiplier*($currentcount+1))) AND ([Timestamp] <= $timenow - ($multiplier*$currentcount));" >> "$7"
+				# --SEARCH TABLE dnsqueries USING COVERING INDEX idx_time_results (Timestamp>? AND Timestamp<?)
+				echo "SELECT '$1' Fieldname, $timenow - ($multiplier*$currentcount) Time, COUNT([QueryID]) QueryCount FROM ${2}${6} WHERE ([Timestamp] >= $timenow - ($multiplier*($currentcount+1))) AND ([Timestamp] <= $timenow - ($multiplier*$currentcount));" >> "$7"
 			elif [ "$1" = "Blocked" ]; then
-				echo "SELECT '$1' Fieldname, $timenow - ($multiplier*$currentcount) Time, COUNT([QueryID]) QueryCount FROM $2$6 WHERE ([Result] LIKE 'blocked%') AND ([Timestamp] >= $timenow - ($multiplier*($currentcount+1))) AND ([Timestamp] <= $timenow - ($multiplier*$currentcount));" >> "$7"
+				# --SEARCH TABLE dnsqueries USING COVERING INDEX idx_results_time (Result>? AND Result<?)
+				echo "SELECT '$1' Fieldname, $timenow - ($multiplier*$currentcount) Time, COUNT([QueryID]) QueryCount FROM ${2}${6} WHERE ([Result] LIKE 'blocked%') AND ([Timestamp] >= $timenow - ($multiplier*($currentcount+1))) AND ([Timestamp] <= $timenow - ($multiplier*$currentcount));" >> "$7"
 			fi
 			currentcount="$((currentcount + 1))"
 		done
 	else
 		if [ "$1" = "Total" ]; then
-			echo "SELECT '$1' Fieldname, [Timestamp] Time, COUNT([QueryID]) QueryCount FROM $2$6 GROUP BY ([Timestamp]/($multiplier));" >> "$7"
+			# --SEARCH TABLE dnsqueries USING COVERING INDEX idx_time_results (Timestamp>? AND Timestamp<?)
+			echo "SELECT '$1' Fieldname, [Timestamp] Time, COUNT([QueryID]) QueryCount FROM ${2}${6} GROUP BY ([Timestamp]/($multiplier));" >> "$7"
 		elif [ "$1" = "Blocked" ]; then
-			echo "SELECT '$1' Fieldname, [Timestamp] Time, COUNT([QueryID]) QueryCount FROM $2$6 WHERE ([Result] LIKE 'blocked%') GROUP BY ([Timestamp]/($multiplier));" >> "$7"
+			# --SEARCH TABLE dnsqueries USING COVERING INDEX idx_results_time (Result>? AND Result<?)
+			echo "SELECT '$1' Fieldname, [Timestamp] Time, COUNT([QueryID]) QueryCount FROM ${2}${6} WHERE ([Result] LIKE 'blocked%') GROUP BY ([Timestamp]/($multiplier));" >> "$7"
 		fi
 	fi
 }
 
 Write_KeyStats_Sql_ToFile(){
 	timenow="$6"
-	
 	{
 		echo ".headers off"
 		echo ".output /tmp/queries$1$3"
 	} > "$5"
 	
 	if [ "$1" = "Total" ]; then
-		echo "SELECT COUNT(QueryID) QueryCount FROM [$2$3] WHERE [Timestamp] >= ($timenow - (86400*$4)) AND ([Timestamp] <= $timenow);" >> "$5"
+		# --SEARCH TABLE dnsqueries USING COVERING INDEX idx_time_results (Timestamp>? AND Timestamp<?)
+		echo "SELECT COUNT([QueryID]) QueryCount FROM ${2}${3} WHERE [Timestamp] >= ($timenow - (86400*$4)) AND [Timestamp] <= $timenow;" >> "$5"
 	elif [ "$1" = "Blocked" ]; then
-		echo "SELECT COUNT(QueryID) QueryCount FROM [$2$3] WHERE [Timestamp] >= ($timenow - (86400*$4)) AND ([Timestamp] <= $timenow) AND [Result] LIKE 'blocked%';" >> "$5"
+		# --SEARCH TABLE dnsqueries USING COVERING INDEX idx_results_time (Result>? AND Result<?)
+		echo "SELECT COUNT([QueryID]) QueryCount FROM ${2}${3} WHERE [Timestamp] >= ($timenow - (86400*$4)) AND [Timestamp] <= $timenow AND [Result] LIKE 'blocked%';" >> "$5"
 	fi
 }
 
@@ -1037,6 +1048,7 @@ Generate_Stats_From_SQLite(){
 	done
 	rm -f /tmp/uidivstats.sql
 	
+	# --SCAN TABLE dnsqueries USING COVERING INDEX idx_clients
 	{
 		echo ".mode list"
 		echo ".output /tmp/ipdistinctclients"
@@ -1108,6 +1120,7 @@ Trim_DNS_DB(){
 }
 
 Flush_Cache_To_DB(){
+	renice 15 $$
 	if [ -f /tmp/cache-uiDivStats-SQL.tmp ]; then
 		{
 			echo "CREATE TABLE IF NOT EXISTS [dnsqueries] ([QueryID] INTEGER PRIMARY KEY NOT NULL, [Timestamp] NUMERIC NOT NULL, [SrcIP] TEXT NOT NULL,[ReqDmn] TEXT NOT NULL,[QryType] Text NOT NULL,[Result] Text NOT NULL);"
@@ -1123,6 +1136,60 @@ Flush_Cache_To_DB(){
 		rm -f /tmp/cache-uiDivStats-SQL.sql
 		rm -f /tmp/cache-uiDivStats-SQL.tmp
 	fi
+	renice 0 $$
+}
+
+Process_Upgrade(){
+	/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
+	sleep 5
+	Auto_Cron delete 2>/dev/null
+	
+	renice 15 $$
+	
+	Print_Output true "Updating database table indexes..." "$PASS"
+	echo "DROP INDEX IF EXISTS idx_dns_domains;" > /tmp/uidivstats-upgrade.sql
+	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
+	echo "DROP INDEX IF EXISTS idx_dns_time;" > /tmp/uidivstats-upgrade.sql
+	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
+	echo "DROP INDEX IF EXISTS idx_dns_clients;" > /tmp/uidivstats-upgrade.sql
+	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
+	echo "DROP INDEX IF EXISTS idx_results_clients;" > /tmp/uidivstats-upgrade.sql
+	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
+	echo "DROP INDEX IF EXISTS idx_clients_results_domains;" > /tmp/uidivstats-upgrade.sql
+	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
+	
+	# used in Generate_Stats_From_SQLite for unique clients and Write_Count_PerClient_Sql_ToFile
+	echo "CREATE INDEX IF NOT EXISTS idx_clients ON dnsqueries (SrcIP);" > /tmp/uidivstats-upgrade.sql
+	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
+	echo "CREATE INDEX IF NOT EXISTS idx_time_clients ON dnsqueries (Timestamp,SrcIP);" > /tmp/uidivstats-upgrade.sql
+	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
+	echo "CREATE INDEX IF NOT EXISTS idx_results_time_clients ON dnsqueries (Result collate nocase,Timestamp,SrcIP);" > /tmp/uidivstats-upgrade.sql
+	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
+	echo "CREATE INDEX IF NOT EXISTS idx_clients_time_domains ON dnsqueries (SrcIP,Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
+	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
+	echo "CREATE INDEX IF NOT EXISTS idx_clients_results_time_domains ON dnsqueries (SrcIP,Result collate nocase,Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
+	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
+	
+	 # used by Write_Count_Sql_ToFile
+	echo "CREATE INDEX IF NOT EXISTS idx_time_domains ON dnsqueries (Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
+	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
+	echo "CREATE INDEX IF NOT EXISTS idx_results_time_domains ON dnsqueries (Result collate nocase,Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
+	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
+	
+	# used by Write_Time_Sql_ToFile
+	echo "CREATE INDEX IF NOT EXISTS idx_results_time ON dnsqueries (Result collate nocase,Timestamp);" > /tmp/uidivstats-upgrade.sql
+	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
+	
+	# used by Write_KeyStats_Sql_ToFile and Write_Time_Sql_ToFile
+	echo "CREATE INDEX IF NOT EXISTS idx_time_results ON dnsqueries (Timestamp,Result collate nocase);" > /tmp/uidivstats-upgrade.sql
+	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
+	
+	rm -f /tmp/uidivstats-upgrade.sql
+	Print_Output true "Database ready, starting services..." "$PASS"
+	renice 0 $$
+	
+	Auto_Cron create 2>/dev/null
+	/opt/etc/init.d/S90taildns start >/dev/null 2>&1
 }
 
 Shortcut_Script(){
@@ -1343,25 +1410,56 @@ Menu_Install(){
 	/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
 	sleep 5
 	Auto_Cron delete 2>/dev/null
+	
+	renice 15 $$
 	Print_Output true "Creating database table and enabling write-ahead logging..." "$PASS"
 	{
 		echo "PRAGMA journal_mode=WAL;"
-		echo "CREATE TABLE IF NOT EXISTS [dnsqueries] ([QueryID] INTEGER PRIMARY KEY NOT NULL, [Timestamp] NUMERIC NOT NULL, [SrcIP] TEXT NOT NULL,[ReqDmn] TEXT NOT NULL,[QryType] Text NOT NULL,[Result] Text NOT NULL);"
+		echo "CREATE TABLE IF NOT EXISTS [dnsqueries] ([QueryID] INTEGER PRIMARY KEY NOT NULL,[Timestamp] NUMERIC NOT NULL,[SrcIP] TEXT NOT NULL,[ReqDmn] TEXT NOT NULL,[QryType] Text NOT NULL,[Result] Text NOT NULL);"
 	}  > /tmp/uidivstats-upgrade.sql
 	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
 	
 	Print_Output true "Creating database table indexes..." "$PASS"
-	echo "CREATE INDEX idx_dns_domains ON dnsqueries (ReqDmn,Timestamp);" > /tmp/uidivstats-upgrade.sql
+	echo "DROP INDEX IF EXISTS idx_dns_domains;" > /tmp/uidivstats-upgrade.sql
 	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
-	echo "CREATE INDEX idx_dns_time ON dnsqueries (Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
+	echo "DROP INDEX IF EXISTS idx_dns_time;" > /tmp/uidivstats-upgrade.sql
 	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
-	echo "CREATE INDEX idx_dns_clients ON dnsqueries (SrcIP,Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
+	echo "DROP INDEX IF EXISTS idx_dns_clients;" > /tmp/uidivstats-upgrade.sql
 	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
-	echo "CREATE INDEX idx_clients ON dnsqueries (SrcIP);" > /tmp/uidivstats-upgrade.sql
+	echo "DROP INDEX IF EXISTS idx_results_clients;" > /tmp/uidivstats-upgrade.sql
+	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
+	echo "DROP INDEX IF EXISTS idx_clients_results_domains;" > /tmp/uidivstats-upgrade.sql
+	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
+	
+	# used in Generate_Stats_From_SQLite for unique clients and Write_Count_PerClient_Sql_ToFile
+	echo "CREATE INDEX IF NOT EXISTS idx_clients ON dnsqueries (SrcIP);" > /tmp/uidivstats-upgrade.sql
+	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
+	echo "CREATE INDEX IF NOT EXISTS idx_time_clients ON dnsqueries (Timestamp,SrcIP);" > /tmp/uidivstats-upgrade.sql
+	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
+	echo "CREATE INDEX IF NOT EXISTS idx_results_time_clients ON dnsqueries (Result collate nocase,Timestamp,SrcIP);" > /tmp/uidivstats-upgrade.sql
+	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
+	echo "CREATE INDEX IF NOT EXISTS idx_clients_time_domains ON dnsqueries (SrcIP,Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
+	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
+	echo "CREATE INDEX IF NOT EXISTS idx_clients_results_time_domains ON dnsqueries (SrcIP,Result collate nocase,Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
+	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
+	
+	 # used by Write_Count_Sql_ToFile
+	echo "CREATE INDEX IF NOT EXISTS idx_time_domains ON dnsqueries (Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
+	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
+	echo "CREATE INDEX IF NOT EXISTS idx_results_time_domains ON dnsqueries (Result collate nocase,Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
+	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
+	
+	# used by Write_Time_Sql_ToFile
+	echo "CREATE INDEX IF NOT EXISTS idx_results_time ON dnsqueries (Result collate nocase,Timestamp);" > /tmp/uidivstats-upgrade.sql
+	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
+	
+	# used by Write_KeyStats_Sql_ToFile and Write_Time_Sql_ToFile
+	echo "CREATE INDEX IF NOT EXISTS idx_time_results ON dnsqueries (Timestamp,Result collate nocase);" > /tmp/uidivstats-upgrade.sql
 	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
 	
 	rm -f /tmp/uidivstats-upgrade.sql
 	Print_Output true "Database ready, starting services..." "$PASS"
+	renice 0 $$
 	
 	Auto_Startup create 2>/dev/null
 	Auto_DNSMASQ_Postconf create 2>/dev/null
@@ -1588,6 +1686,7 @@ case "$1" in
 	;;
 	fullrefresh)
 		Check_Lock
+		Process_Upgrade
 		Menu_GenerateStats fullrefresh
 		exit 0
 	;;
