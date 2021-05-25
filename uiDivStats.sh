@@ -1072,15 +1072,15 @@ Generate_Stats_From_SQLite(){
 	for ipclient in $ipclients; do
 		ARPINFO="$(echo "$ARPDUMP" | grep "$ipclient)")"
 		HOST="$(echo "$ARPINFO" | awk '{print $1}' | cut -f1 -d ".")"
-		MACADRR="$(echo "$ARPINFO" | awk '{print $4}' | cut -f1 -d ".")"
+		MACADDR="$(echo "$ARPINFO" | awk '{print $4}' | cut -f1 -d ".")"
 		if echo "$HOST" | grep -q "?"; then
-			HOST="$(grep "$ipclient " /var/lib/misc/dnsmasq.leases | awk '{print $4}')"
+			HOST="$(grep "$ipclient " /var/lib/misc/dnsmasq.leases | grep -v "\*" | awk '{print $4}')"
 		fi
-		
-		if echo "$HOST" | grep -q "?" || [ "${#HOST}" -le 1 ]; then
-			HOST="$(nvram get custom_clientlist | grep -ioE "<.*>$MACADRR" | awk -F ">" '{print $(NF-1)}' | tr -d '<')" #thanks Adamm00
+			
+		if [ "$HOST" = "?" ] || [ "$(printf "%s" "$HOST" | wc -m)" -le 1 ]; then
+			HOST="$(nvram get custom_clientlist | grep -ioE "<.*>$MACADDR" | awk -F ">" '{print $(NF-1)}' | tr -d '<')" #thanks Adamm00
 		fi
-		
+			
 		if Validate_IP "$ipclient" >/dev/null 2>&1; then
 			if [ -z "$HOST" ]; then
 				HOST="$(dig +short +answer -x "$ipclient" '@'"$(nvram get lan_ipaddr)" | cut -f1 -d'.')"
