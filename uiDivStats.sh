@@ -1174,6 +1174,11 @@ Trim_DNS_DB(){
 }
 
 Flush_Cache_To_DB(){
+	if [ -n "$PPID" ]; then
+		ps | grep -v grep | grep -v $$ | grep -v "$PPID" | grep -i "$SCRIPT_NAME" | grep flushtodb | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
+	else
+		ps | grep -v grep | grep -v $$ | grep -i "$SCRIPT_NAME" | grep flushtodb | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
+	fi
 	renice 15 $$
 	if [ -f /tmp/cache-uiDivStats-SQL.tmp ]; then
 		{
