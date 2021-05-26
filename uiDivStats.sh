@@ -711,7 +711,6 @@ Write_Count_Sql_ToFile(){
 	timenow="$7"
 	
 	{
-		echo "pragma temp_store = memory;"
 		echo ".mode csv"
 		echo ".headers on"
 		echo ".output ${4}${5}.htm"
@@ -730,7 +729,6 @@ Write_Count_Sql_ToFile(){
 Write_Count_PerClient_Sql_ToFile(){
 	timenow="$7"
 	{
-		echo "pragma temp_store = memory;"
 		echo ".mode list"
 		echo ".output /tmp/distinctclients"
 	} > "$6"
@@ -749,7 +747,6 @@ Write_Count_PerClient_Sql_ToFile(){
 	rm -f /tmp/distinctclients
 	
 	{
-		echo "pragma temp_store = memory;"
 		echo ".mode csv"
 		echo ".headers off"
 		echo ".output ${4}${5}clients.htm"
@@ -774,7 +771,6 @@ Write_Time_Sql_ToFile(){
 	multiplier="$(echo "$3" | awk '{printf (60*60*$1)}')"
 	
 	{
-		echo "pragma temp_store = memory;"
 		echo ".mode csv"
 		echo ".headers off"
 		echo ".output ${5}${6}time.htm"
@@ -807,7 +803,6 @@ Write_Time_Sql_ToFile(){
 Write_KeyStats_Sql_ToFile(){
 	timenow="$6"
 	{
-		echo "pragma temp_store = memory;"
 		echo ".headers off"
 		echo ".output /tmp/queries${1}${3}"
 	} > "$5"
@@ -908,7 +903,6 @@ Generate_Query_Log(){
 	fi
 	
 	{
-		echo "pragma temp_store = memory;"
 		echo ".mode csv"
 		echo ".headers off"
 		echo ".separator '|'"
@@ -1099,7 +1093,6 @@ Generate_Stats_From_SQLite(){
 	
 	# --SCAN TABLE dnsqueries USING COVERING INDEX idx_clients
 	{
-		echo "pragma temp_store = memory;"
 		echo ".mode list"
 		echo ".output /tmp/ipdistinctclients"
 		echo "SELECT DISTINCT [SrcIP] SrcIP FROM dnsqueries;"
