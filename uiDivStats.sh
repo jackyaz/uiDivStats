@@ -1759,19 +1759,27 @@ case "$1" in
 		exit 0
 	;;
 	fullrefresh)
+		NTP_Ready
+		Entware_Ready
 		Check_Lock
 		Menu_GenerateStats fullrefresh
 		exit 0
 	;;
 	querylog)
+		NTP_Ready
+		Entware_Ready
 		Generate_Query_Log
 		exit 0
 	;;
 	flushtodb)
+		NTP_Ready
+		Entware_Ready
 		Flush_Cache_To_DB
 		exit 0
 	;;
 	trimdb)
+		NTP_Ready
+		Entware_Ready
 		Trim_DNS_DB
 		Check_Lock
 		Process_Upgrade
