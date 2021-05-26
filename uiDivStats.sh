@@ -1109,16 +1109,17 @@ Generate_Stats_From_SQLite(){
 	fi
 	
 	echo "var hostiparray =[" > "$CSV_OUTPUT_DIR/ipdistinctclients.js"
-	ARPDUMP="$(arp -a)"
+	ARPDUMP="$(arp -an)"
 	for ipclient in $ipclients; do
 		ARPINFO="$(echo "$ARPDUMP" | grep "$ipclient)")"
-		HOST="$(echo "$ARPINFO" | awk '{print $1}' | cut -f1 -d ".")"
 		MACADDR="$(echo "$ARPINFO" | awk '{print $4}' | cut -f1 -d ".")"
-		if echo "$HOST" | grep -q "?"; then
+		
+		HOST="$(arp "$ipclient" | awk '{if (NR==1) {print $1}}' | cut -f1 -d ".")"
+		if [ "$HOST" = "?" ] || [ "$HOST" = "No" ]; then
 			HOST="$(grep "$ipclient " /var/lib/misc/dnsmasq.leases | grep -v "\*" | awk '{print $4}')"
 		fi
 			
-		if [ "$HOST" = "?" ] || [ "$(printf "%s" "$HOST" | wc -m)" -le 1 ]; then
+		if [ "$HOST" = "?" ] || [ "$HOST" = "No" ] || [ "$(printf "%s" "$HOST" | wc -m)" -le 1 ]; then
 			HOST="$(nvram get custom_clientlist | grep -ioE "<.*>$MACADDR" | awk -F ">" '{print $(NF-1)}' | tr -d '<')" #thanks Adamm00
 		fi
 			
@@ -1128,6 +1129,10 @@ Generate_Stats_From_SQLite(){
 			fi
 		else
 			HOST="IPv6"
+		fi
+		
+		if [ -z "$HOST" ]; then
+			HOST="Unknown"
 		fi
 		
 		HOST="$(echo "$HOST" | tr -d '\n')"
