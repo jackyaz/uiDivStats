@@ -785,7 +785,7 @@ Write_KeyStats_Sql_ToFile(){
 	timenow="$6"
 	{
 		echo ".headers off"
-		echo ".output /tmp/queries$1$3"
+		echo ".output /tmp/queries${1}${3}"
 	} > "$5"
 	
 	if [ "$1" = "Total" ]; then
