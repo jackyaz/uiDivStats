@@ -807,10 +807,10 @@ Write_KeyStats_Sql_ToFile(){
 	
 	if [ "$1" = "Total" ]; then
 		# --SEARCH TABLE dnsqueries USING COVERING INDEX idx_time_results (Timestamp>? AND Timestamp<?)
-		echo "SELECT COUNT([QueryID]) QueryCount FROM ${2}${3} WHERE [Timestamp] >= ($timenow - (86400*$4)) AND [Timestamp] <= $timenow;" >> "$5"
+		echo "SELECT COUNT([QueryID]) QueryCount FROM ${2}${3};" >> "$5"
 	elif [ "$1" = "Blocked" ]; then
 		# --SEARCH TABLE dnsqueries USING COVERING INDEX idx_results_time (Result>? AND Result<?)
-		echo "SELECT COUNT([QueryID]) QueryCount FROM ${2}${3} WHERE [Timestamp] >= ($timenow - (86400*$4)) AND [Timestamp] <= $timenow AND [Result] LIKE 'blocked%';" >> "$5"
+		echo "SELECT COUNT([QueryID]) QueryCount FROM ${2}${3} WHERE [Result] LIKE 'blocked%';" >> "$5"
 	fi
 }
 
