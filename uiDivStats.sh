@@ -1,17 +1,27 @@
 #!/bin/sh
 
-#################################################################
-##                                                             ##
-##          _  _____   _          _____  _          _          ##
-##         (_)|  __ \ (_)        / ____|| |        | |         ##
-##   _   _  _ | |  | | _ __   __| (___  | |_  __ _ | |_  ___   ##
-##  | | | || || |  | || |\ \ / / \___ \ | __|/ _  || __|/ __|  ##
-##  | |_| || || |__| || | \ V /  ____) || |_| (_| || |_ \__ \  ##
-##   \__,_||_||_____/ |_|  \_/  |_____/  \__|\__,_| \__||___/  ##
-##                                                             ##
-##            https://github.com/jackyaz/uiDivStats            ##
-##                                                             ##
-#################################################################
+###################################################################
+##                                                               ##
+##           _  _____   _          _____  _          _           ##
+##          (_)|  __ \ (_)        / ____|| |        | |          ##
+##    _   _  _ | |  | | _ __   __| (___  | |_  __ _ | |_  ___    ##
+##   | | | || || |  | || |\ \ / / \___ \ | __|/ _  || __|/ __|   ##
+##   | |_| || || |__| || | \ V /  ____) || |_| (_| || |_ \__ \   ##
+##    \__,_||_||_____/ |_|  \_/  |_____/  \__|\__,_| \__||___/   ##
+##                                                               ##
+##             https://github.com/jackyaz/uiDivStats             ##
+##                                                               ##
+###################################################################
+
+##############        Shellcheck directives      #############
+# shellcheck disable=SC2009
+# shellcheck disable=SC2012
+# shellcheck disable=SC2016
+# shellcheck disable=SC2018
+# shellcheck disable=SC2019
+# shellcheck disable=SC2059
+# shellcheck disable=SC2086
+##############################################################
 
 ### Start of script variables ###
 readonly SCRIPT_NAME="uiDivStats"
@@ -384,7 +394,6 @@ Auto_ServiceEvent(){
 		create)
 			if [ -f /jffs/scripts/service-event ]; then
 				STARTUPLINECOUNT=$(grep -c '# '"$SCRIPT_NAME" /jffs/scripts/service-event)
-				# shellcheck disable=SC2016
 				STARTUPLINECOUNTEX=$(grep -cx "/jffs/scripts/$SCRIPT_NAME service_event"' "$@" & # '"$SCRIPT_NAME" /jffs/scripts/service-event)
 				
 				if [ "$STARTUPLINECOUNT" -gt 1 ] || { [ "$STARTUPLINECOUNTEX" -eq 0 ] && [ "$STARTUPLINECOUNT" -gt 0 ]; }; then
@@ -392,13 +401,11 @@ Auto_ServiceEvent(){
 				fi
 				
 				if [ "$STARTUPLINECOUNTEX" -eq 0 ]; then
-					# shellcheck disable=SC2016
 					echo "/jffs/scripts/$SCRIPT_NAME service_event"' "$@" & # '"$SCRIPT_NAME" >> /jffs/scripts/service-event
 				fi
 			else
 				echo "#!/bin/sh" > /jffs/scripts/service-event
 				echo "" >> /jffs/scripts/service-event
-				# shellcheck disable=SC2016
 				echo "/jffs/scripts/$SCRIPT_NAME service_event"' "$@" & # '"$SCRIPT_NAME" >> /jffs/scripts/service-event
 				chmod 0755 /jffs/scripts/service-event
 			fi
@@ -866,7 +873,6 @@ Generate_NG(){
 }
 
 Generate_Query_Log(){
-	#shellcheck disable=SC2009
 	if [ -n "$PPID" ]; then
 		ps | grep -v grep | grep -v $$ | grep -v "$PPID" | grep -i "$SCRIPT_NAME" | grep querylog | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
 	else
@@ -1004,7 +1010,6 @@ Generate_Count_Blocklist_Domains(){
 	blacklistfile="$DIVERSION_DIR/list/blacklist"
 	blacklistwcfile="$DIVERSION_DIR/list/wc_blacklist"
 	
-	#shellcheck disable=SC2086
 	BLL="$(($(/opt/bin/grep "^[^#]" $blockinglistfile | wc -w)-$(/opt/bin/grep "^[^#]" $blockinglistfile | wc -l)))"
 	[ "$(nvram get ipv6_service)" != "disabled" ] && BLL="$((BLL/2))"
 	BL="$(/opt/bin/grep "^[^#]" "$blacklistfile" | wc -l)"
