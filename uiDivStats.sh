@@ -477,16 +477,26 @@ Auto_Cron(){
 			STARTUPLINECOUNTQUERYLOG=$(cru l | grep -c "${SCRIPT_NAME}_querylog")
 			STARTUPLINECOUNTFLUSHTODB=$(cru l | grep -c "${SCRIPT_NAME}_flushtodb")
 			
+			STARTUPLINECOUNTEXGENERATE=$(cru l | grep "${SCRIPT_NAME}_generate" | grep -c "1-23" )
+			if [ "$STARTUPLINECOUNTGENERATE" -ne 0 ] && [ "$STARTUPLINECOUNTEXGENERATE" -eq 0 ]; then
+				cru d "${SCRIPT_NAME}_generate"
+			fi
+			
+			STARTUPLINECOUNTEXTRIM=$(cru l | grep "${SCRIPT_NAME}_trim" | grep -c "1" )
+			if [ "$STARTUPLINECOUNTTRIM" -ne 0 ] && [ "$STARTUPLINECOUNTEXTRIM" -eq 0 ]; then
+				cru d "${SCRIPT_NAME}_trim"
+			fi
+			
 			STARTUPLINECOUNTEXFLUSHTODB=$(cru l | grep "${SCRIPT_NAME}_flushtodb" | grep -c "4-59/5" )
 			if [ "$STARTUPLINECOUNTFLUSHTODB" -ne 0 ] && [ "$STARTUPLINECOUNTEXFLUSHTODB" -eq 0 ]; then
 				cru d "${SCRIPT_NAME}_flushtodb"
 			fi
 			
 			if [ "$STARTUPLINECOUNTGENERATE" -eq 0 ]; then
-				cru a "${SCRIPT_NAME}_generate" "0 * * * * /jffs/scripts/$SCRIPT_NAME generate"
+				cru a "${SCRIPT_NAME}_generate" "0 1-23 * * * /jffs/scripts/$SCRIPT_NAME generate"
 			fi
 			if [ "$STARTUPLINECOUNTTRIM" -eq 0 ]; then
-				cru a "${SCRIPT_NAME}_trim" "3 0 * * * /jffs/scripts/$SCRIPT_NAME trimdb"
+				cru a "${SCRIPT_NAME}_trim" "1 0 * * * /jffs/scripts/$SCRIPT_NAME trimdb"
 			fi
 			if [ "$STARTUPLINECOUNTQUERYLOG" -eq 0 ]; then
 				cru a "${SCRIPT_NAME}_querylog" "* * * * * /jffs/scripts/$SCRIPT_NAME querylog"
@@ -1794,7 +1804,6 @@ case "$1" in
 		Process_Upgrade
 		Optimise_DNS_DB
 		Menu_GenerateStats fullrefresh
-		Clear_Lock
 		exit 0
 	;;
 	develop)
