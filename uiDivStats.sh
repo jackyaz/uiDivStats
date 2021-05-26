@@ -1177,9 +1177,9 @@ Flush_Cache_To_DB(){
 			echo ".mode csv"
 			echo ".import /tmp/cache-uiDivStats-SQL.tmp dnsqueries_tmp"
 			echo "INSERT INTO dnsqueries SELECT NULL,* FROM dnsqueries_tmp;"
-			echo "DROP TABLE dnsqueries_tmp;"
+			echo "DROP TABLE IF EXISTS dnsqueries_tmp;"
 		} > /tmp/cache-uiDivStats-SQL.sql
-		while ! "$SQLITE3_PATH" /opt/share/uiDivStats.d/dnsqueries.db < /tmp/cache-uiDivStats-SQL.sql >/dev/null 2>&1; do
+		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/cache-uiDivStats-SQL.sql >/dev/null 2>&1; do
 			sleep 1
 		done
 		rm -f /tmp/cache-uiDivStats-SQL.sql
