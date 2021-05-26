@@ -914,17 +914,16 @@ Generate_KeyStats(){
 	Write_KeyStats_Sql_ToFile Total dnsqueries daily 1 /tmp/uidivstats1.sql "$timenow"
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats1.sql >/dev/null 2>&1; do
 		sleep 1
-	done &
+	done && touch /tmp/uidivstats1.end &
 	Write_KeyStats_Sql_ToFile Blocked dnsqueries daily 1 /tmp/uidivstats2.sql "$timenow"
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats2.sql >/dev/null 2>&1; do
 		sleep 1
-	done &
-	sleep 1
-	while [ ! -f /tmp/queriesTotaldaily ] && [ ! -f /tmp/queriesBlockeddaily ]; do
+	done && touch /tmp/uidivstats2.end &
+	while [ ! -f /tmp/uidivstats1.end ] && [ ! -f /tmp/uidivstats2.end ]; do
 		sleep 1
 	done
-	rm -f /tmp/uidivstats1.sql
-	rm -f /tmp/uidivstats2.sql
+	rm -f /tmp/uidivstats1*
+	rm -f /tmp/uidivstats2*
 	
 	queriesTotaldaily="$(cat /tmp/queriesTotaldaily)"
 	queriesBlockeddaily="$(cat /tmp/queriesBlockeddaily)"
@@ -944,17 +943,16 @@ Generate_KeyStats(){
 		Write_KeyStats_Sql_ToFile Total dnsqueries weekly 7 /tmp/uidivstats1.sql "$timenow"
 		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats1.sql >/dev/null 2>&1; do
 			sleep 1
-		done &
+		done && touch /tmp/uidivstats1.end &
 		Write_KeyStats_Sql_ToFile Blocked dnsqueries weekly 7 /tmp/uidivstats2.sql "$timenow"
 		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats2.sql >/dev/null 2>&1; do
 			sleep 1
-		done &
-		sleep 1
-		while [ ! -f /tmp/queriesTotalweekly ] && [ ! -f /tmp/queriesBlockedweekly ]; do
+		done && touch /tmp/uidivstats2.end &
+		while [ ! -f /tmp/uidivstats1.end ] && [ ! -f /tmp/uidivstats2.end ]; do
 			sleep 1
 		done
-		rm -f /tmp/uidivstats1.sql
-		rm -f /tmp/uidivstats2.sql
+		rm -f /tmp/uidivstats1*
+		rm -f /tmp/uidivstats2*
 		
 		queriesTotalweekly="$(cat /tmp/queriesTotalweekly)"
 		queriesBlockedweekly="$(cat /tmp/queriesBlockedweekly)"
@@ -975,17 +973,16 @@ Generate_KeyStats(){
 		Write_KeyStats_Sql_ToFile Total dnsqueries monthly 30 /tmp/uidivstats1.sql "$timenow"
 		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats1.sql >/dev/null 2>&1; do
 			sleep 1
-		done &
+		done && touch /tmp/uidivstats1.end &
 		Write_KeyStats_Sql_ToFile Blocked dnsqueries monthly 30 /tmp/uidivstats2.sql "$timenow"
 		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats2.sql >/dev/null 2>&1; do
 			sleep 1
-		done &
-		sleep 1
-		while [ ! -f /tmp/queriesTotalmonthly ] && [ ! -f /tmp/queriesBlockedmonthly ]; do
+		done && touch /tmp/uidivstats2.end &
+		while [ ! -f /tmp/uidivstats1.end ] && [ ! -f /tmp/uidivstats2.end ]; do
 			sleep 1
 		done
-		rm -f /tmp/uidivstats1.sql
-		rm -f /tmp/uidivstats2.sql
+		rm -f /tmp/uidivstats1*
+		rm -f /tmp/uidivstats2*
 		
 		queriesTotalmonthly="$(cat /tmp/queriesTotalmonthly)"
 		queriesBlockedmonthly="$(cat /tmp/queriesBlockedmonthly)"
