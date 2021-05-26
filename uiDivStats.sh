@@ -1140,6 +1140,19 @@ Generate_Stats_From_SQLite(){
 	echo "];" >> "$CSV_OUTPUT_DIR/ipdistinctclients.js"
 }
 
+Optimise_DNS_DB(){
+	renice 15 $$
+	{
+		echo "PRAGMA analysis_limit=0;"
+		echo "ANALYZE dnsqueries;"
+	}  > /tmp/uidivstats-trim.sql
+	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-trim.sql >/dev/null 2>&1; do
+		sleep 1
+	done
+	rm -f /tmp/uidivstats-trim.sql
+	renice 0 $$
+}
+
 Trim_DNS_DB(){
 	renice 15 $$
 	TZ=$(cat /etc/TZ)
@@ -1155,13 +1168,6 @@ Trim_DNS_DB(){
 		sleep 1
 	done
 	echo "DELETE FROM [dnsqueries] WHERE [SrcIP] = 'from';" > /tmp/uidivstats-trim.sql
-	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-trim.sql >/dev/null 2>&1; do
-		sleep 1
-	done
-	{
-		echo "PRAGMA analysis_limit=1000;"
-		echo "ANALYZE dnsqueries;"
-	}  > /tmp/uidivstats-trim.sql
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-trim.sql >/dev/null 2>&1; do
 		sleep 1
 	done
@@ -1783,6 +1789,7 @@ case "$1" in
 		Trim_DNS_DB
 		Check_Lock
 		Process_Upgrade
+		Optimise_DNS_DB
 		Menu_GenerateStats fullrefresh
 		Clear_Lock
 		exit 0
