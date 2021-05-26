@@ -905,55 +905,92 @@ Generate_KeyStats(){
 	timenow="$1"
 	
 	#daily
-	Write_KeyStats_Sql_ToFile Total dnsqueries daily 1 /tmp/uidivstats.sql "$timenow"
-	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
-		:
+	Write_KeyStats_Sql_ToFile Total dnsqueries daily 1 /tmp/uidivstats1.sql "$timenow"
+	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats1.sql >/dev/null 2>&1; do
+		sleep 1
+	done &
+	Write_KeyStats_Sql_ToFile Blocked dnsqueries daily 1 /tmp/uidivstats2.sql "$timenow"
+	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats2.sql >/dev/null 2>&1; do
+		sleep 1
+	done &
+	sleep 1
+	while [ ! -f /tmp/queriesTotaldaily ] && [ ! -f /tmp/queriesBlockeddaily ]; do
+		sleep 1
 	done
-	Write_KeyStats_Sql_ToFile Blocked dnsqueries daily 1 /tmp/uidivstats.sql "$timenow"
-	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
-		:
-	done
+	rm -f /tmp/uidivstats1.sql
+	rm -f /tmp/uidivstats2.sql
+	
 	queriesTotaldaily="$(cat /tmp/queriesTotaldaily)"
 	queriesBlockeddaily="$(cat /tmp/queriesBlockeddaily)"
+	
+	if ! Validate_Number "$queriesTotaldaily"; then queriesTotaldaily=0; fi
 	if ! Validate_Number "$queriesBlockeddaily"; then queriesBlockeddaily=0; fi
-	queriesPercentagedaily="$(echo "$queriesBlockeddaily" "$queriesTotaldaily" | awk '{printf "%3.2f\n",$1/$2*100}')"
+	if [ "$queriesTotaldaily" -eq 0 ]; then
+		queriesPercentagedaily=0
+	else
+		queriesPercentagedaily="$(echo "$queriesBlockeddaily" "$queriesTotaldaily" | awk '{printf "%3.2f\n",$1/$2*100}')"
+	fi
 	
 	WritePlainData_ToJS "$SCRIPT_DIR/SQLData.js" "QueriesTotaldaily,$queriesTotaldaily" "QueriesBlockeddaily,$queriesBlockeddaily" "BlockedPercentagedaily,$queriesPercentagedaily"
 	
 	#weekly
 	if [ -n "$2" ] && [ "$2" = "fullrefresh" ]; then
-		Write_KeyStats_Sql_ToFile Total dnsqueries weekly 7 /tmp/uidivstats.sql "$timenow"
-		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
-			:
+		Write_KeyStats_Sql_ToFile Total dnsqueries weekly 7 /tmp/uidivstats1.sql "$timenow"
+		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats1.sql >/dev/null 2>&1; do
+			sleep 1
+		done &
+		Write_KeyStats_Sql_ToFile Blocked dnsqueries weekly 7 /tmp/uidivstats2.sql "$timenow"
+		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats2.sql >/dev/null 2>&1; do
+			sleep 1
+		done &
+		sleep 1
+		while [ ! -f /tmp/queriesTotalweekly ] && [ ! -f /tmp/queriesBlockedweekly ]; do
+			sleep 1
 		done
-		Write_KeyStats_Sql_ToFile Blocked dnsqueries weekly 7 /tmp/uidivstats.sql "$timenow"
-		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
-			:
-		done
+		rm -f /tmp/uidivstats1.sql
+		rm -f /tmp/uidivstats2.sql
 		
 		queriesTotalweekly="$(cat /tmp/queriesTotalweekly)"
 		queriesBlockedweekly="$(cat /tmp/queriesBlockedweekly)"
+		
+		if ! Validate_Number "$queriesTotalweekly"; then queriesTotalweekly=0; fi
 		if ! Validate_Number "$queriesBlockedweekly"; then queriesBlockedweekly=0; fi
-		queriesPercentageweekly="$(echo "$queriesBlockedweekly" "$queriesTotalweekly" | awk '{printf "%3.2f\n",$1/$2*100}')"
+		if [ "$queriesTotalweekly" -eq 0 ]; then
+			queriesPercentageweekly=0
+		else
+			queriesPercentageweekly="$(echo "$queriesBlockedweekly" "$queriesTotalweekly" | awk '{printf "%3.2f\n",$1/$2*100}')"
+		fi
 		
 		WritePlainData_ToJS "$SCRIPT_DIR/SQLData.js" "QueriesTotalweekly,$queriesTotalweekly" "QueriesBlockedweekly,$queriesBlockedweekly" "BlockedPercentageweekly,$queriesPercentageweekly"
 	fi
 
 	#monthly
 	if [ -n "$2" ] && [ "$2" = "fullrefresh" ]; then
-		Write_KeyStats_Sql_ToFile Total dnsqueries monthly 30 /tmp/uidivstats.sql "$timenow"
-		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
-			:
+		Write_KeyStats_Sql_ToFile Total dnsqueries monthly 30 /tmp/uidivstats1.sql "$timenow"
+		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats1.sql >/dev/null 2>&1; do
+			sleep 1
+		done &
+		Write_KeyStats_Sql_ToFile Blocked dnsqueries monthly 30 /tmp/uidivstats2.sql "$timenow"
+		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats2.sql >/dev/null 2>&1; do
+			sleep 1
+		done &
+		sleep 1
+		while [ ! -f /tmp/queriesTotalmonthly ] && [ ! -f /tmp/queriesBlockedmonthly ]; do
+			sleep 1
 		done
-		Write_KeyStats_Sql_ToFile Blocked dnsqueries monthly 30 /tmp/uidivstats.sql "$timenow"
-		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
-			:
-		done
+		rm -f /tmp/uidivstats1.sql
+		rm -f /tmp/uidivstats2.sql
 		
 		queriesTotalmonthly="$(cat /tmp/queriesTotalmonthly)"
 		queriesBlockedmonthly="$(cat /tmp/queriesBlockedmonthly)"
+		
+		if ! Validate_Number "$queriesTotalmonthly"; then queriesTotalmonthly=0; fi
 		if ! Validate_Number "$queriesBlockedmonthly"; then queriesBlockedmonthly=0; fi
-		queriesPercentagemonthly="$(echo "$queriesBlockedmonthly" "$queriesTotalmonthly" | awk '{printf "%3.2f\n",$1/$2*100}')"
+		if [ "$queriesTotalmonthly" -eq 0 ]; then
+			queriesPercentagemonthly=0
+		else
+			queriesPercentagemonthly="$(echo "$queriesBlockedmonthly" "$queriesTotalmonthly" | awk '{printf "%3.2f\n",$1/$2*100}')"
+		fi
 		
 		WritePlainData_ToJS "$SCRIPT_DIR/SQLData.js" "QueriesTotalmonthly,$queriesTotalmonthly" "QueriesBlockedmonthly,$queriesBlockedmonthly" "BlockedPercentagemonthly,$queriesPercentagemonthly"
 	fi
