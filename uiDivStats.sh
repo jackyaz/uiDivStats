@@ -1199,6 +1199,7 @@ Flush_Cache_To_DB(){
 			echo "CREATE TABLE IF NOT EXISTS [dnsqueries] ([QueryID] INTEGER PRIMARY KEY NOT NULL, [Timestamp] NUMERIC NOT NULL, [SrcIP] TEXT NOT NULL,[ReqDmn] TEXT NOT NULL,[QryType] Text NOT NULL,[Result] Text NOT NULL);"
 			echo "CREATE TABLE IF NOT EXISTS [dnsqueries_tmp] ([Timestamp] NUMERIC NOT NULL, [SrcIP] TEXT NOT NULL,[ReqDmn] TEXT NOT NULL,[QryType] Text NOT NULL,[Result] Text NOT NULL);"
 			echo ".mode csv"
+			echo "pragma synchronous = normal;"
 			echo ".import /tmp/cache-uiDivStats-SQL.tmp dnsqueries_tmp"
 			echo "INSERT INTO dnsqueries SELECT NULL,* FROM dnsqueries_tmp;"
 			echo "DROP TABLE IF EXISTS dnsqueries_tmp;"
