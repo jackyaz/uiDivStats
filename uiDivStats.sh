@@ -790,7 +790,7 @@ Write_Time_Sql_ToFile(){
 	else
 		if [ "$1" = "Total" ]; then
 			# --SEARCH TABLE dnsqueries USING COVERING INDEX idx_time_results (Timestamp>? AND Timestamp<?)
-			echo "SELECT '$1' Fieldname, [Timestamp] Time, COUNT([QueryID]) QueryCount FROM ${2}${6} GROUP BY ([Timestamp]/($multiplier));" >> "$7"
+			echo "SELECT '$1' Fieldname, [Timestamp] Time, COUNT([QueryID]) QueryCount FROM ${2}${6} GROUP BY ([Timestamp]/$multiplier);" >> "$7"
 		elif [ "$1" = "Blocked" ]; then
 			# --SEARCH TABLE dnsqueries USING COVERING INDEX idx_results_time (Result>? AND Result<?)
 			echo "SELECT '$1' Fieldname, [Timestamp] Time, COUNT([QueryID]) QueryCount FROM ${2}${6} WHERE ([Result] LIKE 'blocked%') GROUP BY ([Timestamp]/($multiplier));" >> "$7"
@@ -921,20 +921,15 @@ Generate_KeyStats(){
 	timenow="$1"
 	
 	#daily
-	Write_KeyStats_Sql_ToFile Total dnsqueries daily 1 /tmp/uidivstats1.sql "$timenow"
-	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats1.sql >/dev/null 2>&1; do
-		sleep 1
-	done && touch /tmp/uidivstats1.end &
-	Write_KeyStats_Sql_ToFile Blocked dnsqueries daily 1 /tmp/uidivstats2.sql "$timenow"
-	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats2.sql >/dev/null 2>&1; do
-		sleep 1
-	done && touch /tmp/uidivstats2.end &
-	while [ ! -f /tmp/uidivstats1.end ] && [ ! -f /tmp/uidivstats2.end ]; do
+	Write_KeyStats_Sql_ToFile Total dnsqueries daily 1 /tmp/uidivstats.sql "$timenow"
+	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 		sleep 1
 	done
-	rm -f /tmp/uidivstats1*
-	rm -f /tmp/uidivstats2*
-	sleep 1
+	Write_KeyStats_Sql_ToFile Blocked dnsqueries daily 1 /tmp/uidivstats.sql "$timenow"
+	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+		sleep 1
+	done
+	rm -f /tmp/uidivstats.sql
 	
 	queriesTotaldaily="$(cat /tmp/queriesTotaldaily)"
 	queriesBlockeddaily="$(cat /tmp/queriesBlockeddaily)"
@@ -951,20 +946,15 @@ Generate_KeyStats(){
 	
 	#weekly
 	if [ -n "$2" ] && [ "$2" = "fullrefresh" ]; then
-		Write_KeyStats_Sql_ToFile Total dnsqueries weekly 7 /tmp/uidivstats1.sql "$timenow"
-		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats1.sql >/dev/null 2>&1; do
-			sleep 1
-		done && touch /tmp/uidivstats1.end &
-		Write_KeyStats_Sql_ToFile Blocked dnsqueries weekly 7 /tmp/uidivstats2.sql "$timenow"
-		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats2.sql >/dev/null 2>&1; do
-			sleep 1
-		done && touch /tmp/uidivstats2.end &
-		while [ ! -f /tmp/uidivstats1.end ] && [ ! -f /tmp/uidivstats2.end ]; do
+		Write_KeyStats_Sql_ToFile Total dnsqueries weekly 7 /tmp/uidivstats.sql "$timenow"
+		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 			sleep 1
 		done
-		rm -f /tmp/uidivstats1*
-		rm -f /tmp/uidivstats2*
-		sleep 1
+		Write_KeyStats_Sql_ToFile Blocked dnsqueries weekly 7 /tmp/uidivstats.sql "$timenow"
+		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+			sleep 1
+		done
+		rm -f /tmp/uidivstats.sql
 		
 		queriesTotalweekly="$(cat /tmp/queriesTotalweekly)"
 		queriesBlockedweekly="$(cat /tmp/queriesBlockedweekly)"
@@ -982,20 +972,15 @@ Generate_KeyStats(){
 
 	#monthly
 	if [ -n "$2" ] && [ "$2" = "fullrefresh" ]; then
-		Write_KeyStats_Sql_ToFile Total dnsqueries monthly 30 /tmp/uidivstats1.sql "$timenow"
-		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats1.sql >/dev/null 2>&1; do
-			sleep 1
-		done && touch /tmp/uidivstats1.end &
-		Write_KeyStats_Sql_ToFile Blocked dnsqueries monthly 30 /tmp/uidivstats2.sql "$timenow"
-		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats2.sql >/dev/null 2>&1; do
-			sleep 1
-		done && touch /tmp/uidivstats2.end &
-		while [ ! -f /tmp/uidivstats1.end ] && [ ! -f /tmp/uidivstats2.end ]; do
+		Write_KeyStats_Sql_ToFile Total dnsqueries monthly 30 /tmp/uidivstats.sql "$timenow"
+		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 			sleep 1
 		done
-		rm -f /tmp/uidivstats1*
-		rm -f /tmp/uidivstats2*
-		sleep 1
+		Write_KeyStats_Sql_ToFile Blocked dnsqueries monthly 30 /tmp/uidivstats.sql "$timenow"
+		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+			sleep 1
+		done
+		rm -f /tmp/uidivstats.sql
 		
 		queriesTotalmonthly="$(cat /tmp/queriesTotalmonthly)"
 		queriesBlockedmonthly="$(cat /tmp/queriesBlockedmonthly)"
