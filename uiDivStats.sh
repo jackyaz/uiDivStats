@@ -878,6 +878,9 @@ Generate_Query_Log(){
 		if [ -f /tmp/cache-uiDivStats-SQL.tmp ]; then
 			sort -s -k 1,1 -n -r /tmp/cache-uiDivStats-SQL.tmp | sed 's/,/|/g' | awk 'BEGIN{FS=OFS="|"} {t=$2; $2=$3; $3=t; print}' > /tmp/cache-uiDivStats-SQL.tmp.ordered
 			recordcount="$((recordcount - $(wc -l < /tmp/cache-uiDivStats-SQL.tmp.ordered)))"
+			if [ "$(echo "$recordcount 0" | awk '{print ($1 < $2)}')" -eq 1 ]; then
+				recordcount=1
+			fi
 		fi
 	fi
 	
