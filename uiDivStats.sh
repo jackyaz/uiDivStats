@@ -1149,13 +1149,19 @@ Flush_Cache_To_DB(){
 }
 
 Process_Upgrade(){
-	/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
-	sleep 5
-	Auto_Cron delete 2>/dev/null
+	rm -f "$SCRIPT_DIR/.upgraded"
+	rm -f "$SCRIPT_DIR/.upgraded2"
+	rm -f "$SCRIPT_DIR/.upgraded3"
+	
+	if [ ! -f "$SCRIPT_DIR/.newindexes" ]; then
+		/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
+		sleep 5
+		Auto_Cron delete 2>/dev/null
+	fi
 	
 	renice 15 $$
 	
-	Print_Output true "Updating database table indexes..." "$PASS"
+	Print_Output true "Checking database table indexes..." "$PASS"
 	echo "DROP INDEX IF EXISTS idx_dns_domains;" > /tmp/uidivstats-upgrade.sql
 	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
 	echo "DROP INDEX IF EXISTS idx_dns_time;" > /tmp/uidivstats-upgrade.sql
@@ -1194,11 +1200,15 @@ Process_Upgrade(){
 	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
 	
 	rm -f /tmp/uidivstats-upgrade.sql
-	Print_Output true "Database ready, starting services..." "$PASS"
+	Print_Output true "Database index checks complete" "$PASS"
+	
 	renice 0 $$
 	
-	Auto_Cron create 2>/dev/null
-	/opt/etc/init.d/S90taildns start >/dev/null 2>&1
+	if [ ! -f "$SCRIPT_DIR/.newindexes" ]; then
+		Auto_Cron create 2>/dev/null
+		/opt/etc/init.d/S90taildns start >/dev/null 2>&1
+		touch "$SCRIPT_DIR/.newindexes"
+	fi
 }
 
 Shortcut_Script(){
@@ -1695,7 +1705,6 @@ case "$1" in
 	;;
 	fullrefresh)
 		Check_Lock
-		Process_Upgrade
 		Menu_GenerateStats fullrefresh
 		exit 0
 	;;
@@ -1710,6 +1719,7 @@ case "$1" in
 	trimdb)
 		Trim_DNS_DB
 		Check_Lock
+		Process_Upgrade
 		Menu_GenerateStats fullrefresh
 		Clear_Lock
 		exit 0
