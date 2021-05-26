@@ -924,6 +924,7 @@ Generate_KeyStats(){
 	done
 	rm -f /tmp/uidivstats1*
 	rm -f /tmp/uidivstats2*
+	sleep 1
 	
 	queriesTotaldaily="$(cat /tmp/queriesTotaldaily)"
 	queriesBlockeddaily="$(cat /tmp/queriesBlockeddaily)"
@@ -953,6 +954,7 @@ Generate_KeyStats(){
 		done
 		rm -f /tmp/uidivstats1*
 		rm -f /tmp/uidivstats2*
+		sleep 1
 		
 		queriesTotalweekly="$(cat /tmp/queriesTotalweekly)"
 		queriesBlockedweekly="$(cat /tmp/queriesBlockedweekly)"
@@ -983,6 +985,7 @@ Generate_KeyStats(){
 		done
 		rm -f /tmp/uidivstats1*
 		rm -f /tmp/uidivstats2*
+		sleep 1
 		
 		queriesTotalmonthly="$(cat /tmp/queriesTotalmonthly)"
 		queriesBlockedmonthly="$(cat /tmp/queriesBlockedmonthly)"
