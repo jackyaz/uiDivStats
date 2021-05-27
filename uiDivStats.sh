@@ -1268,8 +1268,13 @@ Process_Upgrade(){
 	echo "DROP INDEX IF EXISTS idx_clients_results_domains;" > /tmp/uidivstats-upgrade.sql
 	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
 	if [ ! -f "$SCRIPT_DIR/.newindexes" ]; then
-		echo "PRAGMA cache_size=-20000; VACUUM;" > /tmp/uidivstats-upgrade.sql
-		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
+		echo "PRAGMA cache_size=-20000; VACUUM INTO \"$DNS_DB.new\";" > /tmp/uidivstats-upgrade.sql
+		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
+			sleep 1
+		done
+		sleep 60
+		mv "$DNS_DB" "$DNS_DB.bak"
+		mv "$DNS_DB.new" "$DNS_DB"
 	fi
 	
 	# used in Generate_Stats_From_SQLite for unique clients and Write_Count_PerClient_Sql_ToFile
