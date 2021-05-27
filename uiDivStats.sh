@@ -1268,7 +1268,7 @@ Process_Upgrade(){
 	echo "DROP INDEX IF EXISTS idx_clients_results_domains;" > /tmp/uidivstats-upgrade.sql
 	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
 	if [ ! -f "$SCRIPT_DIR/.newindexes" ]; then
-		echo "PRAGMA cache_size=-20000; PRAGMA VACUUM;" > /tmp/uidivstats-upgrade.sql
+		echo "PRAGMA cache_size=-20000; VACUUM;" > /tmp/uidivstats-upgrade.sql
 		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
 	fi
 	
