@@ -724,40 +724,73 @@ Write_Count_Sql_ToFile(){
 #$1 fieldname $2 tablename $3 length (days) $4 outputfile $5 outputfrequency $6 sqlfile
 Write_Count_PerClient_Sql_ToFile(){
 	{
-		echo ".mode list"
-		echo ".output /tmp/distinctclients"
-	} > "$6"
-	if [ "$1" = "Total" ]; then
-		# --SEARCH TABLE dnsqueries USING COVERING INDEX idx_time_clients (Timestamp>? AND Timestamp<?)
-		echo "SELECT DISTINCT [SrcIP] SrcIP FROM ${2}${5};" >> "$6"
-	elif [ "$1" = "Blocked" ]; then
-		# --SEARCH TABLE dnsqueries USING COVERING INDEX idx_results_time_clients (Result>? AND Result<?)
-		echo "SELECT DISTINCT [SrcIP] SrcIP FROM ${2}${5} WHERE ([Result] LIKE 'blocked%');" >> "$6"
-	fi
-	while ! "$SQLITE3_PATH" "$DNS_DB" < "$6" >/dev/null 2>&1; do
-		sleep 1
-	done
-	
-	clients="$(cat /tmp/distinctclients)"
-	rm -f /tmp/distinctclients
-	
-	{
 		echo ".mode csv"
 		echo ".headers off"
 		echo ".output ${4}${5}clients.htm"
 	} > "$6"
 	
 	if [ "$1" = "Total" ]; then
-		for client in $clients; do
-			# --SEARCH TABLE dnsqueries USING COVERING INDEX idx_clients_time_domains (SrcIP=? AND Timestamp>? AND Timestamp<?)
-			echo "SELECT '$1' Fieldname, [SrcIP] SrcIP, [ReqDmn] ReqDmn, Count([ReqDmn]) Count FROM ${2}${5} WHERE ([SrcIP] = '$client') GROUP BY [ReqDmn] ORDER BY COUNT([ReqDmn]) DESC LIMIT 20;" >> "$6"
-		done
+		{
+			echo "SELECT '$1' Fieldname,SrcIP,ReqDmn,Count FROM"
+			echo "(SELECT [SrcIP] SrcIP,[ReqDmn] ReqDmn,Count([ReqDmn]) Count,ROW_NUMBER() OVER (PARTITION BY [SrcIP] ORDER BY Count(*) DESC) rn"
+			echo "FROM ${2}${5} WHERE [SrcIP] IN (SELECT DISTINCT [SrcIP] SrcIP FROM ${2}${5})"
+			echo "GROUP BY [SrcIP],[ReqDmn]) WHERE rn <=20 ORDER BY SrcIP,Count DESC;"
+		} >> "$6"
 	elif [ "$1" = "Blocked" ]; then
-		for client in $clients; do
-			# --SEARCH TABLE dnsqueries USING COVERING INDEX idx_clients_results_time_domains (SrcIP=? AND Result>? AND Result<?)
-			echo "SELECT '$1' Fieldname, [SrcIP] SrcIP, [ReqDmn] ReqDmn, Count([ReqDmn]) Count FROM ${2}${5} WHERE ([SrcIP] = '$client') AND ([Result] LIKE 'blocked%') GROUP BY [ReqDmn] ORDER BY COUNT([ReqDmn]) DESC LIMIT 20;" >> "$6"
-		done
+		{
+			echo "SELECT '$1' Fieldname,SrcIP,ReqDmn,Count FROM"
+			echo "(SELECT [SrcIP] SrcIP,[ReqDmn] ReqDmn,Count([ReqDmn]) Count,ROW_NUMBER() OVER (PARTITION BY [SrcIP] ORDER BY Count(*) DESC) rn"
+			echo "FROM ${2}${5} WHERE [SrcIP] IN (SELECT DISTINCT [SrcIP] SrcIP FROM ${2}${5} WHERE ([Result] LIKE 'blocked%')) AND ([Result] LIKE 'blocked%')"
+			echo "GROUP BY [SrcIP],[ReqDmn]) WHERE rn <=20 ORDER BY SrcIP,Count DESC;"
+		} >> "$6"
 	fi
+}
+
+# $1 tablename $2 frequency (hours) $3 outputfrequency
+Create_TempTime_Table(){
+	multiplier="$(echo "$2" | awk '{printf (60*60*$1)}')"
+	
+	{
+		echo ".headers off"
+		echo ".output /tmp/timesmin"
+		echo "SELECT CAST(MIN([Timestamp])/$multiplier AS INT)*$multiplier FROM ${1}${3};"
+		echo ".headers off"
+		echo ".output /tmp/timesmax"
+		echo "SELECT CAST(MAX([Timestamp])/$multiplier AS INT)*$multiplier FROM ${1}${3};"
+	} > /tmp/uidivstats.sql
+	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+		sleep 1
+	done
+	
+	timesmin="$(cat /tmp/timesmin)"
+	timesmax="$(cat /tmp/timesmax)"
+	rm -f /tmp/timesmin
+	rm -f /tmp/timesmax
+	
+	if ! Validate_Number "$timesmin"; then timesmin=0; fi
+	if ! Validate_Number "$timesmax"; then timesmax=0; fi
+	
+	{
+		echo "CREATE TABLE IF NOT EXISTS temp_timerange_$3 AS"
+		echo "WITH RECURSIVE c(x) AS("
+		echo "VALUES($timesmin)"
+		echo "UNION ALL"
+		echo "SELECT x+$multiplier FROM c WHERE x<$timesmax"
+		echo ") SELECT x FROM c;"
+	} > /tmp/uidivstats.sql
+	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+		sleep 1
+	done
+	rm -f /tmp/uidivstats.sql
+}
+
+# $1 outputfrequency
+Drop_TempTime_Table(){
+	echo "DROP TABLE IF EXISTS temp_timerange_$1;" > /tmp/uidivstats.sql
+	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+		sleep 1
+	done
+	rm -f /tmp/uidivstats.sql
 }
 
 #$1 fieldname $2 tablename $3 frequency (hours) $4 length (days) $5 outputfile $6 outputfrequency $7 sqlfile
@@ -770,27 +803,10 @@ Write_Time_Sql_ToFile(){
 		echo ".output ${5}${6}time.htm"
 	} > "$7"
 	
-	if [ "$4" -eq 1 ]; then
-		maxcount="$(echo "$multiplier" | awk '{printf (60*60*24/$1)}')"
-		currentcount=0
-		while [ "$currentcount" -lt "$maxcount" ]; do
-			if [ "$1" = "Total" ]; then
-				# --SEARCH TABLE dnsqueries USING COVERING INDEX idx_time_results (Timestamp>? AND Timestamp<?)
-				echo "SELECT '$1' Fieldname, $timenow - ($multiplier*$currentcount) Time, COUNT([QueryID]) QueryCount FROM ${2}${6} WHERE ([Timestamp] >= $timenow - ($multiplier*($currentcount+1))) AND ([Timestamp] <= $timenow - ($multiplier*$currentcount));" >> "$7"
-			elif [ "$1" = "Blocked" ]; then
-				# --SEARCH TABLE dnsqueries USING COVERING INDEX idx_results_time (Result>? AND Result<?)
-				echo "SELECT '$1' Fieldname, $timenow - ($multiplier*$currentcount) Time, COUNT([QueryID]) QueryCount FROM ${2}${6} WHERE ([Result] LIKE 'blocked%') AND ([Timestamp] >= $timenow - ($multiplier*($currentcount+1))) AND ([Timestamp] <= $timenow - ($multiplier*$currentcount));" >> "$7"
-			fi
-			currentcount="$((currentcount + 1))"
-		done
-	else
-		if [ "$1" = "Total" ]; then
-			# --SEARCH TABLE dnsqueries USING COVERING INDEX idx_time_results (Timestamp>? AND Timestamp<?)
-			echo "SELECT '$1' Fieldname, [Timestamp] Time, COUNT([QueryID]) QueryCount FROM ${2}${6} GROUP BY ([Timestamp]/$multiplier);" >> "$7"
-		elif [ "$1" = "Blocked" ]; then
-			# --SEARCH TABLE dnsqueries USING COVERING INDEX idx_results_time (Result>? AND Result<?)
-			echo "SELECT '$1' Fieldname, [Timestamp] Time, COUNT([QueryID]) QueryCount FROM ${2}${6} WHERE ([Result] LIKE 'blocked%') GROUP BY ([Timestamp]/($multiplier));" >> "$7"
-		fi
+	if [ "$1" = "Total" ]; then
+		echo "SELECT '$1' Fieldname,series.x Time,IFNULL(data.QueryCount2,0) QueryCount FROM (SELECT x FROM temp_timerange_$6) series LEFT JOIN (SELECT '$1' Fieldname,CAST([Timestamp]/$multiplier AS INT)*$multiplier Time2,COUNT([QueryID]) QueryCount2 FROM ${2}${6} GROUP BY Time2) data on series.x = data.Time2;" >> "$7"
+	elif [ "$1" = "Blocked" ]; then
+		echo "SELECT '$1' Fieldname,series.x Time,IFNULL(data.QueryCount2,0) QueryCount FROM (SELECT x FROM temp_timerange_$6) series LEFT JOIN (SELECT '$1' Fieldname,CAST([Timestamp]/$multiplier AS INT)*$multiplier Time2,COUNT([QueryID]) QueryCount2 FROM ${2}${6} WHERE ([Result] LIKE 'blocked%') GROUP BY Time2) data on series.x = data.Time2;" >> "$7"
 	fi
 }
 
@@ -857,6 +873,13 @@ Generate_NG(){
 	done
 	rm -f /tmp/uidivstats.sql
 	
+	
+	Create_TempTime_Table dnsqueries 0.25 daily
+	if [ -n "$1" ] && [ "$1" = "fullrefresh" ]; then
+		Create_TempTime_Table dnsqueries 1 weekly
+		Create_TempTime_Table dnsqueries 3 monthly
+	fi
+	
 	Generate_Count_Blocklist_Domains
 	
 	if [ -n "$1" ] && [ "$1" = "fullrefresh" ]; then
@@ -865,6 +888,12 @@ Generate_NG(){
 	else
 		Generate_KeyStats "$timenow"
 		Generate_Stats_From_SQLite "$timenow"
+	fi
+	
+	Drop_TempTime_Table daily
+	if [ -n "$1" ] && [ "$1" = "fullrefresh" ]; then
+		Drop_TempTime_Table weekly
+		Drop_TempTime_Table monthly
 	fi
 	
 	echo "Stats last updated: $timenowfriendly" > /tmp/uidivstatstitle.txt
