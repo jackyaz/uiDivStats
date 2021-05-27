@@ -826,11 +826,10 @@ Generate_NG(){
 	
 	echo 'var uidivstatsstatus = "InProgress";' > /tmp/detect_uidivstats.js
 	
-	echo "DELETE FROM [dnsqueries] WHERE [Timestamp] > $timenow;" > /tmp/uidivstats-trim.sql
-	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-trim.sql >/dev/null 2>&1; do
-		sleep 1
-	done
-	echo "DELETE FROM [dnsqueries] WHERE [SrcIP] = 'from';" > /tmp/uidivstats-trim.sql
+	echo "PRAGMA cache_size=-20000; BEGIN TRANSACTION;"  > /tmp/uidivstats-trim.sql
+	echo "DELETE FROM [dnsqueries] WHERE [Timestamp] > $timenow;" >> /tmp/uidivstats-trim.sql
+	echo "DELETE FROM [dnsqueries] WHERE [SrcIP] = 'from';" >> /tmp/uidivstats-trim.sql
+	echo "END TRANSACTION;" >> /tmp/uidivstats-trim.sql
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-trim.sql >/dev/null 2>&1; do
 		sleep 1
 	done
@@ -1167,15 +1166,11 @@ Trim_DNS_DB(){
 	
 	Print_Output true "Trimming records entries from database..." "$PASS"
 	
-	echo "DELETE FROM [dnsqueries] WHERE [Timestamp] < ($timenow - (86400*30));" > /tmp/uidivstats-trim.sql
-	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-trim.sql >/dev/null 2>&1; do
-		sleep 1
-	done
-	echo "DELETE FROM [dnsqueries] WHERE [Timestamp] > $timenow;" > /tmp/uidivstats-trim.sql
-	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-trim.sql >/dev/null 2>&1; do
-		sleep 1
-	done
-	echo "DELETE FROM [dnsqueries] WHERE [SrcIP] = 'from';" > /tmp/uidivstats-trim.sql
+	echo "PRAGMA cache_size=-20000; BEGIN TRANSACTION;"  > /tmp/uidivstats-trim.sql
+	echo "DELETE FROM [dnsqueries] WHERE [Timestamp] < ($timenow - (86400*30));" >> /tmp/uidivstats-trim.sql
+	echo "DELETE FROM [dnsqueries] WHERE [Timestamp] > $timenow;" >> /tmp/uidivstats-trim.sql
+	echo "DELETE FROM [dnsqueries] WHERE [SrcIP] = 'from';" >> /tmp/uidivstats-trim.sql
+	echo "END TRANSACTION;" >> /tmp/uidivstats-trim.sql
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-trim.sql >/dev/null 2>&1; do
 		sleep 1
 	done
@@ -1204,13 +1199,15 @@ Flush_Cache_To_DB(){
 	renice 15 $$
 	if [ -f /tmp/cache-uiDivStats-SQL.tmp ]; then
 		{
-			echo "CREATE TABLE IF NOT EXISTS [dnsqueries] ([QueryID] INTEGER PRIMARY KEY NOT NULL, [Timestamp] NUMERIC NOT NULL, [SrcIP] TEXT NOT NULL,[ReqDmn] TEXT NOT NULL,[QryType] Text NOT NULL,[Result] Text NOT NULL);"
-			echo "CREATE TABLE IF NOT EXISTS [dnsqueries_tmp] ([Timestamp] NUMERIC NOT NULL, [SrcIP] TEXT NOT NULL,[ReqDmn] TEXT NOT NULL,[QryType] Text NOT NULL,[Result] Text NOT NULL);"
+			echo "PRAGMA synchronous = normal; PRAGMA cache_size=-20000;"
+			echo "BEGIN TRANSACTION;"
+			echo "CREATE TABLE IF NOT EXISTS [dnsqueries] ([QueryID] INTEGER PRIMARY KEY NOT NULL,[Timestamp] NUMERIC NOT NULL,[SrcIP] TEXT NOT NULL,[ReqDmn] TEXT NOT NULL,[QryType] Text NOT NULL,[Result] Text NOT NULL);"
+			echo "CREATE TABLE IF NOT EXISTS [dnsqueries_tmp] ([Timestamp] NUMERIC NOT NULL,[SrcIP] TEXT NOT NULL,[ReqDmn] TEXT NOT NULL,[QryType] Text NOT NULL,[Result] Text NOT NULL);"
 			echo ".mode csv"
-			echo "pragma synchronous = normal;"
 			echo ".import /tmp/cache-uiDivStats-SQL.tmp dnsqueries_tmp"
 			echo "INSERT INTO dnsqueries SELECT NULL,* FROM dnsqueries_tmp;"
 			echo "DROP TABLE IF EXISTS dnsqueries_tmp;"
+			echo "END TRANSACTION;"
 		} > /tmp/cache-uiDivStats-SQL.sql
 		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/cache-uiDivStats-SQL.sql >/dev/null 2>&1; do
 			sleep 1
