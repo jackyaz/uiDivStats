@@ -1247,29 +1247,29 @@ Process_Upgrade(){
 	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
 	
 	# used in Generate_Stats_From_SQLite for unique clients and Write_Count_PerClient_Sql_ToFile
-	echo "pragma cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_clients ON dnsqueries (SrcIP);" > /tmp/uidivstats-upgrade.sql
+	echo "PRAGMA cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_clients ON dnsqueries (SrcIP);" > /tmp/uidivstats-upgrade.sql
 	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
-	echo "pragma cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_time_clients ON dnsqueries (Timestamp,SrcIP);" > /tmp/uidivstats-upgrade.sql
+	echo "PRAGMA cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_time_clients ON dnsqueries (Timestamp,SrcIP);" > /tmp/uidivstats-upgrade.sql
 	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
-	echo "pragma cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_results_time_clients ON dnsqueries (Result collate nocase,Timestamp,SrcIP);" > /tmp/uidivstats-upgrade.sql
+	echo "PRAGMA cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_results_time_clients ON dnsqueries (Result collate nocase,Timestamp,SrcIP);" > /tmp/uidivstats-upgrade.sql
 	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
-	echo "pragma cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_clients_time_domains ON dnsqueries (SrcIP,Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
+	echo "PRAGMA cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_clients_time_domains ON dnsqueries (SrcIP,Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
 	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
-	echo "pragma cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_clients_results_time_domains ON dnsqueries (SrcIP,Result collate nocase,Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
+	echo "PRAGMA cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_clients_results_time_domains ON dnsqueries (SrcIP,Result collate nocase,Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
 	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
 	
 	 # used by Write_Count_Sql_ToFile
-	echo "pragma cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_time_domains ON dnsqueries (Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
+	echo "PRAGMA cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_time_domains ON dnsqueries (Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
 	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
-	echo "pragma cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_results_time_domains ON dnsqueries (Result collate nocase,Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
+	echo "PRAGMA cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_results_time_domains ON dnsqueries (Result collate nocase,Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
 	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
 	
 	# used by Write_Time_Sql_ToFile
-	echo "pragma cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_results_time ON dnsqueries (Result collate nocase,Timestamp);" > /tmp/uidivstats-upgrade.sql
+	echo "PRAGMA cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_results_time ON dnsqueries (Result collate nocase,Timestamp);" > /tmp/uidivstats-upgrade.sql
 	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
 	
 	# used by Write_KeyStats_Sql_ToFile and Write_Time_Sql_ToFile
-	echo "pragma cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_time_results ON dnsqueries (Timestamp,Result collate nocase);" > /tmp/uidivstats-upgrade.sql
+	echo "PRAGMA cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_time_results ON dnsqueries (Timestamp,Result collate nocase);" > /tmp/uidivstats-upgrade.sql
 	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
 	
 	rm -f /tmp/uidivstats-upgrade.sql
@@ -1524,29 +1524,29 @@ Menu_Install(){
 	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
 	
 	# used in Generate_Stats_From_SQLite for unique clients and Write_Count_PerClient_Sql_ToFile
-	echo "pragma cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_clients ON dnsqueries (SrcIP);" > /tmp/uidivstats-upgrade.sql
+	echo "PRAGMA cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_clients ON dnsqueries (SrcIP);" > /tmp/uidivstats-upgrade.sql
 	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
-	echo "pragma cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_time_clients ON dnsqueries (Timestamp,SrcIP);" > /tmp/uidivstats-upgrade.sql
+	echo "PRAGMA cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_time_clients ON dnsqueries (Timestamp,SrcIP);" > /tmp/uidivstats-upgrade.sql
 	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
-	echo "pragma cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_results_time_clients ON dnsqueries (Result collate nocase,Timestamp,SrcIP);" > /tmp/uidivstats-upgrade.sql
+	echo "PRAGMA cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_results_time_clients ON dnsqueries (Result collate nocase,Timestamp,SrcIP);" > /tmp/uidivstats-upgrade.sql
 	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
-	echo "pragma cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_clients_time_domains ON dnsqueries (SrcIP,Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
+	echo "PRAGMA cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_clients_time_domains ON dnsqueries (SrcIP,Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
 	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
-	echo "pragma cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_clients_results_time_domains ON dnsqueries (SrcIP,Result collate nocase,Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
+	echo "PRAGMA cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_clients_results_time_domains ON dnsqueries (SrcIP,Result collate nocase,Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
 	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
 	
 	 # used by Write_Count_Sql_ToFile
-	echo "pragma cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_time_domains ON dnsqueries (Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
+	echo "PRAGMA cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_time_domains ON dnsqueries (Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
 	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
-	echo "pragma cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_results_time_domains ON dnsqueries (Result collate nocase,Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
+	echo "PRAGMA cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_results_time_domains ON dnsqueries (Result collate nocase,Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
 	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
 	
 	# used by Write_Time_Sql_ToFile
-	echo "pragma cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_results_time ON dnsqueries (Result collate nocase,Timestamp);" > /tmp/uidivstats-upgrade.sql
+	echo "PRAGMA cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_results_time ON dnsqueries (Result collate nocase,Timestamp);" > /tmp/uidivstats-upgrade.sql
 	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
 	
 	# used by Write_KeyStats_Sql_ToFile and Write_Time_Sql_ToFile
-	echo "pragma cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_time_results ON dnsqueries (Timestamp,Result collate nocase);" > /tmp/uidivstats-upgrade.sql
+	echo "PRAGMA cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_time_results ON dnsqueries (Timestamp,Result collate nocase);" > /tmp/uidivstats-upgrade.sql
 	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
 	
 	rm -f /tmp/uidivstats-upgrade.sql
