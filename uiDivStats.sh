@@ -1227,6 +1227,7 @@ Process_Upgrade(){
 	rm -f "$SCRIPT_DIR/.upgraded3"
 	
 	if [ ! -f "$SCRIPT_DIR/.newindexes" ]; then
+		Print_Output true "First optimise, this will take a while!" "$WARN"
 		/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
 		sleep 5
 		Auto_Cron delete 2>/dev/null
@@ -1245,6 +1246,10 @@ Process_Upgrade(){
 	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
 	echo "DROP INDEX IF EXISTS idx_clients_results_domains;" > /tmp/uidivstats-upgrade.sql
 	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
+	if [ ! -f "$SCRIPT_DIR/.newindexes" ]; then
+		echo "PRAGMA VACUUM;" > /tmp/uidivstats-upgrade.sql
+		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
+	fi
 	
 	# used in Generate_Stats_From_SQLite for unique clients and Write_Count_PerClient_Sql_ToFile
 	echo "PRAGMA cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_clients ON dnsqueries (SrcIP);" > /tmp/uidivstats-upgrade.sql
