@@ -801,18 +801,17 @@ Write_Time_Sql_ToFile(){
 }
 
 Write_KeyStats_Sql_ToFile(){
-	timenow="$6"
 	{
 		echo ".headers off"
 		echo ".output /tmp/queries${1}${3}"
-	} > "$5"
+	} > "$4"
 	
 	if [ "$1" = "Total" ]; then
 		# --SEARCH TABLE dnsqueries USING COVERING INDEX idx_time_results (Timestamp>? AND Timestamp<?)
-		echo "SELECT COUNT([QueryID]) QueryCount FROM ${2}${3};" >> "$5"
+		echo "SELECT COUNT([QueryID]) QueryCount FROM ${2}${3};" >> "$4"
 	elif [ "$1" = "Blocked" ]; then
 		# --SEARCH TABLE dnsqueries USING COVERING INDEX idx_results_time (Result>? AND Result<?)
-		echo "SELECT COUNT([QueryID]) QueryCount FROM ${2}${3} WHERE [Result] LIKE 'blocked%';" >> "$5"
+		echo "SELECT COUNT([QueryID]) QueryCount FROM ${2}${3} WHERE [Result] LIKE 'blocked%';" >> "$4"
 	fi
 }
 
@@ -923,11 +922,11 @@ Generate_KeyStats(){
 	timenow="$1"
 	
 	#daily
-	Write_KeyStats_Sql_ToFile Total dnsqueries daily 1 /tmp/uidivstats.sql "$timenow"
+	Write_KeyStats_Sql_ToFile Total dnsqueries daily /tmp/uidivstats.sql
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 		sleep 1
 	done
-	Write_KeyStats_Sql_ToFile Blocked dnsqueries daily 1 /tmp/uidivstats.sql "$timenow"
+	Write_KeyStats_Sql_ToFile Blocked dnsqueries daily /tmp/uidivstats.sql
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 		sleep 1
 	done
@@ -948,11 +947,11 @@ Generate_KeyStats(){
 	
 	#weekly
 	if [ -n "$2" ] && [ "$2" = "fullrefresh" ]; then
-		Write_KeyStats_Sql_ToFile Total dnsqueries weekly 7 /tmp/uidivstats.sql "$timenow"
+		Write_KeyStats_Sql_ToFile Total dnsqueries weekly /tmp/uidivstats.sql
 		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 			sleep 1
 		done
-		Write_KeyStats_Sql_ToFile Blocked dnsqueries weekly 7 /tmp/uidivstats.sql "$timenow"
+		Write_KeyStats_Sql_ToFile Blocked dnsqueries weekly /tmp/uidivstats.sql
 		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 			sleep 1
 		done
@@ -974,11 +973,11 @@ Generate_KeyStats(){
 
 	#monthly
 	if [ -n "$2" ] && [ "$2" = "fullrefresh" ]; then
-		Write_KeyStats_Sql_ToFile Total dnsqueries monthly 30 /tmp/uidivstats.sql "$timenow"
+		Write_KeyStats_Sql_ToFile Total dnsqueries monthly /tmp/uidivstats.sql
 		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 			sleep 1
 		done
-		Write_KeyStats_Sql_ToFile Blocked dnsqueries monthly 30 /tmp/uidivstats.sql "$timenow"
+		Write_KeyStats_Sql_ToFile Blocked dnsqueries monthly /tmp/uidivstats.sql
 		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 			sleep 1
 		done
