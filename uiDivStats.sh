@@ -834,10 +834,12 @@ Generate_NG(){
 	
 	echo 'var uidivstatsstatus = "InProgress";' > /tmp/detect_uidivstats.js
 	
-	echo "PRAGMA cache_size=-20000; BEGIN TRANSACTION;"  > /tmp/uidivstats-trim.sql
-	echo "DELETE FROM [dnsqueries] WHERE [Timestamp] > $timenow;" >> /tmp/uidivstats-trim.sql
-	echo "DELETE FROM [dnsqueries] WHERE [SrcIP] = 'from';" >> /tmp/uidivstats-trim.sql
-	echo "END TRANSACTION;" >> /tmp/uidivstats-trim.sql
+	{
+		echo "PRAGMA cache_size=-20000; BEGIN TRANSACTION;"
+		echo "DELETE FROM [dnsqueries] WHERE [Timestamp] > $timenow;"
+		echo "DELETE FROM [dnsqueries] WHERE [SrcIP] = 'from';"
+		echo "END TRANSACTION;"
+	} > /tmp/uidivstats-trim.sql
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-trim.sql >/dev/null 2>&1; do
 		sleep 1
 	done
@@ -1186,11 +1188,13 @@ Trim_DNS_DB(){
 	
 	Print_Output true "Trimming records entries from database..." "$PASS"
 	
-	echo "PRAGMA cache_size=-20000; BEGIN TRANSACTION;"  > /tmp/uidivstats-trim.sql
-	echo "DELETE FROM [dnsqueries] WHERE [Timestamp] < ($timenow - (86400*30));" >> /tmp/uidivstats-trim.sql
-	echo "DELETE FROM [dnsqueries] WHERE [Timestamp] > $timenow;" >> /tmp/uidivstats-trim.sql
-	echo "DELETE FROM [dnsqueries] WHERE [SrcIP] = 'from';" >> /tmp/uidivstats-trim.sql
-	echo "END TRANSACTION;" >> /tmp/uidivstats-trim.sql
+	{
+		echo "PRAGMA cache_size=-20000; BEGIN TRANSACTION;"
+		echo "DELETE FROM [dnsqueries] WHERE [Timestamp] < ($timenow - (86400*30));"
+		echo "DELETE FROM [dnsqueries] WHERE [Timestamp] > $timenow;"
+		echo "DELETE FROM [dnsqueries] WHERE [SrcIP] = 'from';"
+		echo "END TRANSACTION;"
+	} > /tmp/uidivstats-trim.sql
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-trim.sql >/dev/null 2>&1; do
 		sleep 1
 	done
