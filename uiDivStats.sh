@@ -1167,6 +1167,7 @@ Optimise_DNS_DB(){
 	Print_Output true "Running nightly database analysis and optimisation..." "$PASS"
 	{
 		echo "PRAGMA analysis_limit=0;"
+		echo "PRAGMA cache_size=-20000;"
 		echo "ANALYZE dnsqueries;"
 	}  > /tmp/uidivstats-trim.sql
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-trim.sql >/dev/null 2>&1; do
