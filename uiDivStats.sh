@@ -1147,6 +1147,7 @@ Generate_Stats_From_SQLite(){
 
 Optimise_DNS_DB(){
 	renice 15 $$
+	Print_Output true "Running nightly database analysis and optimisation..." "$PASS"
 	{
 		echo "PRAGMA analysis_limit=0;"
 		echo "ANALYZE dnsqueries;"
@@ -1155,6 +1156,7 @@ Optimise_DNS_DB(){
 		sleep 1
 	done
 	rm -f /tmp/uidivstats-trim.sql
+	Print_Output true "Database analysis and optimisation complete" "$PASS"
 	renice 0 $$
 }
 
@@ -1163,6 +1165,8 @@ Trim_DNS_DB(){
 	TZ=$(cat /etc/TZ)
 	export TZ
 	timenow=$(date +"%s")
+	
+	Print_Output true "Trimming records entries from database..." "$PASS"
 	
 	echo "DELETE FROM [dnsqueries] WHERE [Timestamp] < ($timenow - (86400*30));" > /tmp/uidivstats-trim.sql
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-trim.sql >/dev/null 2>&1; do
@@ -1186,6 +1190,9 @@ Trim_DNS_DB(){
 		sleep 1
 	done
 	rm -f /tmp/uidivstats-trim.sql
+	
+	Print_Output true "Record trimming complete" "$PASS"
+	
 	renice 0 $$
 }
 
