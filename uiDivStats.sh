@@ -1275,6 +1275,10 @@ Process_Upgrade(){
 		sleep 60
 		mv "$DNS_DB" "$DNS_DB.bak"
 		mv "$DNS_DB.new" "$DNS_DB"
+		echo "PRAGMA journal_mode=WAL;" > /tmp/uidivstats-upgrade.sql
+		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
+			sleep 1
+		done
 	fi
 	
 	# used in Generate_Stats_From_SQLite for unique clients and Write_Count_PerClient_Sql_ToFile
