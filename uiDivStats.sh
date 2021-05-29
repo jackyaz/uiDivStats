@@ -1346,6 +1346,10 @@ Reset_DB(){
 			Print_Output true "Database backup failed, please check storage device" "$WARN"
 		fi
 		
+		/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
+		sleep 5
+		Auto_Cron delete 2>/dev/null
+		
 		Write_View_Sql_ToFile dnsqueries daily 1 /tmp/uidivstats.sql "$timenow" drop
 		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 			sleep 1
@@ -1359,9 +1363,12 @@ Reset_DB(){
 			sleep 1
 		done
 		
-		echo "DELETE FROM [dnsqueries];" > /tmp/uidivstats-stats.sql
+		echo "PRAGMA synchronous = normal; PRAGMA cache_size=-20000; BEGIN TRANSACTION; DELETE FROM [dnsqueries]; END TRANSACTION;" > /tmp/uidivstats-stats.sql
 		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-stats.sql
 		rm -f /tmp/uidivstats-stats.sql
+		
+		Auto_Cron create 2>/dev/null
+		/opt/etc/init.d/S90taildns start >/dev/null 2>&1
 		
 		Print_Output true "Database reset complete" "$WARN"
 	fi
