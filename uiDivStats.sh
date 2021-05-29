@@ -54,10 +54,8 @@ readonly PASS="\\e[32m"
 Print_Output(){
 	if [ "$1" = "true" ]; then
 		logger -t "$SCRIPT_NAME" "$2"
-		printf "\\e[1m$3%s: $2\\e[0m\\n\\n" "$SCRIPT_NAME"
-	else
-		printf "\\e[1m$3%s: $2\\e[0m\\n\\n" "$SCRIPT_NAME"
 	fi
+	printf "${BOLD}${3}%s${CLEARFORMAT}\\n\\n" "$2"
 }
 
 Validate_Number(){
@@ -126,19 +124,19 @@ Clear_Lock(){
 ############################################################################
 
 Set_Version_Custom_Settings(){
-	SETTINGSFILE=/jffs/addons/custom_settings.txt
+	SETTINGSFILE="/jffs/addons/custom_settings.txt"
 	case "$1" in
 		local)
 			if [ -f "$SETTINGSFILE" ]; then
 				if [ "$(grep -c "uidivstats_version_local" $SETTINGSFILE)" -gt 0 ]; then
 					if [ "$SCRIPT_VERSION" != "$(grep "uidivstats_version_local" /jffs/addons/custom_settings.txt | cut -f2 -d' ')" ]; then
-						sed -i "s/uidivstats_version_local.*/uidivstats_version_local $SCRIPT_VERSION/" "$SETTINGSFILE"
+						sed -i "s/uidivstats_version_local.*/uidivstats_version_local $2/" "$SETTINGSFILE"
 					fi
 				else
-					echo "uidivstats_version_local $SCRIPT_VERSION" >> "$SETTINGSFILE"
+					echo "uidivstats_version_local $2" >> "$SETTINGSFILE"
 				fi
 			else
-				echo "uidivstats_version_local $SCRIPT_VERSION" >> "$SETTINGSFILE"
+				echo "uidivstats_version_local $2" >> "$SETTINGSFILE"
 			fi
 		;;
 		server)
@@ -160,7 +158,7 @@ Set_Version_Custom_Settings(){
 Update_Check(){
 	echo 'var updatestatus = "InProgress";' > "$SCRIPT_WEB_DIR/detect_update.js"
 	doupdate="false"
-	localver=$(grep "SCRIPT_VERSION=" /jffs/scripts/"$SCRIPT_NAME" | grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})')
+	localver=$(grep "SCRIPT_VERSION=" "/jffs/scripts/$SCRIPT_NAME" | grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})')
 	/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME.sh" | grep -qF "jackyaz" || { Print_Output true "404 error detected - stopping update" "$ERR"; return 1; }
 	serverver=$(/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME.sh" | grep "SCRIPT_VERSION=" | grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})')
 	if [ "$localver" != "$serverver" ]; then
@@ -652,18 +650,17 @@ CacheMode(){
 BlockingFile(){
 	case "$1" in
 		check)
-		DIVCONF="$DIVERSION_DIR/.conf/diversion.conf"
-		BLOCKINGFILE="$DIVERSION_DIR/list/blockinglist"
-		
-		if [ "$(grep alternateBF "$DIVCONF" | cut -f2 -d"=")" = "on" ]; then
-				BLOCKINGFILE="$DIVERSION_DIR/list/blockinglist $DIVERSION_DIR/list/blockinglist_fs"
-		elif [ "$(grep "bfFs" "$DIVCONF" | cut -f2 -d"=")" = "on" ]; then
-			if [ "$(grep "bfTypeinUse" "$DIVCONF" | cut -f2 -d"=")" != "primary" ]; then
-				BLOCKINGFILE="$DIVERSION_DIR/list/blockinglist_fs"
+			DIVCONF="$DIVERSION_DIR/.conf/diversion.conf"
+			BLOCKINGFILE="$DIVERSION_DIR/list/blockinglist"
+			
+			if [ "$(grep alternateBF "$DIVCONF" | cut -f2 -d"=")" = "on" ]; then
+					BLOCKINGFILE="$DIVERSION_DIR/list/blockinglist $DIVERSION_DIR/list/blockinglist_fs"
+			elif [ "$(grep "bfFs" "$DIVCONF" | cut -f2 -d"=")" = "on" ]; then
+				if [ "$(grep "bfTypeinUse" "$DIVCONF" | cut -f2 -d"=")" != "primary" ]; then
+					BLOCKINGFILE="$DIVERSION_DIR/list/blockinglist_fs"
+				fi
 			fi
-		fi
-		
-		echo "$BLOCKINGFILE"
+			echo "$BLOCKINGFILE"
 		;;
 	esac
 }
@@ -700,7 +697,7 @@ WritePlainData_ToJS(){
 Write_View_Sql_ToFile(){
 	if [ "$6" = "create" ]; then
 		timenow="$5"
-		echo "CREATE VIEW IF NOT EXISTS ${1}${2} AS SELECT * FROM $1 WHERE ([Timestamp] >= $timenow - (86400*$3)) AND ([Timestamp] <= $timenow);" > "$4"
+		echo "CREATE VIEW IF NOT EXISTS ${1}${2} AS SELECT * FROM $1 WHERE ([Timestamp] >= strftime('%s',datetime($timenow,'unixepoch','-$3 day'))) AND ([Timestamp] <= $timenow);" > "$4"
 	elif [ "$6" = "drop" ]; then
 		echo "DROP VIEW IF EXISTS ${1}${2};" > "$4"
 	fi
@@ -715,9 +712,9 @@ Write_Count_Sql_ToFile(){
 	} > "$6"
 	
 	if [ "$1" = "Total" ]; then
-		echo "SELECT '$1' Fieldname, [ReqDmn] ReqDmn, Count([ReqDmn]) Count FROM ${2}${5} GROUP BY [ReqDmn] ORDER BY COUNT([ReqDmn]) DESC LIMIT 20;" >> "$6"
+		echo "SELECT '$1' Fieldname,[ReqDmn] ReqDmn,Count([ReqDmn]) Count FROM ${2}${5} GROUP BY [ReqDmn] ORDER BY COUNT([ReqDmn]) DESC LIMIT 20;" >> "$6"
 	elif [ "$1" = "Blocked" ]; then # covering index idx_results_domains
-		echo "SELECT '$1' Fieldname, [ReqDmn] ReqDmn, Count([ReqDmn]) Count FROM ${2}${5} WHERE ([Result] LIKE 'blocked%') GROUP BY [ReqDmn] ORDER BY COUNT([ReqDmn]) DESC LIMIT 20;" >> "$6"
+		echo "SELECT '$1' Fieldname,[ReqDmn] ReqDmn,Count([ReqDmn]) Count FROM ${2}${5} WHERE ([Result] LIKE 'blocked%') GROUP BY [ReqDmn] ORDER BY COUNT([ReqDmn]) DESC LIMIT 20;" >> "$6"
 	fi
 }
 
@@ -874,7 +871,6 @@ Generate_NG(){
 		sleep 1
 	done
 	rm -f /tmp/uidivstats.sql
-	
 	
 	Create_TempTime_Table dnsqueries 0.25 daily
 	if [ -n "$1" ] && [ "$1" = "fullrefresh" ]; then
@@ -1383,7 +1379,7 @@ MainMenu(){
 	printf "\\n"
 	
 	while true; do
-		printf "Choose an option:    "
+		printf "Choose an option:  "
 		read -r menu
 		case "$menu" in
 			1)
@@ -1402,24 +1398,41 @@ MainMenu(){
 				PressEnter
 				break
 			;;
+			3)
+				printf "\\n"
+				DaysToKeep update
+				PressEnter
+				break
+			;;
 			q)
 				printf "\\n"
 				if Check_Lock menu; then
-					Menu_ToggleQueryMode
+					if [ "$(QueryMode check)" = "all" ]; then
+						QueryMode "A+AAAA"
+					elif [ "$(QueryMode check)" = "A+AAAA" ]; then
+						QueryMode all
+					fi
+					Clear_Lock
 				fi
 				break
 			;;
 			c)
 				printf "\\n"
 				if Check_Lock menu; then
-					Menu_ToggleCacheMode
+					if [ "$(CacheMode check)" = "none" ]; then
+						CacheMode tmp
+					elif [ "$(CacheMode check)" = "tmp" ]; then
+						CacheMode none
+					fi
+					Clear_Lock
 				fi
 				break
 			;;
 			u)
 				printf "\\n"
 				if Check_Lock menu; then
-					Menu_Update
+					Update_Version
+					Clear_Lock
 				fi
 				PressEnter
 				break
@@ -1427,7 +1440,12 @@ MainMenu(){
 			uf)
 				printf "\\n"
 				if Check_Lock menu; then
-					Menu_ForceUpdate
+					Update_Version force
+					Clear_Lock
+				fi
+				PressEnter
+				break
+			;;
 				fi
 				PressEnter
 				break
@@ -1473,29 +1491,29 @@ Check_Requirements(){
 	fi
 	
 	if [ ! -f /opt/bin/opkg ]; then
-		Print_Output true "Entware not detected!" "$ERR"
+		Print_Output false "Entware not detected!" "$ERR"
 		CHECKSFAILED="true"
 	fi
 	
 	if [ ! -f /opt/bin/diversion ]; then
-		Print_Output true "Diversion not installed!" "$ERR"
+		Print_Output false "Diversion not installed!" "$ERR"
 		CHECKSFAILED="true"
 	else
 		if ! /opt/bin/grep -qm1 'div_lock_ac' /opt/bin/diversion; then
-			Print_Output true "Diversion update required!" "$ERR"
-			Print_Output true "Open Diversion and use option u to update"
+			Print_Output false "Diversion update required!" "$ERR"
+			Print_Output false "Open Diversion and use option u to update"
 			CHECKSFAILED="true"
 		fi
 		
 		if ! /opt/bin/grep -q 'log-facility=/opt/var/log/dnsmasq.log' /etc/dnsmasq.conf; then
-			Print_Output true "Diversion logging not enabled!" "$ERR"
-			Print_Output true "Open Diversion and use option l to enable logging"
+			Print_Output false "Diversion logging not enabled!" "$ERR"
+			Print_Output false "Open Diversion and use option l to enable logging"
 			CHECKSFAILED="true"
 		fi
 	fi
 	
 	if ! Firmware_Version_Check; then
-		Print_Output true "Unsupported firmware version detected, 384.XX required" "$ERR"
+		Print_Output false "Unsupported firmware version detected, 384.XX required" "$ERR"
 		CHECKSFAILED="true"
 	fi
 	
@@ -1512,13 +1530,14 @@ Check_Requirements(){
 }
 
 Menu_Install(){
+	ScriptHeader
 	Print_Output true "Welcome to $SCRIPT_NAME $SCRIPT_VERSION, a script by JackYaz"
 	sleep 1
 	
-	Print_Output true "Checking your router meets the requirements for $SCRIPT_NAME"
+	Print_Output false "Checking your router meets the requirements for $SCRIPT_NAME"
 	
 	if ! Check_Requirements; then
-		Print_Output true "Requirements for $SCRIPT_NAME not met, please see above for the reason(s)" "$CRIT"
+		Print_Output false "Requirements for $SCRIPT_NAME not met, please see above for the reason(s)" "$CRIT"
 		PressEnter
 		Clear_Lock
 		rm -f "/jffs/scripts/$SCRIPT_NAME" 2>/dev/null
@@ -1527,7 +1546,8 @@ Menu_Install(){
 	
 	Create_Dirs
 	Conf_Exists
-	Set_Version_Custom_Settings local
+	Set_Version_Custom_Settings local "$SCRIPT_VERSION"
+	Set_Version_Custom_Settings server "$SCRIPT_VERSION"
 	Create_Symlinks
 	
 	Update_File uidivstats_www.asp
@@ -1539,14 +1559,14 @@ Menu_Install(){
 	Auto_Cron delete 2>/dev/null
 	
 	renice 15 $$
-	Print_Output true "Creating database table and enabling write-ahead logging..." "$PASS"
+	Print_Output false "Creating database table and enabling write-ahead logging..." "$PASS"
 	{
 		echo "PRAGMA journal_mode=WAL;"
 		echo "CREATE TABLE IF NOT EXISTS [dnsqueries] ([QueryID] INTEGER PRIMARY KEY NOT NULL,[Timestamp] NUMERIC NOT NULL,[SrcIP] TEXT NOT NULL,[ReqDmn] TEXT NOT NULL,[QryType] Text NOT NULL,[Result] Text NOT NULL);"
 	}  > /tmp/uidivstats-upgrade.sql
 	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
 	
-	Print_Output true "Creating database table indexes..." "$PASS"
+	Print_Output false "Creating database table indexes..." "$PASS"
 	echo "DROP INDEX IF EXISTS idx_dns_domains;" > /tmp/uidivstats-upgrade.sql
 	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
 	echo "DROP INDEX IF EXISTS idx_dns_time;" > /tmp/uidivstats-upgrade.sql
@@ -1585,7 +1605,7 @@ Menu_Install(){
 	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
 	
 	rm -f /tmp/uidivstats-upgrade.sql
-	Print_Output true "Database ready, starting services..." "$PASS"
+	Print_Output false "Database ready, starting services..." "$PASS"
 	renice 0 $$
 	
 	Auto_Startup create 2>/dev/null
@@ -1595,10 +1615,11 @@ Menu_Install(){
 	Shortcut_Script create
 	/opt/etc/init.d/S90taildns start >/dev/null 2>&1
 	
-	Print_Output true "Starting first run of stat generation..." "$PASS"
 	Menu_GenerateStats fullrefresh
 	
 	Clear_Lock
+	ScriptHeader
+	MainMenu
 }
 
 Menu_Startup(){
@@ -1624,7 +1645,6 @@ Menu_Startup(){
 	
 	Create_Dirs
 	Conf_Exists
-	Set_Version_Custom_Settings local
 	Create_Symlinks
 	Auto_Startup create 2>/dev/null
 	Auto_DNSMASQ_Postconf create 2>/dev/null
@@ -1638,6 +1658,11 @@ Menu_Startup(){
 Menu_GenerateStats(){
 	if /opt/bin/grep -q 'log-facility=/opt/var/log/dnsmasq.log' /etc/dnsmasq.conf; then
 		renice 15 $$
+		if [ -n "$1" ] && [ "$1" = "fullrefresh" ]; then
+			Print_Output true "Starting stat full refresh" "$PASS"
+		else
+			Print_Output true "Starting stat update" "$PASS"
+		fi
 		UpdateDiversionWeeklyStatsFile
 		Generate_NG "$1"
 		renice 0 $$
@@ -1648,32 +1673,6 @@ Menu_GenerateStats(){
 	Clear_Lock
 }
 
-Menu_ToggleQueryMode(){
-	if [ "$(QueryMode check)" = "all" ]; then
-		QueryMode "A+AAAA"
-	elif [ "$(QueryMode check)" = "A+AAAA" ]; then
-		QueryMode all
-	fi
-	Clear_Lock
-}
-
-Menu_ToggleCacheMode(){
-	if [ "$(CacheMode check)" = "none" ]; then
-		CacheMode tmp
-	elif [ "$(CacheMode check)" = "tmp" ]; then
-		CacheMode none
-	fi
-	Clear_Lock
-}
-
-Menu_Update(){
-	Update_Version
-	Clear_Lock
-}
-
-Menu_ForceUpdate(){
-	Update_Version force
-	Clear_Lock
 }
 
 Menu_Uninstall(){
@@ -1695,6 +1694,10 @@ Menu_Uninstall(){
 	rm -f "$SCRIPT_DIR/uidivstats_www.asp" 2>/dev/null
 	rm -rf "$SCRIPT_WEB_DIR" 2>/dev/null
 	
+	SETTINGSFILE="/jffs/addons/custom_settings.txt"
+	sed -i '/uidivstats_version_local/d' "$SETTINGSFILE"
+	sed -i '/uidivstats_version_server/d' "$SETTINGSFILE"
+	
 	/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
 	sleep 5
 	rm -f /opt/etc/init.d/S90taildns 2>/dev/null
@@ -1709,17 +1712,15 @@ Menu_Uninstall(){
 
 NTP_Ready(){
 	if [ "$(nvram get ntp_ready)" -eq 0 ]; then
-		ntpwaitcount="0"
 		Check_Lock
-		while [ "$(nvram get ntp_ready)" -eq 0 ] && [ "$ntpwaitcount" -lt 300 ]; do
-			ntpwaitcount="$((ntpwaitcount + 1))"
-			if [ "$ntpwaitcount" -eq 60 ]; then
-				Print_Output true "Waiting for NTP to sync..." "$WARN"
-			fi
-			sleep 1
+		ntpwaitcount=0
+		while [ "$(nvram get ntp_ready)" -eq 0 ] && [ "$ntpwaitcount" -lt 600 ]; do
+			ntpwaitcount="$((ntpwaitcount + 30))"
+			Print_Output true "Waiting for NTP to sync..." "$WARN"
+			sleep 30
 		done
-		if [ "$ntpwaitcount" -ge 300 ]; then
-			Print_Output true "NTP failed to sync after 5 minutes. Please resolve!" "$CRIT"
+		if [ "$ntpwaitcount" -ge 600 ]; then
+			Print_Output true "NTP failed to sync after 10 minutes. Please resolve!" "$CRIT"
 			Clear_Lock
 			exit 1
 		else
@@ -1751,12 +1752,48 @@ Entware_Ready(){
 }
 ### ###
 
+Show_About(){
+	cat <<EOF
+About
+  $SCRIPT_NAME provides a graphical representation of domain
+  blocking performed by Diversion.
+License
+  $SCRIPT_NAME is free to use under the GNU General Public License
+  version 3 (GPL-3.0) https://opensource.org/licenses/GPL-3.0
+Help & Support
+  https://www.snbforums.com/forums/asuswrt-merlin-addons.60/?prefix_id=22
+Source code
+  https://github.com/jackyaz/$SCRIPT_NAME
+EOF
+	printf "\\n"
+}
+### ###
+
+### function based on @dave14305's FlexQoS show_help function ###
+Show_Help(){
+	cat <<EOF
+Available commands:
+  $SCRIPT_NAME about              explains functionality
+  $SCRIPT_NAME update             checks for updates
+  $SCRIPT_NAME forceupdate        updates to latest version (force update)
+  $SCRIPT_NAME startup force      runs startup actions such as mount WebUI tab
+  $SCRIPT_NAME install            installs script
+  $SCRIPT_NAME uninstall          uninstalls script
+  $SCRIPT_NAME generate           get modem stats and logs. also runs outputcsv
+  $SCRIPT_NAME outputcsv          create CSVs from database, used by WebUI and export
+  $SCRIPT_NAME ntpredirect        apply firewall rules to intercept and redirect NTP traffic
+  $SCRIPT_NAME develop            switch to development branch
+  $SCRIPT_NAME stable             switch to stable branch
+EOF
+	printf "\\n"
+}
+### ###
+
 if [ -z "$1" ]; then
 	NTP_Ready
 	Entware_Ready
 	Create_Dirs
 	Conf_Exists
-	Set_Version_Custom_Settings local
 	Create_Symlinks
 	Auto_Startup create 2>/dev/null
 	Auto_DNSMASQ_Postconf create 2>/dev/null
@@ -1840,18 +1877,6 @@ case "$1" in
 		Menu_GenerateStats fullrefresh
 		exit 0
 	;;
-	develop)
-		SCRIPT_BRANCH="develop"
-		SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/$SCRIPT_NAME/$SCRIPT_BRANCH"
-		Update_Version force
-		exit 0
-	;;
-	stable)
-		SCRIPT_BRANCH="master"
-		SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/$SCRIPT_NAME/$SCRIPT_BRANCH"
-		Update_Version force
-		exit 0
-	;;
 	update)
 		Update_Version unattended
 		exit 0
@@ -1868,12 +1893,40 @@ case "$1" in
 		fi
 		exit 0
 	;;
-	checkupdate)
-		Update_Check
+	postupdate)
+		Create_Dirs
+		Conf_Exists
+		Create_Symlinks
+		Auto_Startup create 2>/dev/null
+		Auto_DNSMASQ_Postconf create 2>/dev/null
+		Auto_Cron create 2>/dev/null
+		Auto_ServiceEvent create 2>/dev/null
+		Shortcut_Script create
+	;;
+	about)
+		ScriptHeader
+		Show_About
+		exit 0
+	;;
+	help)
+		ScriptHeader
+		Show_Help
 		exit 0
 	;;
 	uninstall)
 		Menu_Uninstall
+		exit 0
+	;;
+	develop)
+		SCRIPT_BRANCH="develop"
+		SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/$SCRIPT_NAME/$SCRIPT_BRANCH"
+		Update_Version force
+		exit 0
+	;;
+	stable)
+		SCRIPT_BRANCH="master"
+		SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/$SCRIPT_NAME/$SCRIPT_BRANCH"
+		Update_Version force
 		exit 0
 	;;
 	*)
