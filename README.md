@@ -2,8 +2,8 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/240224b6b96543a782f176f2435ffa03)](https://www.codacy.com/app/jackyaz/uiDivStats?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=jackyaz/uiDivStats&amp;utm_campaign=Badge_Grade)
 [![Build Status](https://travis-ci.com/jackyaz/uiDivStats.svg?branch=master)](https://travis-ci.com/jackyaz/uiDivStats)
 
-## v2.3.0
-### Updated on 2021-01-09
+## v3.0.0
+### Updated on 2021-06-01
 ## About
 A graphical representation of domain blocking performed by Diversion.
 
@@ -44,12 +44,4 @@ If this does not work, you will need to use the full path:
 ```
 
 ## Help
-Please post about any issues and problems here: [uiDivStats on SNBForums](https://www.snbforums.com/threads/uidivstats-webui-for-diversion-statistics.56393/)
-
-## FAQs
-### I haven't used scripts before on AsusWRT-Merlin
-If this is the first time you are using scripts, don't panic! In your router's WebUI, go to the Administration area of the left menu, and then the System tab. Set Enable JFFS custom scripts and configs to Yes.
-
-Further reading about scripts is available here: [AsusWRT-Merlin User-scripts](https://github.com/RMerl/asuswrt-merlin/wiki/User-scripts)
-
-![WebUI enable scripts](https://puu.sh/A3wnG/00a43283ed.png)
+Please post about any issues and problems here: [uiDivStats on SNBForums](https://www.snbforums.com/forums/asuswrt-merlin-addons.60/?prefix_id=15)
