@@ -1,5 +1,5 @@
 #!/bin/sh
-#shellcheck disable=SC2039
+# shellcheck disable=SC2039
 trap '' SIGHUP
 
 if [ ! -f /opt/bin/pkill ]; then
@@ -7,7 +7,7 @@ if [ ! -f /opt/bin/pkill ]; then
 	opkg install procps-ng-pkill
 fi
 
-cachemode="$(grep "CACHEMODE" "/jffs/addons/uiDivStats.d/config" | cut -f2 -d"=")"
+cachemode="$(grep "CACHEMODE" /jffs/addons/uiDivStats.d/config | cut -f2 -d"=")"
 taildnsfilesuffix=""
 if [ "$cachemode" = "tmp" ]; then
 	taildnsfilesuffix="-cache"
@@ -17,12 +17,12 @@ ntpwaitcount=0
 # Wait for NTP before starting
 while [ "$(nvram get ntp_ready)" -eq 0 ] && [ "$ntpwaitcount" -lt 600 ]; do
 	ntpwaitcount="$((ntpwaitcount + 30))"
-	logger -st "taildns" "Waiting for NTP to sync..." "$WARN"
+	logger -st taildns "Waiting for NTP to sync..." "$WARN"
 	sleep 30
 done
 
 if [ "$ntpwaitcount" -ge 600 ]; then
-	logger -st "taildns" "NTP failed to sync after 10 minutes - please check immediately!"
+	logger -st taildns "NTP failed to sync after 10 minutes - please check immediately!"
 	exit 1
 fi
 
@@ -30,12 +30,12 @@ fi
 
 while true; do
 	sleep 5
-	if [ "$(pidof taildnstotal"$taildnsfilesuffix" | wc -w)" -lt 2 ]; then
-		logger -t "uiDivStats" "taildns dead, restarting..."
-		killall -q taildnstotal"$taildnsfilesuffix"
+	if [ "$(pidof "taildnstotal$taildnsfilesuffix" | wc -w)" -lt 2 ]; then
+		logger -t uiDivStats "taildns dead, restarting..."
+		killall -q "taildnstotal$taildnsfilesuffix"
 		/opt/bin/pkill -f "tail -F /opt/var/log/dnsmasq.log /opt/var/log/dnsmasq.log3"
 		sleep 5
 		/jffs/addons/uiDivStats.d/taildns.d/taildnstotal"$taildnsfilesuffix" &
-		logger -t "uiDivStats" "taildns restarted"
+		logger -t uiDivStats "taildns restarted"
 	fi
 done

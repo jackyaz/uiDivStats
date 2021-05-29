@@ -1,8 +1,8 @@
 #!/bin/sh
-#shellcheck disable=SC2039
+# shellcheck disable=SC2039
 trap '' SIGHUP
 
-querymode="$(grep "QUERYMODE" "/jffs/addons/uiDivStats.d/config" | cut -f2 -d"=")"
+querymode="$(grep "QUERYMODE" /jffs/addons/uiDivStats.d/config | cut -f2 -d"=")"
 tailfilesuffix=""
 if [ "$querymode" = "A+AAAA" ]; then
 	tailfilesuffix="-a-aaaa"
