@@ -181,35 +181,45 @@ Update_Check(){
 }
 
 Update_Version(){
-	if [ -z "$1" ] || [ "$1" = "unattended" ]; then
+	if [ -z "$1" ]; then
 		updatecheckresult="$(Update_Check)"
 		isupdate="$(echo "$updatecheckresult" | cut -f1 -d',')"
 		localver="$(echo "$updatecheckresult" | cut -f2 -d',')"
 		serverver="$(echo "$updatecheckresult" | cut -f3 -d',')"
 		
 		if [ "$isupdate" = "version" ]; then
-			Print_Output true "New version of $SCRIPT_NAME available - updating to $serverver" "$PASS"
+			Print_Output true "New version of $SCRIPT_NAME available - $serverver" "$PASS"
 		elif [ "$isupdate" = "md5" ]; then
-			Print_Output true "MD5 hash of $SCRIPT_NAME does not match - downloading updated $serverver" "$PASS"
+			Print_Output true "MD5 hash of $SCRIPT_NAME does not match - hotfix available - $serverver" "$PASS"
 		fi
 		
-		Update_File shared-jy.tar.gz
 		
 		if [ "$isupdate" != "false" ]; then
-			Update_File uidivstats_www.asp
-			Update_File taildns.tar.gz
-			
-			/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME.sh" -o "/jffs/scripts/$SCRIPT_NAME" && Print_Output true "$SCRIPT_NAME successfully updated"
-			chmod 0755 /jffs/scripts/"$SCRIPT_NAME"
-			Clear_Lock
-			if [ -z "$1" ]; then
-				exec "$0" setversion
-			elif [ "$1" = "unattended" ]; then
-				exec "$0" setversion unattended
-			fi
-			exit 0
+			printf "\\n${BOLD}Do you want to continue with the update? (y/n)${CLEARFORMAT}  "
+			read -r confirm
+			case "$confirm" in
+				y|Y)
+					Update_File uidivstats_www.asp
+					Update_File taildns.tar.gz
+					Update_File shared-jy.tar.gz
+					
+					/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME.sh" -o "/jffs/scripts/$SCRIPT_NAME" && Print_Output true "$SCRIPT_NAME successfully updated"
+					chmod 0755 "/jffs/scripts/$SCRIPT_NAME"
+					Set_Version_Custom_Settings local "$serverver"
+					Set_Version_Custom_Settings server "$serverver"
+					Clear_Lock
+					PressEnter
+					exec "$0"
+					exit 0
+				;;
+				*)
+					printf "\\n"
+					Clear_Lock
+					return 1
+				;;
+			esac
 		else
-			Print_Output true "No new version - latest is $localver" "$WARN"
+			Print_Output true "No updates available - latest is $localver" "$WARN"
 			Clear_Lock
 		fi
 	fi
@@ -218,15 +228,18 @@ Update_Version(){
 		serverver=$(/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME.sh" | grep "SCRIPT_VERSION=" | grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})')
 		Print_Output true "Downloading latest version ($serverver) of $SCRIPT_NAME" "$PASS"
 		Update_File uidivstats_www.asp
-		Update_File shared-jy.tar.gz
 		Update_File taildns.tar.gz
+		Update_File shared-jy.tar.gz
 		/usr/sbin/curl -fsL --retry 3 "$SCRIPT_REPO/$SCRIPT_NAME.sh" -o "/jffs/scripts/$SCRIPT_NAME" && Print_Output true "$SCRIPT_NAME successfully updated"
-		chmod 0755 /jffs/scripts/"$SCRIPT_NAME"
+		chmod 0755 "/jffs/scripts/$SCRIPT_NAME"
+		Set_Version_Custom_Settings local "$serverver"
+		Set_Version_Custom_Settings server "$serverver"
 		Clear_Lock
 		if [ -z "$2" ]; then
-			exec "$0" setversion
+			PressEnter
+			exec "$0"
 		elif [ "$2" = "unattended" ]; then
-			exec "$0" setversion unattended
+			exec "$0" postupdate
 		fi
 		exit 0
 	fi
