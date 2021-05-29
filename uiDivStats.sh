@@ -1334,6 +1334,39 @@ Flush_Cache_To_DB(){
 	renice 0 $$
 }
 
+Reset_DB(){
+	SIZEAVAIL="$(df -P -k "$SCRIPT_USB_DIR" | awk '{print $4}' | tail -n 1)"
+	SIZEDB="$(ls -l "$DNS_DB" | awk '{print $5}')"
+	if [ "$SIZEDB" -gt "$SIZEAVAIL" ]; then
+		Print_Output true "Database size exceeds available space. $(ls -lh "$DNS_DB" | awk '{print $5}')B is required to create backup." "$ERR"
+		return 1
+	else
+		Print_Output true "Sufficient free space to back up database, proceeding..." "$PASS"
+		if ! cp -a "$DNS_DB" "$DNS_DB.bak"; then
+			Print_Output true "Database backup failed, please check storage device" "$WARN"
+		fi
+		
+		Write_View_Sql_ToFile dnsqueries daily 1 /tmp/uidivstats.sql "$timenow" drop
+		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+			sleep 1
+		done
+		Write_View_Sql_ToFile dnsqueries weekly 7 /tmp/uidivstats.sql "$timenow" drop
+		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+			sleep 1
+		done
+		Write_View_Sql_ToFile dnsqueries monthly 30 /tmp/uidivstats.sql "$timenow" drop
+		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+			sleep 1
+		done
+		
+		echo "DELETE FROM [dnsqueries];" > /tmp/uidivstats-stats.sql
+		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-stats.sql
+		rm -f /tmp/uidivstats-stats.sql
+		
+		Print_Output true "Database reset complete" "$WARN"
+	fi
+}
+
 Process_Upgrade(){
 	rm -f "$SCRIPT_DIR/.upgraded"
 	rm -f "$SCRIPT_DIR/.upgraded2"
@@ -1545,6 +1578,11 @@ MainMenu(){
 				PressEnter
 				break
 			;;
+			r)
+				printf "\\n"
+				if Check_Lock menu; then
+					Menu_ResetDB
+					Clear_Lock
 				fi
 				PressEnter
 				break
@@ -1772,6 +1810,20 @@ Menu_GenerateStats(){
 	Clear_Lock
 }
 
+Menu_ResetDB(){
+	printf "${BOLD}\\e[33mWARNING: This will reset the %s database by deleting all database records.\\n" "$SCRIPT_NAME"
+	printf "A backup of the database will be created if you change your mind.${CLEARFORMAT}\\n"
+	printf "\\n${BOLD}Do you want to continue? (y/n)${CLEARFORMAT}  "
+	read -r confirm
+	case "$confirm" in
+		y|Y)
+			printf "\\n"
+			Reset_DB
+		;;
+		*)
+			printf "\\n${BOLD}\\e[33mDatabase reset cancelled${CLEARFORMAT}\\n\\n"
+		;;
+	esac
 }
 
 Menu_Uninstall(){
