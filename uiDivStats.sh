@@ -393,9 +393,12 @@ Conf_Exists(){
 		dos2unix "$SCRIPT_CONF"
 		chmod 0644 "$SCRIPT_CONF"
 		sed -i -e 's/"//g' "$SCRIPT_CONF"
+		if ! grep -q "DAYSTOKEEP" "$SCRIPT_CONF"; then
+			echo "DAYSTOKEEP=30" >> "$SCRIPT_CONF"
+		fi
 		return 0
 	else
-		{ echo "QUERYMODE=all"; echo "CACHEMODE=tmp"; } > "$SCRIPT_CONF"
+		{ echo "QUERYMODE=all"; echo "CACHEMODE=tmp"; echo "DAYSTOKEEP=30"; } > "$SCRIPT_CONF"
 		return 1
 	fi
 }
@@ -662,6 +665,45 @@ CacheMode(){
 		check)
 			CACHEMODE="$(grep "CACHEMODE" "$SCRIPT_CONF" | cut -f2 -d"=")"
 			echo "$CACHEMODE"
+		;;
+	esac
+}
+
+DaysToKeep(){
+	case "$1" in
+		update)
+			daystokeep=30
+			exitmenu=""
+			ScriptHeader
+			while true; do
+				printf "\\n${BOLD}Please enter the desired number of days\\nto keep data for (30-365 days):${CLEARFORMAT}  "
+				read -r daystokeep_choice
+				
+				if [ "$daystokeep_choice" = "e" ]; then
+					exitmenu="exit"
+					break
+				elif ! Validate_Number "$daystokeep_choice"; then
+					printf "\\n${ERR}Please enter a valid number (30-365)${CLEARFORMAT}\\n"
+				elif [ "$daystokeep_choice" -lt 30 ] || [ "$daystokeep_choice" -gt 365 ]; then
+						printf "\\n${ERR}Please enter a number between 30 and 365${CLEARFORMAT}\\n"
+				else
+					daystokeep="$daystokeep_choice"
+					printf "\\n"
+					break
+				fi
+			done
+			
+			if [ "$exitmenu" != "exit" ]; then
+				sed -i 's/^DAYSTOKEEP.*$/DAYSTOKEEP='"$daystokeep"'/' "$SCRIPT_CONF"
+				return 0
+			else
+				printf "\\n"
+				return 1
+			fi
+		;;
+		check)
+			DAYSTOKEEP=$(grep "DAYSTOKEEP" "$SCRIPT_CONF" | cut -f2 -d"=")
+			echo "$DAYSTOKEEP"
 		;;
 	esac
 }
@@ -1205,7 +1247,7 @@ Trim_DNS_DB(){
 	
 	{
 		echo "PRAGMA cache_size=-20000; BEGIN TRANSACTION;"
-		echo "DELETE FROM [dnsqueries] WHERE [Timestamp] < ($timenow - (86400*30));"
+		echo "DELETE FROM [dnsqueries] WHERE ([Timestamp] >= strftime('%s',datetime($timenow,'unixepoch','-$(DaysToKeep check) day')));"
 		echo "DELETE FROM [dnsqueries] WHERE [Timestamp] > $timenow;"
 		echo "DELETE FROM [dnsqueries] WHERE [SrcIP] = 'from';"
 		echo "END TRANSACTION;"
@@ -1389,6 +1431,8 @@ MainMenu(){
 	printf "      WARNING: THIS WILL TAKE A WHILE (>10 minutes)\\n\\n"
 	printf "q.    Toggle query mode\\n      Currently \\e[1m%s\\e[0m query types will be logged\\n\\n" "$(QueryMode check)"
 	printf "c.    Toggle cache mode\\n      Currently \\e[1m%s\\e[0m being used to cache query records\\n\\n" "$(CacheMode check)"
+	printf "      WARNING: THIS MAY TAKE A WHILE (>5 minutes)\\n\\n"
+	printf "3.    Set number of days data to keep in database\\n      Currently: ${SETTING}%s days data will be kept${CLEARFORMAT}\\n\\n" "$(DaysToKeep check)"
 	printf "u.    Check for updates\\n"
 	printf "uf.   Update %s with latest version (force update)\\n\\n" "$SCRIPT_NAME"
 	printf "e.    Exit %s\\n\\n" "$SCRIPT_NAME"
