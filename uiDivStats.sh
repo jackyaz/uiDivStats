@@ -48,6 +48,9 @@ readonly CRIT="\\e[41m"
 readonly ERR="\\e[31m"
 readonly WARN="\\e[33m"
 readonly PASS="\\e[32m"
+readonly BOLD="$\\e[1m"
+readonly SETTING="${BOLD}\\e[36m"
+readonly CLEARFORMAT="$\\e[0m"
 ### End of output format variables ###
 
 # $1 = print to syslog, $2 = message to print, $3 = log level
@@ -1440,20 +1443,20 @@ PressEnter(){
 ScriptHeader(){
 	clear
 	printf "\\n"
-	printf "\\e[1m#################################################################\\e[0m\\n"
-	printf "\\e[1m##                                                             ##\\e[0m\\n"
-	printf "\\e[1m##          _  _____   _          _____  _          _          ##\\e[0m\\n"
-	printf "\\e[1m##         (_)|  __ \ (_)        / ____|| |        | |         ##\\e[0m\\n"
-	printf "\\e[1m##   _   _  _ | |  | | _ __   __| (___  | |_  __ _ | |_  ___   ##\\e[0m\\n"
-	printf "\\e[1m##  | | | || || |  | || |\ \ / / \___ \ | __|/ _  || __|/ __|  ##\\e[0m\\n"
-	printf "\\e[1m##  | |_| || || |__| || | \ V /  ____) || |_| (_| || |_ \__ \  ##\\e[0m\\n"
-	printf "\\e[1m##   \__,_||_||_____/ |_|  \_/  |_____/  \__|\__,_| \__||___/  ##\\e[0m\\n"
-	printf "\\e[1m##                                                             ##\\e[0m\\n"
-	printf "\\e[1m##                      %s on %-11s                  ##\\e[0m\\n" "$SCRIPT_VERSION" "$ROUTER_MODEL"
-	printf "\\e[1m##                                                             ##\\e[0m\\n"
-	printf "\\e[1m##             https://github.com/jackyaz/uiDivStats           ##\\e[0m\\n"
-	printf "\\e[1m##                                                             ##\\e[0m\\n"
-	printf "\\e[1m#################################################################\\e[0m\\n"
+	printf "${BOLD}#################################################################${CLEARFORMAT}\\n"
+	printf "${BOLD}##                                                             ##${CLEARFORMAT}\\n"
+	printf "${BOLD}##          _  _____   _          _____  _          _          ##${CLEARFORMAT}\\n"
+	printf "${BOLD}##         (_)|  __ \ (_)        / ____|| |        | |         ##${CLEARFORMAT}\\n"
+	printf "${BOLD}##   _   _  _ | |  | | _ __   __| (___  | |_  __ _ | |_  ___   ##${CLEARFORMAT}\\n"
+	printf "${BOLD}##  | | | || || |  | || |\ \ / / \___ \ | __|/ _  || __|/ __|  ##${CLEARFORMAT}\\n"
+	printf "${BOLD}##  | |_| || || |__| || | \ V /  ____) || |_| (_| || |_ \__ \  ##${CLEARFORMAT}\\n"
+	printf "${BOLD}##   \__,_||_||_____/ |_|  \_/  |_____/  \__|\__,_| \__||___/  ##${CLEARFORMAT}\\n"
+	printf "${BOLD}##                                                             ##${CLEARFORMAT}\\n"
+	printf "${BOLD}##                      %s on %-11s                  ##${CLEARFORMAT}\\n" "$SCRIPT_VERSION" "$ROUTER_MODEL"
+	printf "${BOLD}##                                                             ##${CLEARFORMAT}\\n"
+	printf "${BOLD}##             https://github.com/jackyaz/uiDivStats           ##${CLEARFORMAT}\\n"
+	printf "${BOLD}##                                                             ##${CLEARFORMAT}\\n"
+	printf "${BOLD}#################################################################${CLEARFORMAT}\\n"
 	printf "\\n"
 }
 
@@ -1461,17 +1464,17 @@ MainMenu(){
 	printf "WebUI for %s is available at:\\n${SETTING}%s${CLEARFORMAT}\\n\\n" "$SCRIPT_NAME" "$(Get_WebUI_URL)"
 	printf "1.    Update Diversion Statistics (daily only)\\n\\n"
 	printf "2.    Update Diversion Statistics (daily, weekly and monthly)\\n"
-	printf "      WARNING: THIS WILL TAKE A WHILE (>10 minutes)\\n\\n"
-	printf "q.    Toggle query mode\\n      Currently \\e[1m%s\\e[0m query types will be logged\\n\\n" "$(QueryMode check)"
-	printf "c.    Toggle cache mode\\n      Currently \\e[1m%s\\e[0m being used to cache query records\\n\\n" "$(CacheMode check)"
 	printf "      WARNING: THIS MAY TAKE A WHILE (>5 minutes)\\n\\n"
 	printf "3.    Set number of days data to keep in database\\n      Currently: ${SETTING}%s days data will be kept${CLEARFORMAT}\\n\\n" "$(DaysToKeep check)"
+	printf "q.    Toggle query mode\\n      Currently ${SETTING}%s${CLEARFORMAT} query types will be logged\\n\\n" "$(QueryMode check)"
+	printf "c.    Toggle cache mode\\n      Currently ${SETTING}%s${CLEARFORMAT} being used to cache query records\\n\\n" "$(CacheMode check)"
 	printf "u.    Check for updates\\n"
 	printf "uf.   Update %s with latest version (force update)\\n\\n" "$SCRIPT_NAME"
+	printf "r.    Reset %s database / delete all data\\n\\n" "$SCRIPT_NAME"
 	printf "e.    Exit %s\\n\\n" "$SCRIPT_NAME"
 	printf "z.    Uninstall %s\\n" "$SCRIPT_NAME"
 	printf "\\n"
-	printf "\\e[1m#################################################################\\e[0m\\n"
+	printf "${BOLD}#################################################################${CLEARFORMAT}\\n"
 	printf "\\n"
 	
 	while true; do
@@ -1548,12 +1551,12 @@ MainMenu(){
 			;;
 			e)
 				ScriptHeader
-				printf "\\n\\e[1mThanks for using %s!\\e[0m\\n\\n\\n" "$SCRIPT_NAME"
+				printf "\\n${BOLD}Thanks for using %s!${CLEARFORMAT}\\n\\n\\n" "$SCRIPT_NAME"
 				exit 0
 			;;
 			z)
 				while true; do
-					printf "\\n\\e[1mAre you sure you want to uninstall %s? (y/n)\\e[0m\\n" "$SCRIPT_NAME"
+					printf "\\n${BOLD}Are you sure you want to uninstall %s? (y/n)${CLEARFORMAT}  " "$SCRIPT_NAME"
 					read -r confirm
 					case "$confirm" in
 						y|Y)
