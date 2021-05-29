@@ -1282,7 +1282,7 @@ Trim_DNS_DB(){
 	
 	{
 		echo "PRAGMA cache_size=-20000; BEGIN TRANSACTION;"
-		echo "DELETE FROM [dnsqueries] WHERE ([Timestamp] >= strftime('%s',datetime($timenow,'unixepoch','-$(DaysToKeep check) day')));"
+		echo "DELETE FROM [dnsqueries] WHERE ([Timestamp] < strftime('%s',datetime($timenow,'unixepoch','-$(DaysToKeep check) day')));"
 		echo "DELETE FROM [dnsqueries] WHERE [Timestamp] > $timenow;"
 		echo "DELETE FROM [dnsqueries] WHERE [SrcIP] = 'from';"
 		echo "END TRANSACTION;"
