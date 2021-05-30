@@ -374,7 +374,7 @@ Create_Symlinks(){
 	rm -rf "${SCRIPT_WEB_DIR:?}/"* 2>/dev/null
 	
 	ln -s /tmp/detect_uidivstats.js "$SCRIPT_WEB_DIR/detect_uidivstats.js" 2>/dev/null
-	ln -s "$SCRIPT_DIR/SQLData.js" "$SCRIPT_WEB_DIR/SQLData.js" 2>/dev/null
+	ln -s "$SCRIPT_USB_DIR/SQLData.js" "$SCRIPT_WEB_DIR/SQLData.js" 2>/dev/null
 	ln -s "$SCRIPT_CONF" "$SCRIPT_WEB_DIR/config.htm" 2>/dev/null
 	
 	if [ ! -f /opt/bin/find ]; then
@@ -1037,7 +1037,7 @@ Generate_NG(){
 	fi
 	
 	echo "Stats last updated: $timenowfriendly" > /tmp/uidivstatstitle.txt
-	WriteStats_ToJS /tmp/uidivstatstitle.txt "$SCRIPT_DIR/SQLData.js" SetuiDivStatsTitle statstitle
+	WriteStats_ToJS /tmp/uidivstatstitle.txt "$SCRIPT_USB_DIR/SQLData.js" SetuiDivStatsTitle statstitle
 	echo 'var uidivstatsstatus = "Done";' > /tmp/detect_uidivstats.js
 	Print_Output true "Stats updated successfully" "$PASS"
 	rm -f /tmpuidivstatstitle.txt
@@ -1103,7 +1103,7 @@ Generate_KeyStats(){
 		queriesPercentagedaily="$(echo "$queriesBlockeddaily" "$queriesTotaldaily" | awk '{printf "%3.2f\n",$1/$2*100}')"
 	fi
 	
-	WritePlainData_ToJS "$SCRIPT_DIR/SQLData.js" "QueriesTotaldaily,$queriesTotaldaily" "QueriesBlockeddaily,$queriesBlockeddaily" "BlockedPercentagedaily,$queriesPercentagedaily"
+	WritePlainData_ToJS "$SCRIPT_USB_DIR/SQLData.js" "QueriesTotaldaily,$queriesTotaldaily" "QueriesBlockeddaily,$queriesBlockeddaily" "BlockedPercentagedaily,$queriesPercentagedaily"
 	
 	if [ -n "$2" ] && [ "$2" = "fullrefresh" ]; then
 		#weekly
@@ -1128,7 +1128,7 @@ Generate_KeyStats(){
 			queriesPercentageweekly="$(echo "$queriesBlockedweekly" "$queriesTotalweekly" | awk '{printf "%3.2f\n",$1/$2*100}')"
 		fi
 		
-		WritePlainData_ToJS "$SCRIPT_DIR/SQLData.js" "QueriesTotalweekly,$queriesTotalweekly" "QueriesBlockedweekly,$queriesBlockedweekly" "BlockedPercentageweekly,$queriesPercentageweekly"
+		WritePlainData_ToJS "$SCRIPT_USB_DIR/SQLData.js" "QueriesTotalweekly,$queriesTotalweekly" "QueriesBlockedweekly,$queriesBlockedweekly" "BlockedPercentageweekly,$queriesPercentageweekly"
 		
 		#monthly
 		Write_KeyStats_Sql_ToFile Total dnsqueries monthly /tmp/uidivstats.sql
@@ -1152,7 +1152,7 @@ Generate_KeyStats(){
 			queriesPercentagemonthly="$(echo "$queriesBlockedmonthly" "$queriesTotalmonthly" | awk '{printf "%3.2f\n",$1/$2*100}')"
 		fi
 		
-		WritePlainData_ToJS "$SCRIPT_DIR/SQLData.js" "QueriesTotalmonthly,$queriesTotalmonthly" "QueriesBlockedmonthly,$queriesBlockedmonthly" "BlockedPercentagemonthly,$queriesPercentagemonthly"
+		WritePlainData_ToJS "$SCRIPT_USB_DIR/SQLData.js" "QueriesTotalmonthly,$queriesTotalmonthly" "QueriesBlockedmonthly,$queriesBlockedmonthly" "BlockedPercentagemonthly,$queriesPercentagemonthly"
 	fi
 	
 	rm -f /tmp/queriesTotal*
@@ -1172,7 +1172,7 @@ Generate_Count_Blocklist_Domains(){
 	blocklistdomains="$((BLL+BL+WCBL))"
 	if ! Validate_Number "$blocklistdomains"; then blocklistdomains=0; fi
 	
-	WritePlainData_ToJS "$SCRIPT_DIR/SQLData.js" "BlockedDomains,$blocklistdomains"
+	WritePlainData_ToJS "$SCRIPT_USB_DIR/SQLData.js" "BlockedDomains,$blocklistdomains"
 }
 
 Generate_Stats_From_SQLite(){
@@ -1952,6 +1952,9 @@ if [ -z "$1" ]; then
 	NTP_Ready
 	Entware_Ready
 	Create_Dirs
+	if [ -f "$SCRIPT_DIR/SQLData.js" ]; then
+		mv "$SCRIPT_DIR/SQLData.js" "$SCRIPT_USB_DIR/SQLData.js"
+	fi
 	Conf_Exists
 	Create_Symlinks
 	Auto_Startup create 2>/dev/null
@@ -2045,8 +2048,11 @@ case "$1" in
 		exit 0
 	;;
 	setversion)
-		Set_Version_Custom_Settings local
+		Set_Version_Custom_Settings local "$SCRIPT_VERSION"
 		Set_Version_Custom_Settings server "$SCRIPT_VERSION"
+		if [ -f "$SCRIPT_DIR/SQLData.js" ]; then
+			mv "$SCRIPT_DIR/SQLData.js" "$SCRIPT_USB_DIR/SQLData.js"
+		fi
 		if [ -z "$2" ]; then
 			exec "$0"
 		fi
@@ -2054,6 +2060,9 @@ case "$1" in
 	;;
 	postupdate)
 		Create_Dirs
+		if [ -f "$SCRIPT_DIR/SQLData.js" ]; then
+			mv "$SCRIPT_DIR/SQLData.js" "$SCRIPT_USB_DIR/SQLData.js"
+		fi
 		Conf_Exists
 		Create_Symlinks
 		Auto_Startup create 2>/dev/null
