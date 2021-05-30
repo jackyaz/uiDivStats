@@ -1381,43 +1381,34 @@ Flush_Cache_To_DB(){
 }
 
 Reset_DB(){
-	SIZEAVAIL="$(df -P -k "$SCRIPT_USB_DIR" | awk '{print $4}' | tail -n 1)"
-	SIZEDB="$(ls -l "$DNS_DB" | awk '{print $5}')"
-	if [ "$SIZEDB" -gt "$SIZEAVAIL" ]; then
-		Print_Output true "Database size exceeds available space. $(ls -lh "$DNS_DB" | awk '{print $5}')B is required to create backup." "$ERR"
-		return 1
-	else
-		Print_Output true "Sufficient free space to back up database, proceeding..." "$PASS"
-		if ! cp -a "$DNS_DB" "$DNS_DB.bak"; then
-			Print_Output true "Database backup failed, please check storage device" "$WARN"
-		fi
-		
-		/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
-		sleep 5
-		Auto_Cron delete 2>/dev/null
-		
-		Write_View_Sql_ToFile dnsqueries daily 1 /tmp/uidivstats.sql "$timenow" drop
-		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
-			sleep 1
-		done
-		Write_View_Sql_ToFile dnsqueries weekly 7 /tmp/uidivstats.sql "$timenow" drop
-		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
-			sleep 1
-		done
-		Write_View_Sql_ToFile dnsqueries monthly 30 /tmp/uidivstats.sql "$timenow" drop
-		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
-			sleep 1
-		done
-		
-		echo "PRAGMA synchronous = normal; PRAGMA cache_size=-20000; BEGIN TRANSACTION; DELETE FROM [dnsqueries]; END TRANSACTION;" > /tmp/uidivstats-stats.sql
-		"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-stats.sql
-		rm -f /tmp/uidivstats-stats.sql
-		
-		Auto_Cron create 2>/dev/null
-		/opt/etc/init.d/S90taildns start >/dev/null 2>&1
-		
-		Print_Output true "Database reset complete" "$WARN"
+	
+	/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
+	sleep 5
+	Auto_Cron delete 2>/dev/null
+	
+	if ! mv "$DNS_DB" "$DNS_DB.bak"; then
+		Print_Output true "Database backup failed, please check storage device" "$WARN"
 	fi
+	
+	Print_Output false "Creating database table and enabling write-ahead logging..." "$PASS"
+	{
+		echo "PRAGMA journal_mode=WAL;"
+		echo "CREATE TABLE IF NOT EXISTS [dnsqueries] ([QueryID] INTEGER PRIMARY KEY NOT NULL,[Timestamp] NUMERIC NOT NULL,[SrcIP] TEXT NOT NULL,[ReqDmn] TEXT NOT NULL,[QryType] Text NOT NULL,[Result] Text NOT NULL);"
+	}  > /tmp/uidivstats-upgrade.sql
+	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
+	
+	Print_Output false "Creating database table indexes..." "$PASS"
+	Table_Indexes drop
+	Table_Indexes create
+	
+	rm -f /tmp/uidivstats-upgrade.sql
+	Print_Output false "Database ready, starting services..." "$PASS"
+	renice 0 $$
+	
+	Auto_Cron create 2>/dev/null
+	/opt/etc/init.d/S90taildns start >/dev/null 2>&1
+	
+	Print_Output true "Database reset complete" "$WARN"
 }
 
 Process_Upgrade(){
