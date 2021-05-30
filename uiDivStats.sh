@@ -790,12 +790,62 @@ WritePlainData_ToJS(){
 	done
 }
 
+
+# $1 create/drop $2 tablename $3 frequency (hours) $4 outputfrequency
+TempTime_Table(){
+	case "$1" in
+		create)
+			multiplier="$(echo "$3" | awk '{printf (60*60*$1)}')"
+			
+			{
+				echo ".headers off"
+				echo ".output /tmp/timesmin"
+				echo "SELECT CAST(MIN([Timestamp])/$multiplier AS INT)*$multiplier FROM ${2}${4};"
+				echo ".headers off"
+				echo ".output /tmp/timesmax"
+				echo "SELECT CAST(MAX([Timestamp])/$multiplier AS INT)*$multiplier FROM ${2}${4};"
+			} > /tmp/uidivstats.sql
+			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+				sleep 1
+			done
+			
+			timesmin="$(cat /tmp/timesmin)"
+			timesmax="$(cat /tmp/timesmax)"
+			rm -f /tmp/timesmin
+			rm -f /tmp/timesmax
+			
+			if ! Validate_Number "$timesmin"; then timesmin=0; fi
+			if ! Validate_Number "$timesmax"; then timesmax=0; fi
+			
+			{
+				echo "CREATE TABLE IF NOT EXISTS temp_timerange_$4 AS"
+				echo "WITH RECURSIVE c(x) AS("
+				echo "VALUES($timesmin)"
+				echo "UNION ALL"
+				echo "SELECT x+$multiplier FROM c WHERE x<$timesmax"
+				echo ") SELECT x FROM c;"
+			} > /tmp/uidivstats.sql
+			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+				sleep 1
+			done
+			rm -f /tmp/uidivstats.sql
+			;;
+		drop)
+			echo "DROP TABLE IF EXISTS temp_timerange_$2;" > /tmp/uidivstats.sql
+			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
+				sleep 1
+			done
+			rm -f /tmp/uidivstats.sql
+		;;
+	esac
+}
+
 Write_View_Sql_ToFile(){
-	if [ "$6" = "create" ]; then
-		timenow="$5"
-		echo "CREATE VIEW IF NOT EXISTS ${1}${2} AS SELECT * FROM $1 WHERE ([Timestamp] >= strftime('%s',datetime($timenow,'unixepoch','-$3 day'))) AND ([Timestamp] <= $timenow);" > "$4"
-	elif [ "$6" = "drop" ]; then
-		echo "DROP VIEW IF EXISTS ${1}${2};" > "$4"
+	if [ "$1" = "create" ]; then
+		timenow="$6"
+		echo "CREATE VIEW IF NOT EXISTS ${2}${3} AS SELECT * FROM $2 WHERE ([Timestamp] >= strftime('%s',datetime($timenow,'unixepoch','-$4 day'))) AND ([Timestamp] <= $timenow);" > "$5"
+	elif [ "$1" = "drop" ]; then
+		echo "DROP VIEW IF EXISTS ${2}${3};" > "$4"
 	fi
 }
 
@@ -837,53 +887,6 @@ Write_Count_PerClient_Sql_ToFile(){
 			echo "GROUP BY [SrcIP],[ReqDmn]) WHERE rn <=20 ORDER BY SrcIP,Count DESC;"
 		} >> "$6"
 	fi
-}
-
-# $1 tablename $2 frequency (hours) $3 outputfrequency
-Create_TempTime_Table(){
-	multiplier="$(echo "$2" | awk '{printf (60*60*$1)}')"
-	
-	{
-		echo ".headers off"
-		echo ".output /tmp/timesmin"
-		echo "SELECT CAST(MIN([Timestamp])/$multiplier AS INT)*$multiplier FROM ${1}${3};"
-		echo ".headers off"
-		echo ".output /tmp/timesmax"
-		echo "SELECT CAST(MAX([Timestamp])/$multiplier AS INT)*$multiplier FROM ${1}${3};"
-	} > /tmp/uidivstats.sql
-	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
-		sleep 1
-	done
-	
-	timesmin="$(cat /tmp/timesmin)"
-	timesmax="$(cat /tmp/timesmax)"
-	rm -f /tmp/timesmin
-	rm -f /tmp/timesmax
-	
-	if ! Validate_Number "$timesmin"; then timesmin=0; fi
-	if ! Validate_Number "$timesmax"; then timesmax=0; fi
-	
-	{
-		echo "CREATE TABLE IF NOT EXISTS temp_timerange_$3 AS"
-		echo "WITH RECURSIVE c(x) AS("
-		echo "VALUES($timesmin)"
-		echo "UNION ALL"
-		echo "SELECT x+$multiplier FROM c WHERE x<$timesmax"
-		echo ") SELECT x FROM c;"
-	} > /tmp/uidivstats.sql
-	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
-		sleep 1
-	done
-	rm -f /tmp/uidivstats.sql
-}
-
-# $1 outputfrequency
-Drop_TempTime_Table(){
-	echo "DROP TABLE IF EXISTS temp_timerange_$1;" > /tmp/uidivstats.sql
-	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
-		sleep 1
-	done
-	rm -f /tmp/uidivstats.sql
 }
 
 #$1 fieldname $2 tablename $3 frequency (hours) $4 length (days) $5 outputfile $6 outputfrequency $7 sqlfile
@@ -939,39 +942,39 @@ Generate_NG(){
 	rm -f /tmp/uidivstats-trim.sql
 	
 	if [ -n "$1" ] && [ "$1" = "fullrefresh" ]; then
-		Write_View_Sql_ToFile dnsqueries daily 1 /tmp/uidivstats.sql "$timenow" drop
+		Write_View_Sql_ToFile drop dnsqueries daily /tmp/uidivstats.sql
 		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 			sleep 1
 		done
-		Write_View_Sql_ToFile dnsqueries weekly 7 /tmp/uidivstats.sql "$timenow" drop
+		Write_View_Sql_ToFile drop dnsqueries weekly /tmp/uidivstats.sql
 		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 			sleep 1
 		done
-		Write_View_Sql_ToFile dnsqueries monthly 30 /tmp/uidivstats.sql "$timenow" drop
+		Write_View_Sql_ToFile drop dnsqueries monthly /tmp/uidivstats.sql
 		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 			sleep 1
 		done
 		rm -f /tmp/uidivstats.sql
 	fi
 	
-	Write_View_Sql_ToFile dnsqueries daily 1 /tmp/uidivstats.sql "$timenow" create
+	Write_View_Sql_ToFile create dnsqueries daily 1 /tmp/uidivstats.sql "$timenow"
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 		sleep 1
 	done
-	Write_View_Sql_ToFile dnsqueries weekly 7 /tmp/uidivstats.sql "$timenow" create
+	Write_View_Sql_ToFile create dnsqueries weekly 7 /tmp/uidivstats.sql "$timenow"
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 		sleep 1
 	done
-	Write_View_Sql_ToFile dnsqueries monthly 30 /tmp/uidivstats.sql "$timenow" create
+	Write_View_Sql_ToFile create dnsqueries monthly 30 /tmp/uidivstats.sql "$timenow"
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 		sleep 1
 	done
 	rm -f /tmp/uidivstats.sql
 	
-	Create_TempTime_Table dnsqueries 0.25 daily
+	TempTime_Table create dnsqueries 0.25 daily
 	if [ -n "$1" ] && [ "$1" = "fullrefresh" ]; then
-		Create_TempTime_Table dnsqueries 1 weekly
-		Create_TempTime_Table dnsqueries 3 monthly
+		TempTime_Table create dnsqueries 1 weekly
+		TempTime_Table create dnsqueries 3 monthly
 	fi
 	
 	Generate_Count_Blocklist_Domains
@@ -984,10 +987,10 @@ Generate_NG(){
 		Generate_Stats_From_SQLite "$timenow"
 	fi
 	
-	Drop_TempTime_Table daily
+	TempTime_Table drop daily
 	if [ -n "$1" ] && [ "$1" = "fullrefresh" ]; then
-		Drop_TempTime_Table weekly
-		Drop_TempTime_Table monthly
+		TempTime_Table drop weekly
+		TempTime_Table drop monthly
 	fi
 	
 	echo "Stats last updated: $timenowfriendly" > /tmp/uidivstatstitle.txt
@@ -1197,7 +1200,7 @@ Generate_Stats_From_SQLite(){
 		fi
 	done
 	
-	Write_View_Sql_ToFile dnsqueries daily 1 /tmp/uidivstats.sql "$timenow" drop
+	Write_View_Sql_ToFile drop dnsqueries daily /tmp/uidivstats.sql
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats.sql >/dev/null 2>&1; do
 		sleep 1
 	done
@@ -1291,11 +1294,11 @@ Trim_DNS_DB(){
 		sleep 1
 	done
 	
-	Write_View_Sql_ToFile dnsqueries weekly 7 /tmp/uidivstats-trim.sql "$timenow" drop
+	Write_View_Sql_ToFile drop dnsqueries weekly /tmp/uidivstats-trim.sql
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-trim.sql >/dev/null 2>&1; do
 		sleep 1
 	done
-	Write_View_Sql_ToFile dnsqueries monthly 30 /tmp/uidivstats-trim.sql "$timenow" drop
+	Write_View_Sql_ToFile drop dnsqueries monthly /tmp/uidivstats-trim.sql
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-trim.sql >/dev/null 2>&1; do
 		sleep 1
 	done
