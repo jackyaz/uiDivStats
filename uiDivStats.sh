@@ -768,13 +768,14 @@ UpdateDiversionWeeklyStatsFile(){
 }
 
 WriteStats_ToJS(){
-	{ echo ""; echo "function $3(){"; } >> "$2"
+	sed -i -e '/}/d;/function/d;/document.getElementById/d;/^$/d' "$2"
+	printf "\\r\\nfunction %s(){" "$3" >> "$2"
 	html='document.getElementById("'"$4"'").innerHTML="'
 	while IFS='' read -r line || [ -n "$line" ]; do
-		html="${html}${line}\\r\\n"
+		html="${html}${line};"
 	done < "$1"
 	html="$html"'"'
-	printf "%s\\r\\n}\\r\\n" "$html" >> "$2"
+	printf "%s}\\r\\n" "$html" >> "$2"
 }
 
 WritePlainData_ToJS(){
