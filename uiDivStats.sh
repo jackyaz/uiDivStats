@@ -41,6 +41,7 @@ readonly CSV_OUTPUT_DIR="$SCRIPT_USB_DIR/csv"
 [ -z "$(nvram get odmpid)" ] && ROUTER_MODEL=$(nvram get productid) || ROUTER_MODEL=$(nvram get odmpid)
 SQLITE3_PATH=/opt/bin/sqlite3
 readonly DIVERSION_DIR="/opt/share/diversion"
+readonly STATSEXCLUDE_LIST_FILE="$SCRIPT_DIR/statsexcludelist"
 ### End of script variables ###
 
 ### Start of output format variables ###
@@ -367,6 +368,10 @@ Create_Dirs(){
 	
 	if [ ! -d "$CSV_OUTPUT_DIR" ]; then
 		mkdir -p "$CSV_OUTPUT_DIR"
+	fi
+	
+	if [ ! -f "$STATSEXCLUDE_LIST_FILE" ]; then
+		touch "$STATSEXCLUDE_LIST_FILE"
 	fi
 }
 
@@ -903,10 +908,22 @@ Write_Count_Sql_ToFile(){
 		echo ".output ${4}${5}.htm"
 	} > "$6"
 	
+	wherestring=""
+	while IFS='' read -r line || [ -n "$line" ]; do
+		if [ -n "$line" ]; then
+			domain="$(echo "$line" | sed 's/\*/%/g')"
+			wherestring="$wherestring AND [ReqDmn] NOT LIKE '$domain'"
+		fi
+	done < "$STATSEXCLUDE_LIST_FILE"
+	
 	if [ "$1" = "Total" ]; then
-		echo "SELECT '$1' Fieldname,[ReqDmn] ReqDmn,Count([ReqDmn]) Count FROM ${2}${5} GROUP BY [ReqDmn] ORDER BY COUNT([ReqDmn]) DESC LIMIT 20;" >> "$6"
-	elif [ "$1" = "Blocked" ]; then # covering index idx_results_domains
-		echo "SELECT '$1' Fieldname,[ReqDmn] ReqDmn,Count([ReqDmn]) Count FROM ${2}${5} WHERE ([Result] LIKE 'blocked%') GROUP BY [ReqDmn] ORDER BY COUNT([ReqDmn]) DESC LIMIT 20;" >> "$6"
+		wherestring="$(echo "$wherestring" | sed 's/AND/WHERE/')"
+	fi
+	
+	if [ "$1" = "Total" ]; then
+		echo "SELECT '$1' Fieldname,[ReqDmn] ReqDmn,Count([ReqDmn]) Count FROM ${2}${5} $wherestring GROUP BY [ReqDmn] ORDER BY COUNT([ReqDmn]) DESC LIMIT 20;" >> "$6"
+	elif [ "$1" = "Blocked" ]; then
+		echo "SELECT '$1' Fieldname,[ReqDmn] ReqDmn,Count([ReqDmn]) Count FROM ${2}${5} WHERE ([Result] LIKE 'blocked%') $wherestring GROUP BY [ReqDmn] ORDER BY COUNT([ReqDmn]) DESC LIMIT 20;" >> "$6"
 	fi
 }
 
@@ -918,18 +935,26 @@ Write_Count_PerClient_Sql_ToFile(){
 		echo ".output ${4}${5}clients.htm"
 	} > "$6"
 	
+	wherestring=""
+	while IFS='' read -r line || [ -n "$line" ]; do
+		if [ -n "$line" ]; then
+			domain="$(echo "$line" | sed 's/\*/%/g')"
+			wherestring="$wherestring AND [ReqDmn] NOT LIKE '$domain'"
+		fi
+	done < "$STATSEXCLUDE_LIST_FILE"
+	
 	if [ "$1" = "Total" ]; then
 		{
 			echo "SELECT '$1' Fieldname,SrcIP,ReqDmn,Count FROM"
 			echo "(SELECT [SrcIP] SrcIP,[ReqDmn] ReqDmn,Count([ReqDmn]) Count,ROW_NUMBER() OVER (PARTITION BY [SrcIP] ORDER BY Count(*) DESC) rn"
-			echo "FROM ${2}${5} WHERE [SrcIP] IN (SELECT DISTINCT [SrcIP] SrcIP FROM ${2}${5})"
+			echo "FROM ${2}${5} WHERE [SrcIP] IN (SELECT DISTINCT [SrcIP] SrcIP FROM ${2}${5}) $wherestring"
 			echo "GROUP BY [SrcIP],[ReqDmn]) WHERE rn <=20 ORDER BY SrcIP,Count DESC;"
 		} >> "$6"
 	elif [ "$1" = "Blocked" ]; then
 		{
 			echo "SELECT '$1' Fieldname,SrcIP,ReqDmn,Count FROM"
 			echo "(SELECT [SrcIP] SrcIP,[ReqDmn] ReqDmn,Count([ReqDmn]) Count,ROW_NUMBER() OVER (PARTITION BY [SrcIP] ORDER BY Count(*) DESC) rn"
-			echo "FROM ${2}${5} WHERE [SrcIP] IN (SELECT DISTINCT [SrcIP] SrcIP FROM ${2}${5} WHERE ([Result] LIKE 'blocked%')) AND ([Result] LIKE 'blocked%')"
+			echo "FROM ${2}${5} WHERE [SrcIP] IN (SELECT DISTINCT [SrcIP] SrcIP FROM ${2}${5}) AND ([Result] LIKE 'blocked%') $wherestring"
 			echo "GROUP BY [SrcIP],[ReqDmn]) WHERE rn <=20 ORDER BY SrcIP,Count DESC;"
 		} >> "$6"
 	fi
@@ -1512,7 +1537,8 @@ MainMenu(){
 	printf "1.    Update Diversion Statistics (daily only)\\n\\n"
 	printf "2.    Update Diversion Statistics (daily, weekly and monthly)\\n"
 	printf "      WARNING: THIS MAY TAKE A WHILE (>5 minutes)\\n\\n"
-	printf "3.    Set number of days data to keep in database\\n      Currently: ${SETTING}%s days data will be kept${CLEARFORMAT}\\n\\n" "$(DaysToKeep check)"
+	printf "3.    Edit list of domains to exclude from %s statistics\\n\\n" "$SCRIPT_NAME"
+	printf "4.    Set number of days data to keep in database\\n      Currently: ${SETTING}%s days data will be kept${CLEARFORMAT}\\n\\n" "$(DaysToKeep check)"
 	printf "q.    Toggle query mode\\n      Currently ${SETTING}%s${CLEARFORMAT} query types will be logged\\n\\n" "$(QueryMode check)"
 	printf "c.    Toggle cache mode\\n      Currently ${SETTING}%s${CLEARFORMAT} being used to cache query records\\n\\n" "$(CacheMode check)"
 	printf "u.    Check for updates\\n"
@@ -1545,6 +1571,15 @@ MainMenu(){
 				break
 			;;
 			3)
+				printf "\\n"
+				if Check_Lock menu; then
+					Menu_EditExcludeList
+				fi
+				printf "\\n"
+				PressEnter
+				break
+			;;
+			4)
 				printf "\\n"
 				DaysToKeep update
 				PressEnter
@@ -1786,6 +1821,78 @@ Menu_GenerateStats(){
 	else
 		Print_Output true "Diversion logging not enabled!" "$ERR"
 		Print_Output true "Open Diversion and use option l to enable logging"
+	fi
+	Clear_Lock
+}
+
+Menu_EditExcludeList(){
+	ScriptHeader
+	texteditor=""
+	exitmenu="false"
+	
+	printf "${BOLD}${WARN}Enter one domain per line${CLEARFORMAT}\\n" "$SCRIPT_NAME"
+	printf "\\nThis file is located here: %s\\n" "$STATSEXCLUDE_LIST_FILE"
+	printf "\\n\\n${BOLD}A choice of text editors is available:${CLEARFORMAT}\\n"
+	printf "1.    nano (recommended for beginners)\\n"
+	printf "2.    vi\\n"
+	printf "\\ne.    Exit to main menu\\n"
+	
+	while true; do
+		printf "\\n${BOLD}Choose an option:${CLEARFORMAT}  "
+		read -r editor
+		case "$editor" in
+			1)
+				texteditor="nano -K"
+				break
+			;;
+			2)
+				texteditor="vi"
+				break
+			;;
+			e)
+				exitmenu="true"
+				break
+			;;
+			*)
+				printf "\\nPlease choose a valid option\\n\\n"
+			;;
+		esac
+	done
+	
+	if [ "$exitmenu" != "true" ]; then
+		oldmd5="$(md5sum "$STATSEXCLUDE_LIST_FILE" | awk '{print $1}')"
+		$texteditor "$STATSEXCLUDE_LIST_FILE"
+		newmd5="$(md5sum "$STATSEXCLUDE_LIST_FILE" | awk '{print $1}')"
+		if [ "$oldmd5" != "$newmd5" ]; then
+			ScriptHeader
+			printf "\\n${BOLD}${WARN}Changes detected, would you like to regenerate stats?${CLEARFORMAT}\\n\\n"
+			printf "1.    Daily stats only\\n"
+			printf "2.    Daily, weekly and monthly (may take a while, >5 mins)\\n"
+			printf "\\ne.    Exit to main menu\\n"
+			
+			while true; do
+				printf "\\n${BOLD}Choose an option:${CLEARFORMAT}  "
+				read -r editor
+				case "$editor" in
+					1)
+						printf "\\n"
+						Menu_GenerateStats
+						break
+					;;
+					2)
+						printf "\\n"
+						Menu_GenerateStats fullrefresh
+						break
+					;;
+					e)
+						break
+					;;
+					*)
+						printf "\\nPlease choose a valid option\\n\\n"
+					;;
+				esac
+			done
+		fi
 	fi
 	Clear_Lock
 }
