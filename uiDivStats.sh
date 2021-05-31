@@ -768,7 +768,9 @@ UpdateDiversionWeeklyStatsFile(){
 }
 
 WriteStats_ToJS(){
-	sed -i -e '/}/d;/function/d;/document.getElementById/d;/^$/d' "$2"
+	sed -i -e '/}/d;/function/d;/document.getElementById/d;' "$2"
+	awk 'NF' "$2" > "$2.tmp"
+	mv "$2.tmp" "$2"
 	printf "\\r\\nfunction %s(){" "$3" >> "$2"
 	html='document.getElementById("'"$4"'").innerHTML="'
 	while IFS='' read -r line || [ -n "$line" ]; do
