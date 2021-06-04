@@ -385,6 +385,7 @@ Create_Symlinks(){
 	ln -s /tmp/detect_uidivstats.js "$SCRIPT_WEB_DIR/detect_uidivstats.js" 2>/dev/null
 	ln -s "$SCRIPT_USB_DIR/SQLData.js" "$SCRIPT_WEB_DIR/SQLData.js" 2>/dev/null
 	ln -s "$SCRIPT_CONF" "$SCRIPT_WEB_DIR/config.htm" 2>/dev/null
+	ln -s "$STATSEXCLUDE_LIST_FILE" "$SCRIPT_WEB_DIR/domainstoexclude.htm"
 	
 	if [ ! -f /opt/bin/find ]; then
 		opkg update
