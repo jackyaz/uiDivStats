@@ -253,12 +253,16 @@ Update_File(){
 	if [ "$1" = "uidivstats_www.asp" ]; then
 		tmpfile="/tmp/$1"
 		Download_File "$SCRIPT_REPO/$1" "$tmpfile"
-		if ! diff -q "$tmpfile" "$SCRIPT_DIR/$1" >/dev/null 2>&1; then
-			if [ -f "$SCRIPT_DIR/$1" ]; then
+		if [ -f "$SCRIPT_DIR/$1" ]; then
+			if ! diff -q "$tmpfile" "$SCRIPT_DIR/$1" >/dev/null 2>&1; then
 				Get_WebUI_Page "$SCRIPT_DIR/$1"
 				sed -i "\\~$MyPage~d" /tmp/menuTree.js
 				rm -f "$SCRIPT_WEBPAGE_DIR/$MyPage" 2>/dev/null
+				Download_File "$SCRIPT_REPO/$1" "$SCRIPT_DIR/$1"
+				Print_Output true "New version of $1 downloaded" "$PASS"
+				Mount_WebUI
 			fi
+		else
 			Download_File "$SCRIPT_REPO/$1" "$SCRIPT_DIR/$1"
 			Print_Output true "New version of $1 downloaded" "$PASS"
 			Mount_WebUI
