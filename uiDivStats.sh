@@ -416,9 +416,12 @@ Conf_Exists(){
 		if ! grep -q "DAYSTOKEEP" "$SCRIPT_CONF"; then
 			echo "DAYSTOKEEP=30" >> "$SCRIPT_CONF"
 		fi
+		if ! grep -q "LASTXQUERIES" "$SCRIPT_CONF"; then
+			echo "LASTXQUERIES=5000" >> "$SCRIPT_CONF"
+		fi
 		return 0
 	else
-		{ echo "QUERYMODE=all"; echo "CACHEMODE=tmp"; echo "DAYSTOKEEP=30"; } > "$SCRIPT_CONF"
+		{ echo "QUERYMODE=all"; echo "CACHEMODE=tmp"; echo "DAYSTOKEEP=30"; echo "LASTXQUERIES=5000"; } > "$SCRIPT_CONF"
 		return 1
 	fi
 }
@@ -760,6 +763,46 @@ DaysToKeep(){
 	esac
 }
 
+LastXQueries(){
+	case "$1" in
+		update)
+			lastxquerieds=10
+			exitmenu=""
+			ScriptHeader
+			while true; do
+				printf "\\n${BOLD}Please enter the desired number of queries\\nto display in the WebUI (10-10000):${CLEARFORMAT}  "
+				read -r lastx_choice
+				
+				if [ "$lastx_choice" = "e" ]; then
+					exitmenu="exit"
+					break
+				elif ! Validate_Number "$lastx_choice"; then
+					printf "\\n${ERR}Please enter a valid number (10-10000)${CLEARFORMAT}\\n"
+				elif [ "$lastx_choice" -lt 10 ] || [ "$lastx_choice" -gt 10000 ]; then
+						printf "\\n${ERR}Please enter a number between 10 and 10000${CLEARFORMAT}\\n"
+				else
+					lastxquerieds="$lastx_choice"
+					printf "\\n"
+					break
+				fi
+			done
+			
+			if [ "$exitmenu" != "exit" ]; then
+				sed -i 's/^LASTXQUERIES.*$/LASTXQUERIES='"$lastxquerieds"'/' "$SCRIPT_CONF"
+				Generate_Query_Log
+				return 0
+			else
+				printf "\\n"
+				return 1
+			fi
+		;;
+		check)
+			LASTXQUERIES=$(grep "LASTXQUERIES" "$SCRIPT_CONF" | cut -f2 -d"=")
+			echo "$LASTXQUERIES"
+		;;
+	esac
+}
+
 BlockingFile(){
 	case "$1" in
 		check)
@@ -1088,7 +1131,7 @@ Generate_Query_Log(){
 		ps | grep -v grep | grep -v $$ | grep -i "$SCRIPT_NAME" | grep querylog | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
 	fi
 	
-	recordcount=5000
+	recordcount="$(LastXQueries check)"
 	if [ "$(CacheMode check)" = "tmp" ]; then
 		if [ -f /tmp/cache-uiDivStats-SQL.tmp ]; then
 			sort -s -k 1,1 -n -r /tmp/cache-uiDivStats-SQL.tmp | sed 's/,/|/g' | awk 'BEGIN{FS=OFS="|"} {t=$2; $2=$3; $3=t; print}' > /tmp/cache-uiDivStats-SQL.tmp.ordered
@@ -1548,7 +1591,8 @@ MainMenu(){
 	printf "2.    Update Diversion Statistics (daily, weekly and monthly)\\n"
 	printf "      WARNING: THIS MAY TAKE A WHILE (>5 minutes)\\n\\n"
 	printf "3.    Edit list of domains to exclude from %s statistics\\n\\n" "$SCRIPT_NAME"
-	printf "4.    Set number of days data to keep in database\\n      Currently: ${SETTING}%s days data will be kept${CLEARFORMAT}\\n\\n" "$(DaysToKeep check)"
+	printf "4.    Set number of recent DNS queries to show in WebUI\\n      Currently: ${SETTING}%s queries will be shown${CLEARFORMAT}\\n\\n" "$(LastXQueries check)"
+	printf "5.    Set number of days data to keep in database\\n      Currently: ${SETTING}%s days data will be kept${CLEARFORMAT}\\n\\n" "$(DaysToKeep check)"
 	printf "q.    Toggle query mode\\n      Currently ${SETTING}%s${CLEARFORMAT} query types will be logged\\n\\n" "$(QueryMode check)"
 	printf "c.    Toggle cache mode\\n      Currently ${SETTING}%s${CLEARFORMAT} being used to cache query records\\n\\n" "$(CacheMode check)"
 	printf "u.    Check for updates\\n"
@@ -1590,6 +1634,12 @@ MainMenu(){
 				break
 			;;
 			4)
+				printf "\\n"
+				LastXQueries update
+				PressEnter
+				break
+			;;
+			5)
 				printf "\\n"
 				DaysToKeep update
 				PressEnter
