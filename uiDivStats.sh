@@ -275,7 +275,7 @@ Update_File(){
 			tar -xzf "$SCRIPT_DIR/$1" -C "$SCRIPT_DIR"
 			if [ -f /opt/etc/init.d/S90taildns ]; then
 				/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
-				sleep 5
+				sleep 3
 			fi
 			mv "$SCRIPT_DIR/taildns.d/S90taildns" /opt/etc/init.d/S90taildns
 			/opt/etc/init.d/S90taildns start >/dev/null 2>&1
@@ -290,7 +290,7 @@ Update_File(){
 				tar -xzf "$SCRIPT_DIR/$1" -C "$SCRIPT_DIR"
 				if [ -f /opt/etc/init.d/S90taildns ]; then
 					/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
-					sleep 5
+					sleep 3
 				fi
 				mv "$SCRIPT_DIR/taildns.d/S90taildns" /opt/etc/init.d/S90taildns
 				/opt/etc/init.d/S90taildns start >/dev/null 2>&1
@@ -324,6 +324,7 @@ Update_File(){
 Conf_FromSettings(){
 	SETTINGSFILE="/jffs/addons/custom_settings.txt"
 	TMPFILE="/tmp/uidivstats_settings.txt"
+	
 	if [ -f "$SETTINGSFILE" ]; then
 		if [ "$(grep "uidivstats_" $SETTINGSFILE | grep -v "version" -c)" -gt 0 ]; then
 			Print_Output true "Updated settings from WebUI found, merging into $SCRIPT_CONF" "$PASS"
@@ -349,7 +350,7 @@ Conf_FromSettings(){
 			rm -f "$SETTINGSFILE.bak"
 			
 			QueryMode "$(QueryMode check)"
-			sleep 5
+			sleep 3
 			CacheMode "$(CacheMode check)"
 			
 			Print_Output true "Merge of updated settings from WebUI completed successfully" "$PASS"
@@ -682,13 +683,13 @@ QueryMode(){
 		all)
 			sed -i 's/^QUERYMODE.*$/QUERYMODE=all/' "$SCRIPT_CONF"
 			/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
-			sleep 5
+			sleep 3
 			/opt/etc/init.d/S90taildns start >/dev/null 2>&1
 		;;
 		A+AAAA)
 			sed -i 's/^QUERYMODE.*$/QUERYMODE=A+AAAA/' "$SCRIPT_CONF"
 			/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
-			sleep 5
+			sleep 3
 			/opt/etc/init.d/S90taildns start >/dev/null 2>&1
 		;;
 		check)
@@ -703,14 +704,14 @@ CacheMode(){
 		none)
 			sed -i 's/^CACHEMODE.*$/CACHEMODE=none/' "$SCRIPT_CONF"
 			/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
-			sleep 5
+			sleep 3
 			Flush_Cache_To_DB
 			/opt/etc/init.d/S90taildns start >/dev/null 2>&1
 		;;
 		tmp)
 			sed -i 's/^CACHEMODE.*$/CACHEMODE=tmp/' "$SCRIPT_CONF"
 			/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
-			sleep 5
+			sleep 3
 			/opt/etc/init.d/S90taildns start >/dev/null 2>&1
 		;;
 		check)
@@ -1422,7 +1423,7 @@ Flush_Cache_To_DB(){
 Reset_DB(){
 	
 	/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
-	sleep 5
+	sleep 3
 	Auto_Cron delete 2>/dev/null
 	
 	if ! mv "$DNS_DB" "$DNS_DB.bak"; then
@@ -1458,7 +1459,7 @@ Process_Upgrade(){
 	if [ ! -f "$SCRIPT_DIR/.newindexes" ]; then
 		Print_Output true "First optimise, this will take a while!" "$WARN"
 		/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
-		sleep 5
+		sleep 3
 		Auto_Cron delete 2>/dev/null
 	fi
 	
@@ -1752,7 +1753,7 @@ Menu_Install(){
 	Update_File taildns.tar.gz
 	
 	/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
-	sleep 5
+	sleep 3
 	Auto_Cron delete 2>/dev/null
 	
 	renice 15 $$
@@ -1979,7 +1980,7 @@ Menu_Uninstall(){
 	sed -i '/uidivstats_version_server/d' "$SETTINGSFILE"
 	
 	/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
-	sleep 5
+	sleep 3
 	rm -f /opt/etc/init.d/S90taildns 2>/dev/null
 	rm -rf "$SCRIPT_DIR/taildns.d" 2>/dev/null
 	
@@ -2126,7 +2127,7 @@ case "$1" in
 		if grep -q 'log-facility' /etc/dnsmasq.conf; then
 			Print_Output true "dnsmasq has restarted, restarting taildns" "$PASS"
 			/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
-			sleep 5
+			sleep 3
 			/opt/etc/init.d/S90taildns start >/dev/null 2>&1
 		fi
 		exit 0
