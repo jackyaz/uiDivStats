@@ -2106,6 +2106,13 @@ case "$1" in
 		Menu_GenerateStats
 		exit 0
 	;;
+	fullrefresh)
+		NTP_Ready
+		Entware_Ready
+		Check_Lock
+		Menu_GenerateStats fullrefresh
+		exit 0
+	;;
 	service_event)
 		if [ "$2" = "start" ] && [ "$3" = "$SCRIPT_NAME" ]; then
 			Check_Lock webui
@@ -2130,13 +2137,6 @@ case "$1" in
 			sleep 3
 			/opt/etc/init.d/S90taildns start >/dev/null 2>&1
 		fi
-		exit 0
-	;;
-	fullrefresh)
-		NTP_Ready
-		Entware_Ready
-		Check_Lock
-		Menu_GenerateStats fullrefresh
 		exit 0
 	;;
 	querylog)
