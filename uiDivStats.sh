@@ -1011,8 +1011,6 @@ Generate_NG(){
 	
 	rm -f /tmp/uidivstats.sql
 	
-	echo 'var uidivstatsstatus = "InProgress";' > /tmp/detect_uidivstats.js
-	
 	{
 		echo "PRAGMA cache_size=-20000; BEGIN TRANSACTION;"
 		echo "DELETE FROM [dnsqueries] WHERE [Timestamp] > $timenow;"
@@ -1822,6 +1820,7 @@ Menu_Startup(){
 
 Menu_GenerateStats(){
 	if /opt/bin/grep -q 'log-facility=/opt/var/log/dnsmasq.log' /etc/dnsmasq.conf; then
+		echo 'var uidivstatsstatus = "InProgress";' > /tmp/detect_uidivstats.js
 		renice 15 $$
 		if [ -n "$1" ] && [ "$1" = "fullrefresh" ]; then
 			Print_Output true "Starting stat full refresh" "$PASS"
@@ -2118,6 +2117,7 @@ case "$1" in
 	;;
 	service_event)
 		if [ "$2" = "start" ] && [ "$3" = "$SCRIPT_NAME" ]; then
+			rm -f /tmp/detect_uidivstats.js
 			Check_Lock webui
 			Menu_GenerateStats
 			exit 0
