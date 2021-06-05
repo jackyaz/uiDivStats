@@ -114,34 +114,33 @@ var tout,$j=jQuery.noConflict(),maxNoChartsBlocked=6,currentNoChartsBlocked=0,ma
 </tr>
 </table>
 <div style="line-height:10px;">&nbsp;</div>
-<table width="100%" border="1" align="center" cellpadding="2" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" style="border:0px;" id="table_config">
+<table width="100%" border="1" align="center" cellpadding="2" cellspacing="0" bordercolor="#6b8fa3" class="FormTable SettingsTable" style="border:0px;" id="table_config">
 <thead class="collapsible-jquery" id="scriptconfig">
 <tr><td colspan="2">Configuration (click to expand/collapse)</td></tr>
 </thead>
-
 <tr class="even" id="rowquerymode">
-<th width="40%">Query Mode<br/><span style="color:#FFCC00;">(DNS query types for logging)</span></th>
+<td class="settingname">Query Mode<br/><span class="settingname" style="color:#FFCC00;">(DNS query types for logging)</span></td>
 <td class="settingvalue">
 <input type="radio" name="uidivstats_querymode" id="uidivstats_query_all" class="input" value="all" checked>
-<label for="uidivstats_query_all" class="settingvalue">All</label>
+<label for="uidivstats_query_all">All</label>
 <input type="radio" name="uidivstats_querymode" id="uidivstats_query_aaaaa" class="input" value="A+AAAA">
-<label for="uidivstats_query_aaaaa" class="settingvalue">A+AAAA only</label>
+<label for="uidivstats_query_aaaaa">A+AAAA only</label>
 </td>
 </tr>
-
 <tr class="even" id="rowcachemode">
-<th width="40%">Cache Mode<br/><span style="color:#FFCC00;">(use tmpfs instead of direct write to disk)</span></th>
+<td class="settingname">Cache Mode<br/><span class="settingname" style="color:#FFCC00;">(use tmpfs instead of direct write to disk)</span></td>
 <td class="settingvalue">
-<input type="radio" name="uidivstats_cachemode" id="uidivstats_cache_none" class="input" value="none" checked>
-<label for="uidivstats_cache_none" class="settingvalue">Disabled</label>
-<input type="radio" name="uidivstats_cachemode" id="uidivstats_cache_tmp" class="input" value="tmp">
-<label for="uidivstats_cache_tmp" class="settingvalue">Enabled</label>
+<input type="radio" name="uidivstats_cachemode" id="uidivstats_cache_tmp" class="input" value="tmp" checked>
+<label for="uidivstats_cache_tmp">Enabled</label>
+<input type="radio" name="uidivstats_cachemode" id="uidivstats_cache_none" class="input" value="none">
+<label for="uidivstats_cache_none">Disabled</label>
 </td>
 </tr>
-
+</td>
+</tr>
 <tr class="apply_gen" valign="top" height="35px">
-<td colspan="2" style="background-color:rgb(77, 89, 93);">
-<input type="button" onclick="SaveConfig();" value="Save" class="button_gen" name="button">
+<td colspan="2" class="savebutton">
+<input type="button" onclick="SaveConfig();" value="Save" class="button_gen savebutton" name="button">
 </td>
 </tr>
 </table>
@@ -191,7 +190,7 @@ var tout,$j=jQuery.noConflict(),maxNoChartsBlocked=6,currentNoChartsBlocked=0,ma
 <tr>
 <td>&nbsp;</td>
 <td><input autocomplete="off" autocapitalize="off" type="text" class="input_30_table" id="filter_reqdmn" name="filter_reqdmn" value="" data-lpignore="true" style="margin:0px;padding-left:0px;width:310px;text-align:center;"/></td>
-<td><input autocomplete="off" autocapitalize="off" type="text" maxlength="15" class="input_20_table" id="filter_srcip" name="filter_srcip" value="" onkeypress="return validator.isIPAddr(this, event);" data-lpignore="true" style="margin:0px;padding-left:0px;width:100px;text-align:center;"/></td>
+<td><input autocomplete="off" autocapitalize="off" type="text" maxlength="15" class="input_20_table" id="filter_srcip" name="filter_srcip" value="" onkeypress="return isFilterIP(this,event);" data-lpignore="true" style="margin:0px;padding-left:0px;width:100px;text-align:center;"/></td>
 <td>
 <select style="width:45px" class="input_option" onchange="FilterQueryLog();" id="filter_qrytype">
 <option value="0">All</option>
@@ -226,22 +225,22 @@ var tout,$j=jQuery.noConflict(),maxNoChartsBlocked=6,currentNoChartsBlocked=0,ma
 </tr>
 <tr>
 <td colspan="2" align="center" style="padding: 0px;">
-<div id="queryTableContainer" class="queryTableContainer"></div>
+<div id="sortTableContainer" class="sortTableContainer"></div>
 </td>
 </tr>
 </table>
 <!-- End Query Log -->
 <div style="line-height:10px;">&nbsp;</div>
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#4D595D" class="FormTable" id="uidivstats_diversiontextstats">
-<thead class="collapsible-jquery" >
+<thead class="collapsible-jquery" id="thead_diversiontextstats">
 <tr>
 <td colspan="2">Diversion Statistics Report (click to expand/collapse)</td>
 </tr>
 </thead>
 <tr>
 <td style="padding: 0px;">
-<textarea cols="75" rows="35" wrap="off" readonly="readonly" id="DiversionStats" class="textarea_log_table" style="font-family:'Courier New', Courier, mono; font-size:11px;border: none;padding: 0px;">If you are seeing this message, it means you don't have a weekly stats file from Diversion present on your router.
-Please check that weekly stats are enabled in Diversion, menu options c 2</textarea>
+<textarea cols="75" rows="35" wrap="off" readonly="readonly" id="DiversionStats" class="textarea_log_table" style="font-family:'Courier New',Courier,mono;font-size:11px;border:none;padding:0px;">If you are seeing this message,it means you don't have a weekly stats file from Diversion present on your router.
+Please check that weekly stats are enabled in Diversion,menu options c 2</textarea>
 </td>
 </tr>
 </table>
