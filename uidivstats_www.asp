@@ -136,6 +136,17 @@ var tout,$j=jQuery.noConflict(),maxNoChartsBlocked=6,currentNoChartsBlocked=0,ma
 <label for="uidivstats_cache_none">Disabled</label>
 </td>
 </tr>
+<tr class="even" id="rowdaystokeep">
+<td class="settingname">Number of days of data to keep</td>
+<td class="settingvalue">
+<input autocomplete="off" type="text" maxlength="3" class="input_6_table removespacing" name="uidivstats_daystokeep" value="30" onkeypress="return validator.isNumber(this,event)" onblur="Validate_Number_Setting(this,365,30);Format_Number_Setting(this)" onkeyup="Validate_Number_Setting(this,365,30)"/>
+&nbsp;days <span style="color:#FFCC00;">(between 30 and 365, default: 30)</span>
+</td>
+</tr>
+<tr class="even" id="rowdomainstoexclude">
+<td class="settingname">List of domains to exclude from<br />"Top requested domains" and<br />"Top blocked domains" charts<br/><span class="settingname" style="color:#FFCC00;">(use * as a wildcard)</span></td>
+<td class="settingvalue" style="padding:2px;">
+<textarea cols="75" rows="10" wrap="off" id="uidivstats_domainstoexclude" name="uidivstats_domainstoexclude" class="textarea_log_table settings" data-lpignore="true"></textarea>
 </td>
 </tr>
 <tr class="apply_gen" valign="top" height="35px">
