@@ -1721,6 +1721,7 @@ Check_Requirements(){
 		opkg install sqlite3-cli
 		opkg install procps-ng-pkill
 		opkg install findutils
+		opkg install bind-dig
 		return 0
 	else
 		return 1
