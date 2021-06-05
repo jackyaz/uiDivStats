@@ -104,7 +104,7 @@ function Format_Number_Setting(forminput){
 
 function Validate_All(){
 	var validationfailed = false;
-	if(! Validate_Number_Setting(document.form.uidivstats_lastxqueries,10000,100)){validationfailed=true;}
+	if(! Validate_Number_Setting(document.form.uidivstats_lastxqueries,10000,10)){validationfailed=true;}
 	if(! Validate_Number_Setting(document.form.uidivstats_daystokeep,365,30)){validationfailed=true;}
 	
 	if(validationfailed){
