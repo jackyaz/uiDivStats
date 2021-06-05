@@ -333,7 +333,13 @@ Conf_FromSettings(){
 			while IFS='' read -r line || [ -n "$line" ]; do
 				SETTINGNAME="$(echo "$line" | cut -f1 -d'=' | awk '{ print toupper($1) }')"
 				SETTINGVALUE="$(echo "$line" | cut -f2 -d'=')"
-				sed -i "s/$SETTINGNAME=.*/$SETTINGNAME=$SETTINGVALUE/" "$SCRIPT_CONF"
+				if [ "$SETTINGNAME" = "DOMAINSTOEXCLUDE" ]; then
+					echo "$SETTINGVALUE" | sed 's/||||/\n/g' > "$STATSEXCLUDE_LIST_FILE"
+					awk 'NF' "$STATSEXCLUDE_LIST_FILE" > "$STATSEXCLUDE_LIST_FILE.tmp"
+					mv "$STATSEXCLUDE_LIST_FILE.tmp" "$STATSEXCLUDE_LIST_FILE"
+				else
+					sed -i "s/$SETTINGNAME=.*/$SETTINGNAME=$SETTINGVALUE/" "$SCRIPT_CONF"
+				fi
 			done < "$TMPFILE"
 			grep 'uidivstats_version' "$SETTINGSFILE" > "$TMPFILE"
 			sed -i "\\~uidivstats_~d" "$SETTINGSFILE"
