@@ -2060,9 +2060,11 @@ Available commands:
   $SCRIPT_NAME startup force      runs startup actions such as mount WebUI tab
   $SCRIPT_NAME install            installs script
   $SCRIPT_NAME uninstall          uninstalls script
-  $SCRIPT_NAME generate           get modem stats and logs. also runs outputcsv
-  $SCRIPT_NAME outputcsv          create CSVs from database, used by WebUI and export
-  $SCRIPT_NAME ntpredirect        apply firewall rules to intercept and redirect NTP traffic
+  $SCRIPT_NAME generate           update daily statistics and charts
+  $SCRIPT_NAME fullrefresh        update daily, weekly and monthly statistics and charts
+  $SCRIPT_NAME querylog           retrieve last 5000 records to show in WebUI
+  $SCRIPT_NAME flushtodb          flush contents of cache to database
+  $SCRIPT_NAME trimdb             run maintenance on database (this runs automatically every night)
   $SCRIPT_NAME develop            switch to development branch
   $SCRIPT_NAME stable             switch to stable branch
 EOF
