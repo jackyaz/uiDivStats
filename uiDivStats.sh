@@ -2042,7 +2042,7 @@ License
   $SCRIPT_NAME is free to use under the GNU General Public License
   version 3 (GPL-3.0) https://opensource.org/licenses/GPL-3.0
 Help & Support
-  https://www.snbforums.com/forums/asuswrt-merlin-addons.60/?prefix_id=22
+  https://www.snbforums.com/forums/asuswrt-merlin-addons.60/?prefix_id=15
 Source code
   https://github.com/jackyaz/$SCRIPT_NAME
 EOF
