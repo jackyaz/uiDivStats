@@ -25,11 +25,13 @@ thead.collapsible-jquery {
   cursor: pointer;
 }
 
-td.nodata {
+.nodata {
   font-size: 48px !important;
   font-weight: bolder !important;
   height: 65px !important;
   font-family: Arial !important;
+  border: none !important;
+  text-align: center !important;
 }
 
 .StatsTable {
@@ -83,15 +85,20 @@ td.nodata {
   text-align:center !important;
 }
 
-div.queryTableContainer {
+div.sortTableContainer {
   height: 500px;
   overflow-y: scroll;
   width: 750px;
   border: 1px solid #000;
 }
 
-thead.queryTableHeader th {
-  background-image: linear-gradient(rgb(146, 160, 165) 0%, rgb(102, 117, 124) 100%);
+.sortTable {
+  table-layout: fixed !important;
+  border: none;
+}
+
+thead.sortTableHeader th {
+  background-image: linear-gradient(rgb(146,160,165) 0%,rgb(102,117,124) 100%);
   border-top: none !important;
   border-left: none !important;
   border-right: none !important;
@@ -108,17 +115,17 @@ th.sortable {
   cursor: pointer;
 }
 
-thead.queryTableHeader th:first-child,
-thead.queryTableHeader th:last-child {
+thead.sortTableHeader th:first-child,
+thead.sortTableHeader th:last-child {
   border-right: none !important;
 }
 
-thead.queryTableHeader th:first-child,
-thead.queryTableHeader td:first-child {
+thead.sortTableHeader th:first-child,
+thead.sortTableHeader td:first-child {
   border-left: none !important;
 }
 
-tbody.queryTableContent td, tbody.queryTableContent tr.queryNormalRow td {
+tbody.sortTableContent td,tbody.sortTableContent td {
   background-color: #2F3A3E !important;
   border-bottom: 1px solid #000 !important;
   border-left: none !important;
@@ -130,25 +137,125 @@ tbody.queryTableContent td, tbody.queryTableContent tr.queryNormalRow td {
   white-space: nowrap !important;
 }
 
-tbody.queryTableContent tr.queryAlternateRow td {
-  background-color: #475A5F !important;
-  border-bottom: 1px solid #000 !important;
-  border-left: none !important;
-  border-right: 1px solid #000 !important;
-  border-top: none !important;
-  padding: 2px;
-  overflow: hidden !important;
-  white-space: nowrap !important;
+tbody.sortTableContent tr.sortRow:nth-child(odd) td {
+  background-color: #2F3A3E !important;
 }
 
-input.settingvalue {
+tbody.sortTableContent tr.sortRow:nth-child(even) td {
+  background-color: #475A5F !important;
+}
+
+.SettingsTable {
+  text-align: left;
+}
+
+.SettingsTable input {
+  text-align: left;
   margin-left: 3px !important;
 }
 
-label.settingvalue {
+.SettingsTable input.savebutton {
+  text-align: center;
+  margin-top: 5px;
+  margin-bottom: 5px;
+  border-right: solid 1px black;
+  border-left: solid 1px black;
+  border-bottom: solid 1px black;
+}
+
+.SettingsTable td.savebutton {
+  border-right: solid 1px black;
+  border-left: solid 1px black;
+  border-bottom: solid 1px black;
+  background-color:rgb(77, 89, 93);
+}
+
+.SettingsTable .cronbutton {
+  text-align: center;
+  min-width: 50px;
+  width: 50px;
+  height: 23px;
+  vertical-align: middle;
+}
+
+.SettingsTable select {
+  margin-left: 3px !important;
+}
+
+.SettingsTable label {
   margin-right: 10px !important;
   vertical-align: top !important;
 }
+
+.SettingsTable th {
+  background-color: #1F2D35 !important;
+  background: #2F3A3E !important;
+  border-bottom: none !important;
+  border-top: none !important;
+  font-size: 12px !important;
+  color: white !important;
+  padding: 4px !important;
+  font-weight: bolder !important;
+  padding: 0px !important;
+}
+
+.SettingsTable td {
+  word-wrap: break-word !important;
+  overflow-wrap: break-word !important;
+  border-right: none;
+  border-left: none;
+}
+
+.SettingsTable span.settingname {
+  background-color: #1F2D35 !important;
+  background: #2F3A3E !important;
+}
+
+.SettingsTable td.settingname {
+  border-right: solid 1px black;
+  border-left: solid 1px black;
+  background-color: #1F2D35 !important;
+  background: #2F3A3E !important;
+  width: 35% !important;
+}
+
+.SettingsTable td.settingvalue {
+  text-align: left !important;
+  border-right: solid 1px black;
+}
+
+.SettingsTable th:first-child{
+  border-left: none !important;
+}
+
+.SettingsTable th:last-child {
+  border-right: none !important;
+}
+
+.SettingsTable .invalid {
+  background-color: darkred !important;
+}
+
+.SettingsTable .disabled {
+  background-color: #CCCCCC !important;
+  color: #888888 !important;
+}
+
+.removespacing {
+  padding-left: 0px !important;
+  margin-left: 0px !important;
+  margin-bottom: 5px !important;
+  text-align: center !important;
+}
+
+textarea.settings {
+  font-family: 'Courier New', Courier, mono !important;
+  font-size:13px !important;
+  padding:2px !important;
+  background:#576D73 !important;
+  width:98% !important;
+}
+
 </style>
 <script language="JavaScript" type="text/javascript" src="/ext/shared-jy/jquery.js"></script>
 <script language="JavaScript" type="text/javascript" src="/ext/shared-jy/moment.js"></script>
