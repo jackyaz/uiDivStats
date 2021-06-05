@@ -144,7 +144,17 @@ var tout,$j=jQuery.noConflict(),maxNoChartsBlocked=6,currentNoChartsBlocked=0,ma
 </td>
 </tr>
 </table>
-
+<div style="line-height:10px;">&nbsp;</div>
+<div id="uidivstats_div_keystats"></div>
+<div style="line-height:10px;">&nbsp;</div>
+<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" id="table_charts">
+<thead class="collapsible-jquery" id="thead_charts">
+<tr>
+<td>Charts (click to expand/collapse)</td>
+</tr>
+</thead>
+<tr><td align="center" style="padding: 0px;" id="td_charts">
+</td></tr></table>
 <!-- Keystats table -->
 
 <!-- Blocked Ads -->
