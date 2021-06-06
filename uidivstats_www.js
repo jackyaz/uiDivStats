@@ -774,6 +774,15 @@ function SaveConfig(){
 	}
 }
 
+function RefreshNow(){
+	clearTimeout(tout);
+	showhide('spanRefreshNow',false);
+	document.formScriptActions.action_script.value='start_uiDivStatsquerylog';
+	document.formScriptActions.submit();
+	document.getElementById('imgRefreshNow').style.display = '';
+	setTimeout(get_querylog_file,5000);
+}
+
 $j.fn.serializeObject = function(){
 	var o = custom_settings;
 	var a = this.serializeArray();
@@ -1373,6 +1382,8 @@ function get_querylog_file(){
 		},
 		success: function(data){
 			ParseQueryLog(data);
+			document.getElementById('imgRefreshNow').style.display = 'none';
+			showhide('spanRefreshNow',true);
 			if(document.getElementById('auto_refresh').checked){
 				tout = setTimeout(get_querylog_file,60000);
 			}
