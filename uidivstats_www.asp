@@ -139,7 +139,7 @@ var tout,$j=jQuery.noConflict(),maxNoChartsBlocked=6,currentNoChartsBlocked=0,ma
 <tr class="even" id="rowlastxqueries">
 <td class="settingname">Last X DNS queries to display in query log</td>
 <td class="settingvalue">
-<input autocomplete="off" type="text" maxlength="3" class="input_6_table removespacing" name="uidivstats_lastxqueries" value="5000" onkeypress="return validator.isNumber(this,event)" onblur="Validate_Number_Setting(this,10000,10);Format_Number_Setting(this)" onkeyup="Validate_Number_Setting(this,10000,10)"/>
+<input autocomplete="off" type="text" maxlength="5" class="input_6_table removespacing" name="uidivstats_lastxqueries" value="5000" onkeypress="return validator.isNumber(this,event)" onblur="Validate_Number_Setting(this,10000,10);Format_Number_Setting(this)" onkeyup="Validate_Number_Setting(this,10000,10)"/>
 &nbsp;results <span style="color:#FFCC00;">(between 10 and 10000, default: 5000)</span>
 </td>
 </tr>
