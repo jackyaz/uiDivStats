@@ -2175,6 +2175,9 @@ case "$1" in
 			Check_Lock webui
 			Menu_GenerateStats
 			exit 0
+		elif [ "$2" = "start" ] && [ "$3" = "${SCRIPT_NAME}querylog" ]; then
+			Generate_Query_Log
+			exit 0
 		elif [ "$2" = "start" ] && [ "$3" = "${SCRIPT_NAME}config" ]; then
 			Conf_FromSettings
 			exit 0
