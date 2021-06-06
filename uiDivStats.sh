@@ -39,7 +39,7 @@ readonly SHARED_WEB_DIR="$SCRIPT_WEBPAGE_DIR/shared-jy"
 readonly DNS_DB="$SCRIPT_USB_DIR/dnsqueries.db"
 readonly CSV_OUTPUT_DIR="$SCRIPT_USB_DIR/csv"
 [ -z "$(nvram get odmpid)" ] && ROUTER_MODEL=$(nvram get productid) || ROUTER_MODEL=$(nvram get odmpid)
-SQLITE3_PATH=/opt/bin/sqlite3
+SQLITE3_PATH="/opt/bin/sqlite3"
 readonly DIVERSION_DIR="/opt/share/diversion"
 readonly STATSEXCLUDE_LIST_FILE="$SCRIPT_DIR/statsexcludelist"
 ### End of script variables ###
