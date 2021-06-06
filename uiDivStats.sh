@@ -1815,7 +1815,9 @@ Menu_Install(){
 		echo "PRAGMA journal_mode=WAL;"
 		echo "CREATE TABLE IF NOT EXISTS [dnsqueries] ([QueryID] INTEGER PRIMARY KEY NOT NULL,[Timestamp] NUMERIC NOT NULL,[SrcIP] TEXT NOT NULL,[ReqDmn] TEXT NOT NULL,[QryType] Text NOT NULL,[Result] Text NOT NULL);"
 	}  > /tmp/uidivstats-upgrade.sql
-	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
+	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
+		sleep 1
+	done
 	
 	Print_Output false "Creating database table indexes..." "$PASS"
 	Table_Indexes drop
