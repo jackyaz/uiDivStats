@@ -2054,6 +2054,8 @@ Menu_Uninstall(){
 		;;
 	esac
 	
+	rm -rf "$CSV_OUTPUT_DIR"
+	rm -f "$SCRIPT_USB_DIR/SQLData.js"
 	rm -f "/jffs/scripts/$SCRIPT_NAME" 2>/dev/null
 	Clear_Lock
 	Print_Output true "Uninstall completed" "$PASS"
