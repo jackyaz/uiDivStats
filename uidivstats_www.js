@@ -1391,7 +1391,7 @@ function ParseQueryLog(data){
 		parsedlogline.ReqDmn = logfields[1].trim();
 		parsedlogline.SrcIP = logfields[2].trim();
 		parsedlogline.QryType = logfields[3].trim();
-		var parsedresult = logfields[4].replace(/'/g,'').trim();
+		var parsedresult = logfields[4].replace(/"/g,'').trim();
 		parsedlogline.Result = parsedresult.charAt(0).toUpperCase()+parsedresult.slice(1);
 		arrayqueryloglines.push(parsedlogline);
 	}
