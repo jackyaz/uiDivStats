@@ -1836,7 +1836,7 @@ Menu_Install(){
 	/opt/etc/init.d/S90taildns start >/dev/null 2>&1
 	
 	nslookup snbforums.com 127.0.0.1 >/dev/null 2>&1
-	nslookup diversion-adblocking-ip.address >/dev/null 2>&1
+	nslookup diversion-adblocking-ip.address 127.0.0.1 >/dev/null 2>&1
 	
 	Flush_Cache_To_DB
 	Generate_Query_Log
