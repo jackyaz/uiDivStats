@@ -203,6 +203,7 @@ Update_Version(){
 			read -r confirm
 			case "$confirm" in
 				y|Y)
+					printf "\\n"
 					Update_File uidivstats_www.asp
 					Update_File taildns.tar.gz
 					Update_File shared-jy.tar.gz
