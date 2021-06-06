@@ -1134,27 +1134,31 @@ Generate_Query_Log(){
 	recordcount="$(LastXQueries check)"
 	if [ "$(CacheMode check)" = "tmp" ]; then
 		if [ -f /tmp/cache-uiDivStats-SQL.tmp ]; then
-			sort -s -k 1,1 -n -r /tmp/cache-uiDivStats-SQL.tmp | sed 's/,/|/g' | awk 'BEGIN{FS=OFS="|"} {t=$2; $2=$3; $3=t; print}' > /tmp/cache-uiDivStats-SQL.tmp.ordered
+			tail -n "$recordcount" /tmp/cache-uiDivStats-SQL.tmp | sort -s -k 1,1 -n -r | sed 's/,/|/g' | awk 'BEGIN{FS=OFS="|"} {t=$2; $2=$3; $3=t; print}' > /tmp/cache-uiDivStats-SQL.tmp.ordered
 			recordcount="$((recordcount - $(wc -l < /tmp/cache-uiDivStats-SQL.tmp.ordered)))"
-			if [ "$(echo "$recordcount 1" | awk '{print ($1 < $2)}')" -eq 1 ]; then
-				recordcount=1
+			if [ "$(echo "$recordcount 0" | awk '{print ($1 < $2)}')" -eq 1 ]; then
+				recordcount=0
 			fi
 		fi
 	fi
 	
-	{
-		echo ".mode csv"
-		echo ".headers off"
-		echo ".separator '|'"
-		echo ".output $CSV_OUTPUT_DIR/SQLQueryLog.tmp"
-		echo "SELECT [Timestamp] Time,[ReqDmn] ReqDmn,[SrcIP] SrcIP,[QryType] QryType,[Result] Result FROM [dnsqueries] ORDER BY [Timestamp] DESC LIMIT $recordcount;"
-	} > /tmp/uidivstats-query.sql
-	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-query.sql >/dev/null 2>&1; do
-		sleep 1
-	done
-	rm -f /tmp/uidivstats-query.sql
-	
-	cat /tmp/cache-uiDivStats-SQL.tmp.ordered "$CSV_OUTPUT_DIR/SQLQueryLog.tmp" > "$CSV_OUTPUT_DIR/SQLQueryLog.htm" 2> /dev/null
+	if [ "$recordcount" -gt 0 ]; then
+		{
+			echo ".mode csv"
+			echo ".headers off"
+			echo ".separator '|'"
+			echo ".output $CSV_OUTPUT_DIR/SQLQueryLog.tmp"
+			echo "SELECT [Timestamp] Time,[ReqDmn] ReqDmn,[SrcIP] SrcIP,[QryType] QryType,[Result] Result FROM [dnsqueries] ORDER BY [Timestamp] DESC LIMIT $recordcount;"
+		} > /tmp/uidivstats-query.sql
+		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-query.sql >/dev/null 2>&1; do
+			sleep 1
+		done
+		rm -f /tmp/uidivstats-query.sql
+		
+		cat /tmp/cache-uiDivStats-SQL.tmp.ordered "$CSV_OUTPUT_DIR/SQLQueryLog.tmp" > "$CSV_OUTPUT_DIR/SQLQueryLog.htm" 2> /dev/null
+	else
+		mv /tmp/cache-uiDivStats-SQL.tmp.ordered "$CSV_OUTPUT_DIR/SQLQueryLog.htm"
+	fi
 	rm -f /tmp/cache-uiDivStats-SQL.tmp.ordered
 	rm -f "$CSV_OUTPUT_DIR/SQLQueryLog.tmp"
 }
