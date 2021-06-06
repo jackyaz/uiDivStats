@@ -2039,8 +2039,19 @@ Menu_Uninstall(){
 	sleep 3
 	rm -f /opt/etc/init.d/S90taildns 2>/dev/null
 	rm -rf "$SCRIPT_DIR/taildns.d" 2>/dev/null
+	rm -f "$SCRIPT_DIR/taildns.tar.gz.md5" 2>/dev/null
 	
-	rm -rf "$SCRIPT_DIR" 2>/dev/null
+	printf "\\n\\e[1mDo you want to delete %s stats and config? (y/n)\\e[0m  " "$SCRIPT_NAME"
+	read -r confirm
+	case "$confirm" in
+		y|Y)
+			rm -rf "$SCRIPT_DIR" 2>/dev/null
+			rm -rf "$SCRIPT_USB_DIR" 2>/dev/null
+		;;
+		*)
+			:
+		;;
+	esac
 	
 	rm -f "/jffs/scripts/$SCRIPT_NAME" 2>/dev/null
 	Clear_Lock
