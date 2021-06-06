@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.com/jackyaz/uiDivStats.svg?branch=master)](https://travis-ci.com/jackyaz/uiDivStats)
 
 ## v3.0.0
-### Updated on 2021-06-01
+### Updated on 2021-06-06
 ## About
 A graphical representation of domain blocking performed by Diversion.
 
@@ -15,8 +15,6 @@ Love the script and want to support future development? Any and all donations gr
 [**PayPal donation**](https://paypal.me/jackyaz21)
 
 [**Buy me a coffee**](https://www.buymeacoffee.com/jackyaz)
-
-![WebUI](https://puu.sh/H5jvB/7b4b4a6339.png)
 
 ## Supported firmware versions
 You must be running firmware Merlin 384.15/384.13_4 or Fork 43E5 (or later) [Asuswrt-Merlin](https://asuswrt.lostrealm.ca/)
@@ -42,6 +40,11 @@ If this does not work, you will need to use the full path:
 ```sh
 /jffs/scripts/uiDivStats
 ```
+
+## Screenshots
+![WebUI](https://puu.sh/HMN1D/a11fca5232.png)
+
+![CLI UI](https://puu.sh/HMN1y/1309c8dc86.png)
 
 ## Help
 Please post about any issues and problems here: [uiDivStats on SNBForums](https://www.snbforums.com/forums/asuswrt-merlin-addons.60/?prefix_id=15)
