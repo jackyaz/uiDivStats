@@ -857,43 +857,64 @@ WritePlainData_ToJS(){
 Table_Indexes(){
 	case "$1" in
 		create)
-			# used in Generate_Stats_From_SQLite for unique clients and Write_Count_PerClient_Sql_ToFile
 			echo "PRAGMA cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_clients ON dnsqueries (SrcIP);" > /tmp/uidivstats-upgrade.sql
-			"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
+			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
+				sleep 1
+			done
 			echo "PRAGMA cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_time_clients ON dnsqueries (Timestamp,SrcIP);" > /tmp/uidivstats-upgrade.sql
-			"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
+			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
+				sleep 1
+			done
 			echo "PRAGMA cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_results_time_clients ON dnsqueries (Result collate nocase,Timestamp,SrcIP);" > /tmp/uidivstats-upgrade.sql
-			"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
+			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
+				sleep 1
+			done
 			echo "PRAGMA cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_clients_time_domains ON dnsqueries (SrcIP,Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
-			"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
+			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
+				sleep 1
+			done
 			echo "PRAGMA cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_clients_results_time_domains ON dnsqueries (SrcIP,Result collate nocase,Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
-			"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
-			
-			 # used by Write_Count_Sql_ToFile
+			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
+				sleep 1
+			done
 			echo "PRAGMA cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_time_domains ON dnsqueries (Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
-			"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
+			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
+				sleep 1
+			done
 			echo "PRAGMA cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_results_time_domains ON dnsqueries (Result collate nocase,Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
-			"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
-			
-			# used by Write_Time_Sql_ToFile
+			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
+				sleep 1
+			done
 			echo "PRAGMA cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_results_time ON dnsqueries (Result collate nocase,Timestamp);" > /tmp/uidivstats-upgrade.sql
-			"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
-			
-			# used by Write_KeyStats_Sql_ToFile and Write_Time_Sql_ToFile
+			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
+				sleep 1
+			done
 			echo "PRAGMA cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_time_results ON dnsqueries (Timestamp,Result collate nocase);" > /tmp/uidivstats-upgrade.sql
-			"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
+			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
+				sleep 1
+			done
 		;;
 		drop)
 			echo "DROP INDEX IF EXISTS idx_dns_domains;" > /tmp/uidivstats-upgrade.sql
-			"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
+			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
+				sleep 1
+			done
 			echo "DROP INDEX IF EXISTS idx_dns_time;" > /tmp/uidivstats-upgrade.sql
-			"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
+			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
+				sleep 1
+			done
 			echo "DROP INDEX IF EXISTS idx_dns_clients;" > /tmp/uidivstats-upgrade.sql
-			"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
+			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
+				sleep 1
+			done
 			echo "DROP INDEX IF EXISTS idx_results_clients;" > /tmp/uidivstats-upgrade.sql
-			"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
+			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
+				sleep 1
+			done
 			echo "DROP INDEX IF EXISTS idx_clients_results_domains;" > /tmp/uidivstats-upgrade.sql
-			"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
+			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
+				sleep 1
+			done
 		;;
 	esac
 }
