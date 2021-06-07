@@ -4,4 +4,5 @@
 *.md text eol=lf
 *.asp text eol=lf
 *.js text eol=lf
+*.css text eol=lf
 *.md5 text eol=lf

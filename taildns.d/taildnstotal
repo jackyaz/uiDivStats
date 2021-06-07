@@ -1,8 +1,8 @@
 #!/bin/sh
-#shellcheck disable=SC2039
+# shellcheck disable=SC2039
 trap '' SIGHUP
 
-querymode="$(grep "QUERYMODE" "/jffs/addons/uiDivStats.d/config" | cut -f2 -d"=")"
+querymode="$(grep "QUERYMODE" /jffs/addons/uiDivStats.d/config | cut -f2 -d"=")"
 tailfilesuffix=""
 if [ "$querymode" = "A+AAAA" ]; then
 	tailfilesuffix="-a-aaaa"
@@ -14,6 +14,8 @@ if grep -q "log-queries=extra" /etc/dnsmasq.conf ; then
 else
 	tailfile="/jffs/addons/uiDivStats.d/taildns.d/dnsmasqtotal$tailfilesuffix.awk"
 fi
+
+renice 15 $$
 
 tail -F /opt/var/log/dnsmasq.log /opt/var/log/dnsmasq.log3 | "$tailfile" | \
 
@@ -27,6 +29,8 @@ result="$(echo $line | cut -f5 -d',')" \
 echo "CREATE TABLE IF NOT EXISTS [dnsqueries] ([QueryID] INTEGER PRIMARY KEY NOT NULL, [Timestamp] NUMERIC NOT NULL, [SrcIP] TEXT NOT NULL,[ReqDmn] TEXT NOT NULL,[QryType] Text NOT NULL,[Result] Text NOT NULL); \
 INSERT INTO dnsqueries ([Timestamp],[SrcIP],[ReqDmn],[QryType],[Result]) values($timestamp,\"$srcip\",\"$reqdmn\",\"$qrytype\",\"$result\");" > /opt/share/uiDivStats.d/dnsqueriestotal.sql \
 
-while ! /opt/bin/sqlite3 "/opt/share/uiDivStats.d/dnsqueries.db" < /opt/share/uiDivStats.d/dnsqueriestotal.sql >/dev/null 2>&1; do sleep 1; done \
+while ! /opt/bin/sqlite3 /opt/share/uiDivStats.d/dnsqueries.db < /opt/share/uiDivStats.d/dnsqueriestotal.sql >/dev/null 2>&1; do sleep 1; done \
 
 done
+
+renice 0 $$
