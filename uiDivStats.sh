@@ -1856,9 +1856,9 @@ Menu_Install(){
 	Shortcut_Script create
 	/opt/etc/init.d/S90taildns start >/dev/null 2>&1
 	
-	nslookup snbforums.com 127.0.0.1 >/dev/null 2>&1
+	dig +short +answer snbforums.com '@'"$(nvram get lan_ipaddr)" >/dev/null 2>&1
 	sleep 1
-	nslookup diversion-adblocking-ip.address 127.0.0.1 >/dev/null 2>&1
+	dig +short +answer diversion-adblocking-ip.address '@'"$(nvram get lan_ipaddr)" >/dev/null 2>&1
 	sleep 1
 	
 	Flush_Cache_To_DB
