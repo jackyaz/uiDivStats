@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.com/jackyaz/uiDivStats.svg?branch=master)](https://travis-ci.com/jackyaz/uiDivStats)
 
 ## v3.0.0
-### Updated on 2021-06-06
+### Updated on 2021-06-07
 ## About
 A graphical representation of domain blocking performed by Diversion.
 
