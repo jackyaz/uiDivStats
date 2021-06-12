@@ -1,6 +1,6 @@
 # uiDivStats - WebUI for Diversion statistics
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/240224b6b96543a782f176f2435ffa03)](https://www.codacy.com/app/jackyaz/uiDivStats?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=jackyaz/uiDivStats&amp;utm_campaign=Badge_Grade)
-[![Build Status](https://travis-ci.com/jackyaz/uiDivStats.svg?branch=master)](https://travis-ci.com/jackyaz/uiDivStats)
+![Shellcheck](https://github.com/jackyaz/uiDivStats/actions/workflows/shellcheck.yml/badge.svg)
 
 ## v3.0.0
 ### Updated on 2021-06-07
