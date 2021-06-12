@@ -134,7 +134,7 @@ Set_Version_Custom_Settings(){
 		local)
 			if [ -f "$SETTINGSFILE" ]; then
 				if [ "$(grep -c "uidivstats_version_local" $SETTINGSFILE)" -gt 0 ]; then
-					if [ "$SCRIPT_VERSION" != "$(grep "uidivstats_version_local" /jffs/addons/custom_settings.txt | cut -f2 -d' ')" ]; then
+					if [ "$2" != "$(grep "uidivstats_version_local" /jffs/addons/custom_settings.txt | cut -f2 -d' ')" ]; then
 						sed -i "s/uidivstats_version_local.*/uidivstats_version_local $2/" "$SETTINGSFILE"
 					fi
 				else
