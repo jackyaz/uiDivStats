@@ -13,7 +13,7 @@
 ##                                                               ##
 ###################################################################
 
-##############        Shellcheck directives      #############
+#################        Shellcheck directives      ###############
 # shellcheck disable=SC2009
 # shellcheck disable=SC2012
 # shellcheck disable=SC2016
@@ -22,7 +22,7 @@
 # shellcheck disable=SC2059
 # shellcheck disable=SC2086
 # shellcheck disable=SC2155
-##############################################################
+###################################################################
 
 ### Start of script variables ###
 readonly SCRIPT_NAME="uiDivStats"
@@ -1595,20 +1595,20 @@ PressEnter(){
 ScriptHeader(){
 	clear
 	printf "\\n"
-	printf "${BOLD}#################################################################${CLEARFORMAT}\\n"
-	printf "${BOLD}##                                                             ##${CLEARFORMAT}\\n"
-	printf "${BOLD}##          _  _____   _          _____  _          _          ##${CLEARFORMAT}\\n"
-	printf "${BOLD}##         (_)|  __ \ (_)        / ____|| |        | |         ##${CLEARFORMAT}\\n"
-	printf "${BOLD}##   _   _  _ | |  | | _ __   __| (___  | |_  __ _ | |_  ___   ##${CLEARFORMAT}\\n"
-	printf "${BOLD}##  | | | || || |  | || |\ \ / / \___ \ | __|/ _  || __|/ __|  ##${CLEARFORMAT}\\n"
-	printf "${BOLD}##  | |_| || || |__| || | \ V /  ____) || |_| (_| || |_ \__ \  ##${CLEARFORMAT}\\n"
-	printf "${BOLD}##   \__,_||_||_____/ |_|  \_/  |_____/  \__|\__,_| \__||___/  ##${CLEARFORMAT}\\n"
-	printf "${BOLD}##                                                             ##${CLEARFORMAT}\\n"
-	printf "${BOLD}##                      %s on %-11s                  ##${CLEARFORMAT}\\n" "$SCRIPT_VERSION" "$ROUTER_MODEL"
-	printf "${BOLD}##                                                             ##${CLEARFORMAT}\\n"
-	printf "${BOLD}##             https://github.com/jackyaz/uiDivStats           ##${CLEARFORMAT}\\n"
-	printf "${BOLD}##                                                             ##${CLEARFORMAT}\\n"
-	printf "${BOLD}#################################################################${CLEARFORMAT}\\n"
+	printf "${BOLD}###################################################################${CLEARFORMAT}\\n"
+	printf "${BOLD}##                                                               ##${CLEARFORMAT}\\n"
+	printf "${BOLD}##           _  _____   _          _____  _          _           ##${CLEARFORMAT}\\n"
+	printf "${BOLD}##          (_)|  __ \ (_)        / ____|| |        | |          ##${CLEARFORMAT}\\n"
+	printf "${BOLD}##    _   _  _ | |  | | _ __   __| (___  | |_  __ _ | |_  ___    ##${CLEARFORMAT}\\n"
+	printf "${BOLD}##   | | | || || |  | || |\ \ / / \___ \ | __|/ _  || __|/ __|   ##${CLEARFORMAT}\\n"
+	printf "${BOLD}##   | |_| || || |__| || | \ V /  ____) || |_| (_| || |_ \__ \   ##${CLEARFORMAT}\\n"
+	printf "${BOLD}##    \__,_||_||_____/ |_|  \_/  |_____/  \__|\__,_| \__||___/   ##${CLEARFORMAT}\\n"
+	printf "${BOLD}##                                                               ##${CLEARFORMAT}\\n"
+	printf "${BOLD}##                       %s on %-11s                   ##${CLEARFORMAT}\\n" "$SCRIPT_VERSION" "$ROUTER_MODEL"
+	printf "${BOLD}##                                                               ##${CLEARFORMAT}\\n"
+	printf "${BOLD}##              https://github.com/jackyaz/uiDivStats            ##${CLEARFORMAT}\\n"
+	printf "${BOLD}##                                                               ##${CLEARFORMAT}\\n"
+	printf "${BOLD}###################################################################${CLEARFORMAT}\\n"
 	printf "\\n"
 }
 
@@ -1628,7 +1628,7 @@ MainMenu(){
 	printf "e.    Exit %s\\n\\n" "$SCRIPT_NAME"
 	printf "z.    Uninstall %s\\n" "$SCRIPT_NAME"
 	printf "\\n"
-	printf "${BOLD}#################################################################${CLEARFORMAT}\\n"
+	printf "${BOLD}###################################################################${CLEARFORMAT}\\n"
 	printf "\\n"
 	
 	while true; do
