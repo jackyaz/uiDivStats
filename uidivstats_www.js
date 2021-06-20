@@ -130,7 +130,7 @@ var intervallist = [24,7,30];
 var bordercolourlist = ['#fc8500','#42ecf5'];
 var backgroundcolourlist = ['rgba(252,133,0,0.5)','rgba(66,236,245,0.5)'];
 
-function Draw_Chart_NoData(txtchartname){
+function Draw_Chart_NoData(txtchartname,texttodisplay){
 	document.getElementById('canvasChart'+txtchartname).width = '735';
 	document.getElementById('canvasChart'+txtchartname).height = '500';
 	document.getElementById('canvasChart'+txtchartname).style.width = '735px';
@@ -141,7 +141,7 @@ function Draw_Chart_NoData(txtchartname){
 	ctx.textBaseline = 'middle';
 	ctx.font = 'normal normal bolder 48px Arial';
 	ctx.fillStyle = 'white';
-	ctx.fillText('Data loading...',368,250);
+	ctx.fillText(texttodisplay,368,250);
 	ctx.restore();
 }
 
@@ -159,8 +159,8 @@ function Draw_Chart(txtchartname){
 	else{
 		dataobject = window[txtchartname+chartperiod+'clients'];
 	}
-	if(typeof dataobject === 'undefined' || dataobject === null){ Draw_Chart_NoData(txtchartname); return; }
-	if(dataobject.length == 0){ Draw_Chart_NoData(txtchartname); return; }
+	if(typeof dataobject === 'undefined' || dataobject === null){ Draw_Chart_NoData(txtchartname,'No data to display'); return; }
+	if(dataobject.length == 0){ Draw_Chart_NoData(txtchartname,'No data to display'); return; }
 	
 	var chartData,chartLabels;
 	
@@ -334,8 +334,8 @@ function Draw_Time_Chart(txtchartname){
 	var numunitx = intervallist[$j('#'+txtchartname+'time_Period option:selected').val()];
 	var dataobject = window[txtchartname+chartperiod+'time'];
 	
-	if(typeof dataobject === 'undefined' || dataobject === null){ Draw_Chart_NoData(txtchartname+'time'); return; }
-	if(dataobject.length == 0){ Draw_Chart_NoData(txtchartname+'time'); return; }
+	if(typeof dataobject === 'undefined' || dataobject === null){ Draw_Chart_NoData(txtchartname+'time','No data to display'); return; }
+	if(dataobject.length == 0){ Draw_Chart_NoData(txtchartname+'time','No data to display'); return; }
 	
 	var unique = [];
 	var chartQueryTypes = [];
@@ -580,7 +580,7 @@ function get_clients_file(){
 		},
 		success: function(){
 			for(var i = 0; i < metriclist.length; i++){
-				Draw_Chart_NoData(metriclist[i]);
+				Draw_Chart_NoData(metriclist[i],'Data loading...');
 				$j('#'+metriclist[i]+'_Period').val(GetCookie(metriclist[i]+'_Period','number'));
 				$j('#'+metriclist[i]+'_Type').val(GetCookie(metriclist[i]+'_Type','number'));
 				$j('#'+metriclist[i]+'_Scale').val(GetCookie(metriclist[i]+'_Scale','number'));
@@ -590,7 +590,7 @@ function get_clients_file(){
 					d3.csv('/ext/uiDivStats/csv/'+metriclist[i]+chartlist[i2]+'clients.htm').then(SetGlobalDataset.bind(null,metriclist[i]+chartlist[i2]+'clients'));
 				}
 			}
-			Draw_Chart_NoData('TotalBlockedtime');
+			Draw_Chart_NoData('TotalBlockedtime','Data loading...');
 			for(var i = 0; i < chartlist.length; i++){
 				$j('#TotalBlockedtime_Period').val(GetCookie('TotalBlockedtime_Period','number'));
 				$j('#TotalBlockedtime_Scale').val(GetCookie('TotalBlockedtime_Scale','number'));
