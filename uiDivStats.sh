@@ -2329,7 +2329,9 @@ case "$1" in
 		exit 0
 	;;
 	*)
-		echo "Command not recognised, please try again"
+		ScriptHeader
+		Print_Output false "Command not recognised." "$ERR"
+		Print_Output false "For a list of available commands run: $SCRIPT_NAME help"
 		exit 1
 	;;
 esac
