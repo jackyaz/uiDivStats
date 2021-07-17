@@ -9,7 +9,6 @@ var maxNoChartsOverall = 15;
 var currentNoChartsOverall = 0;
 var arrayqueryloglines = [];
 var originalarrayqueryloglines = [];
-var sortfield = 'Time';
 var sortname = 'Time';
 var sortdir = 'desc';
 var tout;
@@ -1466,6 +1465,7 @@ function FilterQueryLog(){
 
 function SortTable(sorttext){
 	sortname = sorttext.replace('↑','').replace('↓','').trim();
+	var sortfield = sortname;
 	switch(sortname){
 		case 'Time':
 			sortfield='Time';
