@@ -15,9 +15,11 @@ else
 	tailfile="/jffs/addons/uiDivStats.d/taildns.d/dnsmasqtotal$tailfilesuffix.awk"
 fi
 
+blockingIP="$(grep "blockingIP=" /opt/share/diversion/.conf/diversion.conf | cut -f2 -d"=" | sed 's/"//g')"
+
 renice 15 $$
 
-tail -F /opt/var/log/dnsmasq.log /opt/var/log/dnsmasq.log3 | "$tailfile" | \
+tail -F /opt/var/log/dnsmasq.log /opt/var/log/dnsmasq.log3 | awk -v blockingIP="$blockingIP" -f "$tailfile" | \
 
 while read line; do \
 timestamp="$(echo $line | cut -f1 -d',')" \

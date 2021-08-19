@@ -4,7 +4,7 @@ BEGIN {
 	OFS = ",";
 }
 {
-	if ($5 ~ "query" && $5 !~ "dnssec") {
+	if ($5 ~ "query" && $5 !~ "dnssec"){
 		result = "allowed";
 		time = mktime( \
 			sprintf("%04d %02d %02d %s\n", \
@@ -19,22 +19,22 @@ BEGIN {
 		query = $6;
 		host = $8;
 		getline;
-		if ($5 ~ "diversion") {
+		if ($8 == blockingIP){
 			result = "blocked";
-			if ($5 ~ "blockinglist_fs") {
+			if ($5 ~ "blockinglist_fs"){
 				result = "blocked (blocking list fs)";
 			}
-			else if ($5 ~ "blockinglist") {
+			else if ($5 ~ "blockinglist"){
 				result = "blocked (blocking list)";
 			}
-			else if ($5 ~ "yt_blacklist") {
+			else if ($5 ~ "yt_blacklist"){
 				result = "blocked (youtube blacklist)";
 			}
-			else if ($5 ~ "wc_blacklist") {
-				result = "blocked (wildcard blacklist)";
-			}
-			else if ($5 ~ "blacklist") {
+			else if ($5 ~ "blacklist"){
 				result = "blocked (blacklist)";
+			}
+			else{
+				result = "blocked (wildcard blacklist)";
 			}
 		}
 		print time,host,query,recordtype,result;
