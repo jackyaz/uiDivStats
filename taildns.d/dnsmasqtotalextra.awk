@@ -19,7 +19,7 @@ BEGIN {
 		query = $8;
 		host = $10;
 		getline;
-		if ($10 == blockingIP){
+		if ($10 == blockingIP || $10 == "::"){
 			result = "blocked";
 			if ($7 ~ "blockinglist_fs"){
 				result = "blocked (blocking list fs)";
