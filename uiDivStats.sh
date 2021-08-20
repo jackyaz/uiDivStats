@@ -337,7 +337,7 @@ Conf_FromSettings(){
 				SETTINGNAME="$(echo "$line" | cut -f1 -d'=' | awk '{ print toupper($1) }')"
 				SETTINGVALUE="$(echo "$line" | cut -f2 -d'=')"
 				if [ "$SETTINGNAME" = "DOMAINSTOEXCLUDE" ]; then
-					echo "$SETTINGVALUE" | sed 's/||||/\n/g' > "$STATSEXCLUDE_LIST_FILE"
+					echo "$SETTINGVALUE" | sed 's~||||~\n~g' > "$STATSEXCLUDE_LIST_FILE"
 					awk 'NF' "$STATSEXCLUDE_LIST_FILE" > "$STATSEXCLUDE_LIST_FILE.tmp"
 					mv "$STATSEXCLUDE_LIST_FILE.tmp" "$STATSEXCLUDE_LIST_FILE"
 				else
