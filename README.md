@@ -3,7 +3,7 @@
 ![Shellcheck](https://github.com/jackyaz/uiDivStats/actions/workflows/shellcheck.yml/badge.svg)
 
 ## v3.0.2
-### Updated on 2021-08-19
+### Updated on 2021-12-20
 ## About
 A graphical representation of domain blocking performed by Diversion.
 
