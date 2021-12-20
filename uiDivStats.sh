@@ -1489,7 +1489,6 @@ Flush_Cache_To_DB(){
 }
 
 Reset_DB(){
-	
 	/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
 	sleep 3
 	Auto_Cron delete 2>/dev/null
