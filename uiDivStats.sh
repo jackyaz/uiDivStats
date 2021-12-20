@@ -26,7 +26,7 @@
 
 ### Start of script variables ###
 readonly SCRIPT_NAME="uiDivStats"
-readonly SCRIPT_VERSION="v3.0.1"
+readonly SCRIPT_VERSION="v3.0.2"
 SCRIPT_BRANCH="master"
 SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/$SCRIPT_NAME/$SCRIPT_BRANCH"
 readonly SCRIPT_DIR="/jffs/addons/$SCRIPT_NAME.d"
@@ -337,7 +337,7 @@ Conf_FromSettings(){
 				SETTINGNAME="$(echo "$line" | cut -f1 -d'=' | awk '{ print toupper($1) }')"
 				SETTINGVALUE="$(echo "$line" | cut -f2 -d'=')"
 				if [ "$SETTINGNAME" = "DOMAINSTOEXCLUDE" ]; then
-					echo "$SETTINGVALUE" | sed 's/||||/\n/g' > "$STATSEXCLUDE_LIST_FILE"
+					echo "$SETTINGVALUE" | sed 's~||||~\n~g' > "$STATSEXCLUDE_LIST_FILE"
 					awk 'NF' "$STATSEXCLUDE_LIST_FILE" > "$STATSEXCLUDE_LIST_FILE.tmp"
 					mv "$STATSEXCLUDE_LIST_FILE.tmp" "$STATSEXCLUDE_LIST_FILE"
 				else
@@ -1489,7 +1489,6 @@ Flush_Cache_To_DB(){
 }
 
 Reset_DB(){
-	
 	/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
 	sleep 3
 	Auto_Cron delete 2>/dev/null

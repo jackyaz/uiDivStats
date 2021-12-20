@@ -2,8 +2,8 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/240224b6b96543a782f176f2435ffa03)](https://www.codacy.com/app/jackyaz/uiDivStats?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=jackyaz/uiDivStats&amp;utm_campaign=Badge_Grade)
 ![Shellcheck](https://github.com/jackyaz/uiDivStats/actions/workflows/shellcheck.yml/badge.svg)
 
-## v3.0.1
-### Updated on 2021-08-05
+## v3.0.2
+### Updated on 2021-12-20
 ## About
 A graphical representation of domain blocking performed by Diversion.
 
