@@ -559,7 +559,7 @@ Auto_Cron(){
 			if [ "$STARTUPLINECOUNTQUERYLOG" -gt 0 ]; then
 				cru d "${SCRIPT_NAME}_querylog"
 			fi
-			if [ "$STARTUPLINECOUNTFLUSHTODB" -eq 0 ]; then
+			if [ "$STARTUPLINECOUNTFLUSHTODB" -gt 0 ]; then
 				cru d "${SCRIPT_NAME}_flushtodb"
 			fi
 		;;
