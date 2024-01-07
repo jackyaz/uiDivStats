@@ -805,24 +805,6 @@ LastXQueries(){
 	esac
 }
 
-BlockingFile(){
-	case "$1" in
-		check)
-			DIVCONF="$DIVERSION_DIR/.conf/diversion.conf"
-			BLOCKINGFILE="$DIVERSION_DIR/list/blockinglist"
-			
-			if [ "$(grep alternateBF "$DIVCONF" | cut -f2 -d"=")" = "on" ]; then
-					BLOCKINGFILE="$DIVERSION_DIR/list/blockinglist $DIVERSION_DIR/list/blockinglist_fs"
-			elif [ "$(grep "bfFs" "$DIVCONF" | cut -f2 -d"=")" = "on" ]; then
-				if [ "$(grep "bfTypeinUse" "$DIVCONF" | cut -f2 -d"=")" != "primary" ]; then
-					BLOCKINGFILE="$DIVERSION_DIR/list/blockinglist_fs"
-				fi
-			fi
-			echo "$BLOCKINGFILE"
-		;;
-	esac
-}
-
 UpdateDiversionWeeklyStatsFile(){
 	rm -f "$SCRIPT_WEB_DIR/DiversionStats.htm" 2>/dev/null
 	diversionstatsfile="$(/opt/bin/find /opt/share/diversion/stats -name "Diversion_Stats*" -printf "%C@ %p\n"| sort | tail -n 1 | cut -f2 -d' ')"
@@ -1268,16 +1250,9 @@ Generate_KeyStats(){
 }
 
 Generate_Count_Blocklist_Domains(){
-	blockinglistfile="$(BlockingFile check)"
-	blacklistfile="$DIVERSION_DIR/list/blacklist"
-	blacklistwcfile="$DIVERSION_DIR/list/wc_blacklist"
-	
-	BLL="$(($(/opt/bin/grep "^[^#]" $blockinglistfile | wc -w)-$(/opt/bin/grep "^[^#]" $blockinglistfile | wc -l)))"
-	[ "$(nvram get ipv6_service)" != "disabled" ] && BLL="$((BLL/2))"
-	BL="$(/opt/bin/grep "^[^#]" "$blacklistfile" | wc -l)"
-	[ "$(nvram get ipv6_service)" != "disabled" ] && BL="$((BL/2))"
-	WCBL="$(/opt/bin/grep "^[^#]" "$blacklistwcfile" | wc -l)"
-	blocklistdomains="$((BLL+BL+WCBL))"
+	blockinglistfile="$DIVERSION_DIR/list/blockinglist.conf"
+
+	blocklistdomains="$(cat $blockinglistfile | wc -l)"
 	if ! Validate_Number "$blocklistdomains"; then blocklistdomains=0; fi
 	
 	WritePlainData_ToJS "$SCRIPT_USB_DIR/SQLData.js" "BlockedDomains,$blocklistdomains"
