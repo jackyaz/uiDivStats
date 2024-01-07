@@ -27,7 +27,7 @@
 ### Start of script variables ###
 readonly SCRIPT_NAME="uiDivStats"
 readonly SCRIPT_VERSION="v3.1.0"
-SCRIPT_BRANCH="master"
+SCRIPT_BRANCH="develop"
 SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/$SCRIPT_NAME/$SCRIPT_BRANCH"
 readonly SCRIPT_DIR="/jffs/addons/$SCRIPT_NAME.d"
 readonly SCRIPT_CONF="$SCRIPT_DIR/config"
@@ -733,16 +733,16 @@ DaysToKeep(){
 			exitmenu=""
 			ScriptHeader
 			while true; do
-				printf "\\n${BOLD}Please enter the desired number of days\\nto keep data for (30-365 days):${CLEARFORMAT}  "
+				printf "\\n${BOLD}Please enter the desired number of days\\nto keep data for (1-365 days):${CLEARFORMAT}  "
 				read -r daystokeep_choice
 
 				if [ "$daystokeep_choice" = "e" ]; then
 					exitmenu="exit"
 					break
 				elif ! Validate_Number "$daystokeep_choice"; then
-					printf "\\n${ERR}Please enter a valid number (30-365)${CLEARFORMAT}\\n"
-				elif [ "$daystokeep_choice" -lt 30 ] || [ "$daystokeep_choice" -gt 365 ]; then
-						printf "\\n${ERR}Please enter a number between 30 and 365${CLEARFORMAT}\\n"
+					printf "\\n${ERR}Please enter a valid number (1-365)${CLEARFORMAT}\\n"
+				elif [ "$daystokeep_choice" -lt 1 ] || [ "$daystokeep_choice" -gt 365 ]; then
+						printf "\\n${ERR}Please enter a number between 1 and 365${CLEARFORMAT}\\n"
 				else
 					daystokeep="$daystokeep_choice"
 					printf "\\n"
@@ -1234,6 +1234,7 @@ Generate_Count_Blocklist_Domains(){
 	blockinglistfile="$DIVERSION_DIR/list/blockinglist.conf"
 
 	blocklistdomains="$(cat $blockinglistfile | wc -l)"
+
 	if ! Validate_Number "$blocklistdomains"; then blocklistdomains=0; fi
 
 	WritePlainData_ToJS "$SCRIPT_USB_DIR/SQLData.js" "BlockedDomains,$blocklistdomains"
