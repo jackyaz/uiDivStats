@@ -5,7 +5,6 @@ BEGIN {
 }
 {
 	if ($5 ~ "query" && $5 !~ "dnssec"){
-		result = "allowed";
 		time = mktime( \
 			sprintf("%04d %02d %02d %s\n", \
 				strftime("%Y", systime()), \
@@ -19,24 +18,7 @@ BEGIN {
 		query = $6;
 		host = $8;
 		getline;
-		if ($8 == blockingIP || $8 == "::"){
-			result = "blocked";
-			if ($5 ~ "blockinglist_fs"){
-				result = "blocked (blocking list fs)";
-			}
-			else if ($5 ~ "blockinglist"){
-				result = "blocked (blocking list)";
-			}
-			else if ($5 ~ "yt_blacklist"){
-				result = "blocked (youtube blacklist)";
-			}
-			else if ($5 ~ "blacklist"){
-				result = "blocked (blacklist)";
-			}
-			else{
-				result = "blocked (wildcard blacklist)";
-			}
-		}
-		print time,host,query,recordtype,result;
+		allowed = ($5 == "config" && $8 == "NXDOMAIN") ? 0 : 1;
+		print time,host,query,recordtype,allowed;
 	}
 }
