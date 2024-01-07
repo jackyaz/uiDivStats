@@ -77,7 +77,7 @@ function isFilterIP(o,event){
 function Validate_Number_Setting(forminput,upperlimit,lowerlimit){
 	var inputname = forminput.name;
 	var inputvalue = forminput.value*1;
-	
+
 	if(inputvalue > upperlimit || inputvalue < lowerlimit){
 		$j(forminput).addClass('invalid');
 		return false;
@@ -91,7 +91,7 @@ function Validate_Number_Setting(forminput,upperlimit,lowerlimit){
 function Format_Number_Setting(forminput){
 	var inputname = forminput.name;
 	var inputvalue = forminput.value*1;
-	
+
 	if(forminput.value.length == 0 || inputvalue == NaN){
 		return false;
 	}
@@ -105,7 +105,7 @@ function Validate_All(){
 	var validationfailed = false;
 	if(! Validate_Number_Setting(document.form.uidivstats_lastxqueries,10000,10)){validationfailed=true;}
 	if(! Validate_Number_Setting(document.form.uidivstats_daystokeep,365,30)){validationfailed=true;}
-	
+
 	if(validationfailed){
 		alert('Validation for some fields failed. Please correct invalid values and try again.');
 		return false;
@@ -148,9 +148,9 @@ function Draw_Chart(txtchartname){
 	var chartperiod = getChartPeriod($j('#'+txtchartname+'_Period option:selected').val());
 	var charttype = getChartType($j('#'+txtchartname+'_Type option:selected').val());
 	var chartclientraw = $j('#'+txtchartname+'_Clients option:selected').text();
-	
+
 	var chartclient = chartclientraw.substring(chartclientraw.indexOf('(')+1,chartclientraw.indexOf(')',chartclientraw.indexOf('(')+1))
-	
+
 	var dataobject;
 	if(chartclientraw == 'All (*)'){
 		dataobject = window[txtchartname+chartperiod];
@@ -160,9 +160,9 @@ function Draw_Chart(txtchartname){
 	}
 	if(typeof dataobject === 'undefined' || dataobject === null){ Draw_Chart_NoData(txtchartname,'No data to display'); return; }
 	if(dataobject.length == 0){ Draw_Chart_NoData(txtchartname,'No data to display'); return; }
-	
+
 	var chartData,chartLabels;
-	
+
 	if(chartclientraw == 'All (*)'){
 		chartData = dataobject.map(function(d){return d.Count});
 		chartLabels = dataobject.map(function(d){return d.ReqDmn});
@@ -175,13 +175,13 @@ function Draw_Chart(txtchartname){
 			return item.SrcIP == chartclient;
 		}).map(function(d){return d.ReqDmn});
 	}
-	
+
 	$j.each(chartLabels,function(index,value){
 		chartLabels[index] = chunk(value.toLowerCase(),30).join('\n');
 	});
-	
+
 	var objchartname = window['Chart'+txtchartname];;
-	
+
 	if(objchartname != undefined) objchartname.destroy();
 	var ctx = document.getElementById('canvasChart'+txtchartname).getContext('2d');
 	var chartOptions = {
@@ -332,10 +332,10 @@ function Draw_Time_Chart(txtchartname){
 	var txtunitx = timeunitlist[$j('#'+txtchartname+'time_Period option:selected').val()];
 	var numunitx = intervallist[$j('#'+txtchartname+'time_Period option:selected').val()];
 	var dataobject = window[txtchartname+chartperiod+'time'];
-	
+
 	if(typeof dataobject === 'undefined' || dataobject === null){ Draw_Chart_NoData(txtchartname+'time','No data to display'); return; }
 	if(dataobject.length == 0){ Draw_Chart_NoData(txtchartname+'time','No data to display'); return; }
-	
+
 	var unique = [];
 	var chartQueryTypes = [];
 	for(let i = 0; i < dataobject.length; i++ ){
@@ -344,10 +344,10 @@ function Draw_Time_Chart(txtchartname){
 			unique[dataobject[i].Fieldname] = 1;
 		}
 	}
-	
+
 	var chartData = dataobject.map(function(d){ return {x: d.Time,y: d.QueryCount}});
 	var objchartname = window['Chart'+txtchartname+'time'];;
-	
+
 	factor=0;
 	if(txtunitx=='hour'){
 		factor=60*60*1000;
@@ -446,12 +446,12 @@ function Draw_Time_Chart(txtchartname){
 function getDataSets(txtchartname,objdata,objQueryTypes){
 	var datasets = [];
 	colourname='#fc8500';
-	
+
 	for(var i = 0; i < objQueryTypes.length; i++){
 		var querytypedata = objdata.filter(function(item){
 			return item.Fieldname == objQueryTypes[i];
 		}).map(function(d){return {x: d.Time,y: d.QueryCount}});
-		
+
 		datasets.push({ label: objQueryTypes[i],data: querytypedata,borderWidth: 1,pointRadius: 1,lineTension: 0,fill: true,backgroundColor: backgroundcolourlist[i],borderColor: bordercolourlist[i]});
 	}
 	datasets.reverse();
@@ -462,11 +462,11 @@ function chunk(str,n){
 	var ret = [];
 	var i;
 	var len;
-	
+
 	for(var i = 0,len = str.length; i < len; i += n){
 		ret.push(str.substr(i,n));
 	}
-	
+
 	return ret;
 };
 
@@ -538,14 +538,14 @@ function initial(){
 	show_menu();
 	get_conf_file();
 	get_domainstoexclude_file();
-	
+
 	$j('#sortTableContainer').empty();
 	$j('#sortTableContainer').append(BuildQueryLogTableHtmlNoData());
-	
+
 	$j('#td_charts').append(BuildChartHtml('DNS Queries','TotalBlockedtime','true','false'));
 	$j('#td_charts').append(BuildChartHtml('Top blocked domains','Blocked','false','true'));
 	$j('#td_charts').append(BuildChartHtml('Top requested domains','Total','false','true'));
-	
+
 	get_sqldata_file();
 	get_querylog_file();
 	get_DivStats_file();
@@ -609,7 +609,7 @@ function get_conf_file(){
 		success: function(data){
 			var configdata=data.split('\n');
 			configdata = configdata.filter(Boolean);
-			
+
 			for(var i = 0; i < configdata.length; i++){
 				eval('document.form.uidivstats_'+configdata[i].split('=')[0].toLowerCase()).value = configdata[i].split('=')[1].replace(/(\r\n|\n|\r)/gm,'');
 			}
@@ -645,7 +645,7 @@ function get_DivStats_file(){
 
 function SetGlobalDataset(txtchartname,dataobject){
 	window[txtchartname] = dataobject;
-	
+
 	if(txtchartname.indexOf('TotalBlocked') != -1){
 		currentNoChartsTotalBlocked++;
 		currentNoChartsOverall++;
@@ -669,7 +669,7 @@ function SetGlobalDataset(txtchartname,dataobject){
 			Draw_Chart('Total');
 		}
 	}
-	
+
 	if(currentNoChartsOverall == maxNoChartsOverall){
 		showhide('imgUpdateStats',false);
 		showhide('uidivstats_text',false);
@@ -680,7 +680,7 @@ function SetGlobalDataset(txtchartname,dataobject){
 
 function SetClients(txtchartname){
 	var dataobject = window[txtchartname+getChartPeriod($j('#'+txtchartname+'_Period option:selected').val())+'clients'];
-	
+
 	var unique = [];
 	var chartClients = [];
 	for(let i = 0; i < dataobject.length; i++ ){
@@ -689,7 +689,7 @@ function SetClients(txtchartname){
 			unique[dataobject[i].SrcIP] = 1;
 		}
 	}
-	
+
 	chartClients.sort();
 	for(var i = 0; i < chartClients.length; i++){
 		var arrclient = hostiparray.filter(function(item){
@@ -706,7 +706,7 @@ function ScriptUpdateLayout(){
 	var localver = GetVersionNumber('local');
 	var serverver = GetVersionNumber('server');
 	$j('#uidivstats_version_local').text(localver);
-	
+
 	if(localver != serverver && serverver != 'N/A'){
 		$j('#uidivstats_version_server').text('Updated version available: '+serverver);
 		showhide('btnChkUpdate',false);
@@ -808,7 +808,7 @@ function GetVersionNumber(versiontype){
 	else if(versiontype == 'server'){
 		versionprop = custom_settings.uidivstats_version_server;
 	}
-	
+
 	if(typeof versionprop == 'undefined' || versionprop == null){
 		return 'N/A';
 	}
@@ -821,9 +821,9 @@ function RedrawAllCharts(){
 	$j('#td_charts').append(BuildChartHtml('DNS Queries','TotalBlockedtime','true','false'));
 	$j('#td_charts').append(BuildChartHtml('Top blocked domains','Blocked','false','true'));
 	$j('#td_charts').append(BuildChartHtml('Top requested domains','Total','false','true'));
-	
+
 	get_sqldata_file();
-	
+
 	Assign_EventHandlers();
 }
 
@@ -916,7 +916,7 @@ function getLimit(datasetname,axis,maxmin,isannotation){
 	else{
 		values = datasetname.map(function(o){ return o.y } );
 	}
-	
+
 	if(maxmin == 'max'){
 		limit = Math.max.apply(Math,values);
 	}
@@ -1074,7 +1074,7 @@ function DragZoom(button){
 		pan = false;
 		buttonvalue = 'Drag Zoom On';
 	}
-	
+
 	for(var i = 0; i < metriclist.length; i++){
 		for(var i2 = 0; i2 < chartlist.length; i2++){
 			var chartobj = window['Chart'+metriclist[i]+chartlist[i2]];
@@ -1162,11 +1162,11 @@ function getChartPadding(e){
 
 function getChartLegendTitle(){
 	var chartlegendtitlelabel = 'Domain name';
-	
+
 	for(var i = 0; i < 350 - chartlegendtitlelabel.length; i++){
 		chartlegendtitlelabel = chartlegendtitlelabel+' ';
 	}
-	
+
 	return chartlegendtitlelabel;
 }
 
@@ -1211,9 +1211,9 @@ function changeTable(e){
 	value = e.value * 1;
 	name = e.id.substring(0,e.id.indexOf('_'));
 	SetCookie(e.id,value);
-	
+
 	var tableperiod = getChartPeriod(value);
-	
+
 	$j('#keystatstotal').text(window['QueriesTotal'+tableperiod]);
 	$j('#keystatsblocked').text(window['QueriesBlocked'+tableperiod]);
 	$j('#keystatspercent').text(window['BlockedPercentage'+tableperiod]);
@@ -1355,7 +1355,7 @@ function BuildQueryLogTableHtml(){
 	tablehtml += '</tr>';
 	tablehtml += '</thead>';
 	tablehtml += '<tbody class="sortTableContent">';
-	
+
 	for(var i = 0; i < arrayqueryloglines.length; i++){
 		tablehtml += '<tr class="sortRow">';
 		tablehtml += '<td>'+arrayqueryloglines[i].Time+'</td>';
@@ -1365,10 +1365,10 @@ function BuildQueryLogTableHtml(){
 		tablehtml += '<td>'+arrayqueryloglines[i].Result+'</td>';
 		tablehtml += '</tr>';
 	}
-	
+
 	tablehtml += '</tbody>';
 	tablehtml += '</table>';
-	
+
 	return tablehtml;
 }
 
@@ -1401,8 +1401,7 @@ function ParseQueryLog(data){
 		parsedlogline.ReqDmn = logfields[1].trim();
 		parsedlogline.SrcIP = logfields[2].trim();
 		parsedlogline.QryType = logfields[3].trim();
-		var parsedresult = logfields[4].replace(/"/g,'').trim();
-		parsedlogline.Result = parsedresult.charAt(0).toUpperCase()+parsedresult.slice(1);
+		parsedlogline.Result = logfields[4].trim() == '1' ? 'Allowed' : 'Blocked';
 		arrayqueryloglines.push(parsedlogline);
 	}
 	originalarrayqueryloglines = arrayqueryloglines;
@@ -1415,7 +1414,7 @@ function FilterQueryLog(){
 	}
 	else{
 		arrayqueryloglines = originalarrayqueryloglines;
-		
+
 		if($j('#filter_reqdmn').val() != '' ){
 			if($j('#filter_reqdmn').val().startsWith('!')){
 				arrayqueryloglines = arrayqueryloglines.filter(function(item){
@@ -1428,7 +1427,7 @@ function FilterQueryLog(){
 				});
 			}
 		}
-		
+
 		if( $j('#filter_srcip').val() != '' ){
 			if($j('#filter_srcip').val().startsWith('!')){
 				arrayqueryloglines = arrayqueryloglines.filter(function(item){
@@ -1441,24 +1440,19 @@ function FilterQueryLog(){
 				});
 			}
 		}
-		
+
 		if( $j('#filter_qrytype option:selected').val() != 0 ){
 			arrayqueryloglines = arrayqueryloglines.filter(function(item){
 				return item.QryType == $j('#filter_qrytype option:selected').text();
 			});
 		}
-		
-		if( $j('#filter_result option:selected').val() == 2 ){
-			arrayqueryloglines = arrayqueryloglines.filter(function(item){
-				return item.Result.toLowerCase().indexOf('blocked') != -1;
-			});
-		}
-		else if( $j('#filter_result option:selected').val() != 0 ){
+
+		if( $j('#filter_result option:selected').val() != 0 ){
 			arrayqueryloglines = arrayqueryloglines.filter(function(item){
 				return item.Result == $j('#filter_result option:selected').text();
 			});
 		}
-		
+
 	}
 	SortTable(sortname+' '+sortdir.replace('desc','↑').replace('asc','↓').trim());
 }
@@ -1483,7 +1477,7 @@ function SortTable(sorttext){
 			sortfield='Result';
 		break;
 	}
-	
+
 	if(sorttext.indexOf('↓') == -1 && sorttext.indexOf('↑') == -1){
 		eval('arrayqueryloglines = arrayqueryloglines.sort((a,b) => (a.'+sortfield+' > b.'+sortfield+') ? 1 : ((b.'+sortfield+' > a.'+sortfield+') ? -1 : 0)); ');
 		sortdir = 'asc';
@@ -1496,10 +1490,10 @@ function SortTable(sorttext){
 		eval('arrayqueryloglines = arrayqueryloglines.sort((a,b) => (a.'+sortfield+' < b.'+sortfield+') ? 1 : ((b.'+sortfield+' < a.'+sortfield+') ? -1 : 0)); ');
 		sortdir = 'desc';
 	}
-	
+
 	$j('#sortTableContainer').empty();
 	$j('#sortTableContainer').append(BuildQueryLogTableHtml());
-	
+
 	$j('.sortable').each(function(index,element){
 		if(element.innerHTML == sortname){
 			if(sortdir == 'asc'){
@@ -1523,7 +1517,7 @@ function Assign_EventHandlers(){
 			}
 		})
 	});
-	
+
 	$j('.collapsible-jquery').each(function(index,element){
 		if(GetCookie($j(this)[0].id,'string') == 'collapsed'){
 			$j(this).siblings().toggle(false);
@@ -1532,17 +1526,17 @@ function Assign_EventHandlers(){
 			$j(this).siblings().toggle(true);
 		}
 	});
-	
+
 	let timeoutreqdmn = null;
 	let timeoutsrcip = null;
-	
+
 	$j('#filter_reqdmn').off('keyup touchend').on('keyup touchend',function (e){
 		clearTimeout(timeoutreqdmn);
 		timeoutreqdmn = setTimeout(function(){
 			FilterQueryLog();
 		},1000);
 	});
-	
+
 	$j('#filter_srcip').off('keyup touchend').on('keyup touchend',function (e){
 		clearTimeout(timeoutsrcip);
 		timeoutsrcip = setTimeout(function(){
