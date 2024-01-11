@@ -805,24 +805,6 @@ LastXQueries(){
 	esac
 }
 
-BlockingFile(){
-	case "$1" in
-		check)
-			DIVCONF="$DIVERSION_DIR/.conf/diversion.conf"
-			BLOCKINGFILE="$DIVERSION_DIR/list/blockinglist"
-
-			if [ "$(grep alternateBF "$DIVCONF" | cut -f2 -d"=")" = "on" ]; then
-					BLOCKINGFILE="$DIVERSION_DIR/list/blockinglist $DIVERSION_DIR/list/blockinglist_fs"
-			elif [ "$(grep "bfFs" "$DIVCONF" | cut -f2 -d"=")" = "on" ]; then
-				if [ "$(grep "bfTypeinUse" "$DIVCONF" | cut -f2 -d"=")" != "primary" ]; then
-					BLOCKINGFILE="$DIVERSION_DIR/list/blockinglist_fs"
-				fi
-			fi
-			echo "$BLOCKINGFILE"
-		;;
-	esac
-}
-
 UpdateDiversionWeeklyStatsFile(){
 	rm -f "$SCRIPT_WEB_DIR/DiversionStats.htm" 2>/dev/null
 	diversionstatsfile="$(/opt/bin/find /opt/share/diversion/stats -name "Diversion_Stats*" -printf "%C@ %p\n"| sort | tail -n 1 | cut -f2 -d' ')"
@@ -866,7 +848,7 @@ Table_Indexes(){
 			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
 				sleep 1
 			done
-			echo "PRAGMA cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_results_time_clients ON dnsqueries (Result collate nocase,Timestamp,SrcIP);" > /tmp/uidivstats-upgrade.sql
+			echo "PRAGMA cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_allowed_time_clients ON dnsqueries (Allowed,Timestamp,SrcIP);" > /tmp/uidivstats-upgrade.sql
 			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
 				sleep 1
 			done
@@ -874,7 +856,7 @@ Table_Indexes(){
 			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
 				sleep 1
 			done
-			echo "PRAGMA cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_clients_results_time_domains ON dnsqueries (SrcIP,Result collate nocase,Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
+			echo "PRAGMA cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_clients_allowed_time_domains ON dnsqueries (SrcIP,Allowed,Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
 			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
 				sleep 1
 			done
@@ -882,40 +864,21 @@ Table_Indexes(){
 			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
 				sleep 1
 			done
-			echo "PRAGMA cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_results_time_domains ON dnsqueries (Result collate nocase,Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
+			echo "PRAGMA cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_allowed_time_domains ON dnsqueries (Allowed,Timestamp,ReqDmn);" > /tmp/uidivstats-upgrade.sql
 			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
 				sleep 1
 			done
-			echo "PRAGMA cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_results_time ON dnsqueries (Result collate nocase,Timestamp);" > /tmp/uidivstats-upgrade.sql
+			echo "PRAGMA cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_allowed_time ON dnsqueries (Allowed,Timestamp);" > /tmp/uidivstats-upgrade.sql
 			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
 				sleep 1
 			done
-			echo "PRAGMA cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_time_results ON dnsqueries (Timestamp,Result collate nocase);" > /tmp/uidivstats-upgrade.sql
+			echo "PRAGMA cache_size=-20000; CREATE INDEX IF NOT EXISTS idx_time_allowed ON dnsqueries (Timestamp,Allowed);" > /tmp/uidivstats-upgrade.sql
 			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
 				sleep 1
 			done
 		;;
 		drop)
-			echo "DROP INDEX IF EXISTS idx_dns_domains;" > /tmp/uidivstats-upgrade.sql
-			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
-				sleep 1
-			done
-			echo "DROP INDEX IF EXISTS idx_dns_time;" > /tmp/uidivstats-upgrade.sql
-			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
-				sleep 1
-			done
-			echo "DROP INDEX IF EXISTS idx_dns_clients;" > /tmp/uidivstats-upgrade.sql
-			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
-				sleep 1
-			done
-			echo "DROP INDEX IF EXISTS idx_results_clients;" > /tmp/uidivstats-upgrade.sql
-			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
-				sleep 1
-			done
-			echo "DROP INDEX IF EXISTS idx_clients_results_domains;" > /tmp/uidivstats-upgrade.sql
-			while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
-				sleep 1
-			done
+			true;
 		;;
 	esac
 }
@@ -1001,7 +964,7 @@ Write_Count_Sql_ToFile(){
 	if [ "$1" = "Total" ]; then
 		echo "SELECT '$1' Fieldname,[ReqDmn] ReqDmn,Count([ReqDmn]) Count FROM ${2}${5} $wherestring GROUP BY [ReqDmn] ORDER BY COUNT([ReqDmn]) DESC LIMIT 20;" >> "$6"
 	elif [ "$1" = "Blocked" ]; then
-		echo "SELECT '$1' Fieldname,[ReqDmn] ReqDmn,Count([ReqDmn]) Count FROM ${2}${5} WHERE ([Result] LIKE 'blocked%') $wherestring GROUP BY [ReqDmn] ORDER BY COUNT([ReqDmn]) DESC LIMIT 20;" >> "$6"
+		echo "SELECT '$1' Fieldname,[ReqDmn] ReqDmn,Count([ReqDmn]) Count FROM ${2}${5} WHERE NOT [Allowed] $wherestring GROUP BY [ReqDmn] ORDER BY COUNT([ReqDmn]) DESC LIMIT 20;" >> "$6"
 	fi
 }
 
@@ -1032,7 +995,7 @@ Write_Count_PerClient_Sql_ToFile(){
 		{
 			echo "SELECT '$1' Fieldname,SrcIP,ReqDmn,Count FROM"
 			echo "(SELECT [SrcIP] SrcIP,[ReqDmn] ReqDmn,Count([ReqDmn]) Count,ROW_NUMBER() OVER (PARTITION BY [SrcIP] ORDER BY Count(*) DESC) rn"
-			echo "FROM ${2}${5} WHERE [SrcIP] IN (SELECT DISTINCT [SrcIP] SrcIP FROM ${2}${5}) AND ([Result] LIKE 'blocked%') $wherestring"
+			echo "FROM ${2}${5} WHERE [SrcIP] IN (SELECT DISTINCT [SrcIP] SrcIP FROM ${2}${5}) AND NOT [Allowed] $wherestring"
 			echo "GROUP BY [SrcIP],[ReqDmn]) WHERE rn <=20 ORDER BY SrcIP,Count DESC;"
 		} >> "$6"
 	fi
@@ -1051,7 +1014,7 @@ Write_Time_Sql_ToFile(){
 	if [ "$1" = "Total" ]; then
 		echo "SELECT '$1' Fieldname,series.x Time,IFNULL(data.QueryCount2,0) QueryCount FROM (SELECT x FROM temp_timerange_$6) series LEFT JOIN (SELECT '$1' Fieldname,CAST([Timestamp]/$multiplier AS INT)*$multiplier Time2,COUNT([QueryID]) QueryCount2 FROM ${2}${6} GROUP BY Time2) data on series.x = data.Time2;" >> "$7"
 	elif [ "$1" = "Blocked" ]; then
-		echo "SELECT '$1' Fieldname,series.x Time,IFNULL(data.QueryCount2,0) QueryCount FROM (SELECT x FROM temp_timerange_$6) series LEFT JOIN (SELECT '$1' Fieldname,CAST([Timestamp]/$multiplier AS INT)*$multiplier Time2,COUNT([QueryID]) QueryCount2 FROM ${2}${6} WHERE ([Result] LIKE 'blocked%') GROUP BY Time2) data on series.x = data.Time2;" >> "$7"
+		echo "SELECT '$1' Fieldname,series.x Time,IFNULL(data.QueryCount2,0) QueryCount FROM (SELECT x FROM temp_timerange_$6) series LEFT JOIN (SELECT '$1' Fieldname,CAST([Timestamp]/$multiplier AS INT)*$multiplier Time2,COUNT([QueryID]) QueryCount2 FROM ${2}${6} WHERE NOT [Allowed] GROUP BY Time2) data on series.x = data.Time2;" >> "$7"
 	fi
 }
 
@@ -1064,7 +1027,7 @@ Write_KeyStats_Sql_ToFile(){
 	if [ "$1" = "Total" ]; then
 		echo "SELECT COUNT([QueryID]) QueryCount FROM ${2}${3};" >> "$4"
 	elif [ "$1" = "Blocked" ]; then
-		echo "SELECT COUNT([QueryID]) QueryCount FROM ${2}${3} WHERE [Result] LIKE 'blocked%';" >> "$4"
+		echo "SELECT COUNT([QueryID]) QueryCount FROM ${2}${3} WHERE NOT [Allowed];" >> "$4"
 	fi
 }
 
@@ -1171,7 +1134,7 @@ Generate_Query_Log(){
 			echo ".headers off"
 			echo ".separator '|'"
 			echo ".output $CSV_OUTPUT_DIR/SQLQueryLog.tmp"
-			echo "SELECT [Timestamp] Time,[ReqDmn] ReqDmn,[SrcIP] SrcIP,[QryType] QryType,[Result] Result FROM [dnsqueries] ORDER BY [Timestamp] DESC LIMIT $recordcount;"
+			echo "SELECT [Timestamp] Time,[ReqDmn] ReqDmn,[SrcIP] SrcIP,[QryType] QryType,[Allowed] Allowed FROM [dnsqueries] ORDER BY [Timestamp] DESC LIMIT $recordcount;"
 		} > /tmp/uidivstats-query.sql
 		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-query.sql >/dev/null 2>&1; do
 			sleep 1
@@ -1268,16 +1231,10 @@ Generate_KeyStats(){
 }
 
 Generate_Count_Blocklist_Domains(){
-	blockinglistfile="$(BlockingFile check)"
-	blacklistfile="$DIVERSION_DIR/list/blacklist"
-	blacklistwcfile="$DIVERSION_DIR/list/wc_blacklist"
+	blockinglistfile="$DIVERSION_DIR/list/blockinglist.conf"
 
-	BLL="$(($(/opt/bin/grep "^[^#]" $blockinglistfile | wc -w)-$(/opt/bin/grep "^[^#]" $blockinglistfile | wc -l)))"
-	[ "$(nvram get ipv6_service)" != "disabled" ] && BLL="$((BLL/2))"
-	BL="$(/opt/bin/grep "^[^#]" "$blacklistfile" | wc -l)"
-	[ "$(nvram get ipv6_service)" != "disabled" ] && BL="$((BL/2))"
-	WCBL="$(/opt/bin/grep "^[^#]" "$blacklistwcfile" | wc -l)"
-	blocklistdomains="$((BLL+BL+WCBL))"
+	blocklistdomains="$(cat $blockinglistfile | wc -l)"
+
 	if ! Validate_Number "$blocklistdomains"; then blocklistdomains=0; fi
 
 	WritePlainData_ToJS "$SCRIPT_USB_DIR/SQLData.js" "BlockedDomains,$blocklistdomains"
@@ -1471,8 +1428,8 @@ Flush_Cache_To_DB(){
 		{
 			echo "PRAGMA synchronous = normal; PRAGMA cache_size=-20000;"
 			echo "BEGIN TRANSACTION;"
-			echo "CREATE TABLE IF NOT EXISTS [dnsqueries] ([QueryID] INTEGER PRIMARY KEY NOT NULL,[Timestamp] NUMERIC NOT NULL,[SrcIP] TEXT NOT NULL,[ReqDmn] TEXT NOT NULL,[QryType] Text NOT NULL,[Result] Text NOT NULL);"
-			echo "CREATE TABLE IF NOT EXISTS [dnsqueries_tmp] ([Timestamp] NUMERIC NOT NULL,[SrcIP] TEXT NOT NULL,[ReqDmn] TEXT NOT NULL,[QryType] Text NOT NULL,[Result] Text NOT NULL);"
+			echo "CREATE TABLE IF NOT EXISTS [dnsqueries] ([QueryID] INTEGER PRIMARY KEY NOT NULL,[Timestamp] NUMERIC NOT NULL,[SrcIP] TEXT NOT NULL,[ReqDmn] TEXT NOT NULL,[QryType] Text NOT NULL,[Allowed] INTEGER NOT NULL);"
+			echo "CREATE TABLE IF NOT EXISTS [dnsqueries_tmp] ([Timestamp] NUMERIC NOT NULL,[SrcIP] TEXT NOT NULL,[ReqDmn] TEXT NOT NULL,[QryType] Text NOT NULL,[Allowed] INTEGER NOT NULL);"
 			echo ".mode csv"
 			echo ".import /tmp/cache-uiDivStats-SQL.tmp dnsqueries_tmp"
 			echo "INSERT INTO dnsqueries SELECT NULL,* FROM dnsqueries_tmp;"
@@ -1500,7 +1457,7 @@ Reset_DB(){
 	Print_Output false "Creating database table and enabling write-ahead logging..." "$PASS"
 	{
 		echo "PRAGMA journal_mode=WAL;"
-		echo "CREATE TABLE IF NOT EXISTS [dnsqueries] ([QueryID] INTEGER PRIMARY KEY NOT NULL,[Timestamp] NUMERIC NOT NULL,[SrcIP] TEXT NOT NULL,[ReqDmn] TEXT NOT NULL,[QryType] Text NOT NULL,[Result] Text NOT NULL);"
+		echo "CREATE TABLE IF NOT EXISTS [dnsqueries] ([QueryID] INTEGER PRIMARY KEY NOT NULL,[Timestamp] NUMERIC NOT NULL,[SrcIP] TEXT NOT NULL,[ReqDmn] TEXT NOT NULL,[QryType] Text NOT NULL,[Allowed] INTEGER NOT NULL);"
 	}  > /tmp/uidivstats-upgrade.sql
 	"$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql
 
@@ -1519,46 +1476,43 @@ Reset_DB(){
 }
 
 Process_Upgrade(){
-	rm -f "$SCRIPT_DIR/.upgraded"
-	rm -f "$SCRIPT_DIR/.upgraded2"
-	rm -f "$SCRIPT_DIR/.upgraded3"
+	if [ -f "$SCRIPT_DIR/.upgraded" ] || [ -f "$SCRIPT_DIR/.upgraded" ] || [ -f "$SCRIPT_DIR/.upgraded" ]; then
+		Print_Output true "Unable to upgrade from older versions than 3.0.0" "$CRIT"
+		exit 1
+	fi
 
-	if [ ! -f "$SCRIPT_DIR/.newindexes" ]; then
-		Print_Output true "First optimise, this will take a while!" "$WARN"
+	rm -f "$SCRIPT_DIR/.newindexes"
+
+	if [ ! -f "$SCRIPT_DIR/.newallowed" ]; then
+		Print_Output true "Upgrading database schema, this will take a while!" "$WARN"
+
 		/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
 		sleep 3
 		Auto_Cron delete 2>/dev/null
-	fi
 
-	renice 15 $$
+		renice 15 $$
 
-	Print_Output true "Checking database table indexes..." "$PASS"
-	Table_Indexes drop
-	if [ ! -f "$SCRIPT_DIR/.newindexes" ]; then
-		echo "PRAGMA cache_size=-20000; VACUUM INTO \"$DNS_DB.new\";" > /tmp/uidivstats-upgrade.sql
+		{
+			echo "ALTER TABLE [dnsqueries] RENAME TO [dnsqueries_bak];"
+			echo "CREATE TABLE [dnsqueries] ([QueryID] INTEGER PRIMARY KEY NOT NULL,[Timestamp] NUMERIC NOT NULL,[SrcIP] TEXT NOT NULL,[ReqDmn] TEXT NOT NULL,[QryType] Text NOT NULL,[Allowed] INTEGER NOT NULL);"
+			echo "INSERT INTO [dnsqueries] SELECT [QueryID], [Timestamp], [SrcIP], [ReqDmn], [QryType], [Result] == 'allowed' FROM [dnsqueries_bak];"
+			echo "DROP TABLE [dnsqueries_bak];"
+		} > /tmp/uidivstats-upgrade.sql
 		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
 			sleep 1
 		done
-		sleep 60
-		mv "$DNS_DB" "$DNS_DB.bak"
-		mv "$DNS_DB.new" "$DNS_DB"
-		echo "PRAGMA journal_mode=WAL;" > /tmp/uidivstats-upgrade.sql
-		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
-			sleep 1
-		done
-	fi
 
-	Table_Indexes create
+		Print_Output false "Creating database table indexes..." "$PASS"
+		Table_Indexes create
 
-	rm -f /tmp/uidivstats-upgrade.sql
-	Print_Output true "Database index checks complete" "$PASS"
+		rm -f /tmp/uidivstats-upgrade.sql
+		Print_Output true "Database upgrade complete" "$PASS"
 
-	renice 0 $$
+		renice 0 $$
 
-	if [ ! -f "$SCRIPT_DIR/.newindexes" ]; then
 		Auto_Cron create 2>/dev/null
 		/opt/etc/init.d/S90taildns start >/dev/null 2>&1
-		touch "$SCRIPT_DIR/.newindexes"
+		touch "$SCRIPT_DIR/.newallowed"
 	fi
 }
 
@@ -1835,7 +1789,7 @@ Menu_Install(){
 	Print_Output false "Creating database table and enabling write-ahead logging..." "$PASS"
 	{
 		echo "PRAGMA journal_mode=WAL;"
-		echo "CREATE TABLE IF NOT EXISTS [dnsqueries] ([QueryID] INTEGER PRIMARY KEY NOT NULL,[Timestamp] NUMERIC NOT NULL,[SrcIP] TEXT NOT NULL,[ReqDmn] TEXT NOT NULL,[QryType] Text NOT NULL,[Result] Text NOT NULL);"
+		echo "CREATE TABLE IF NOT EXISTS [dnsqueries] ([QueryID] INTEGER PRIMARY KEY NOT NULL,[Timestamp] NUMERIC NOT NULL,[SrcIP] TEXT NOT NULL,[ReqDmn] TEXT NOT NULL,[QryType] Text NOT NULL,[Allowed] INTEGER NOT NULL);"
 	}  > /tmp/uidivstats-upgrade.sql
 	while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
 		sleep 1
@@ -2188,6 +2142,7 @@ if [ -z "$1" ]; then
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
 	Shortcut_Script create
+	Process_Upgrade
 	ScriptHeader
 	MainMenu
 	exit 0
@@ -2264,7 +2219,6 @@ case "$1" in
 		Entware_Ready
 		Trim_DNS_DB
 		Check_Lock
-		Process_Upgrade
 		Optimise_DNS_DB
 		Menu_GenerateStats fullrefresh
 		exit 0
@@ -2300,6 +2254,7 @@ case "$1" in
 		Auto_Cron create 2>/dev/null
 		Auto_ServiceEvent create 2>/dev/null
 		Shortcut_Script create
+		Process_Upgrade
 	;;
 	about)
 		ScriptHeader

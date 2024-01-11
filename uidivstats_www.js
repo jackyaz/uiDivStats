@@ -1401,8 +1401,7 @@ function ParseQueryLog(data){
 		parsedlogline.ReqDmn = logfields[1].trim();
 		parsedlogline.SrcIP = logfields[2].trim();
 		parsedlogline.QryType = logfields[3].trim();
-		var parsedresult = logfields[4].replace(/"/g,'').trim();
-		parsedlogline.Result = parsedresult.charAt(0).toUpperCase()+parsedresult.slice(1);
+		parsedlogline.Result = logfields[4].trim() == '1' ? 'Allowed' : 'Blocked';
 		arrayqueryloglines.push(parsedlogline);
 	}
 	originalarrayqueryloglines = arrayqueryloglines;
@@ -1448,12 +1447,7 @@ function FilterQueryLog(){
 			});
 		}
 
-		if( $j('#filter_result option:selected').val() == 2 ){
-			arrayqueryloglines = arrayqueryloglines.filter(function(item){
-				return item.Result.toLowerCase().indexOf('blocked') != -1;
-			});
-		}
-		else if( $j('#filter_result option:selected').val() != 0 ){
+		if( $j('#filter_result option:selected').val() != 0 ){
 			arrayqueryloglines = arrayqueryloglines.filter(function(item){
 				return item.Result == $j('#filter_result option:selected').text();
 			});
