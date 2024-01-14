@@ -226,12 +226,12 @@ var $j=jQuery.noConflict(),maxNoChartsBlocked=6,currentNoChartsBlocked=0,maxNoCh
 <option value="0">All</option>
 <option value="1">A</option>
 <option value="2">AAAA</option>
-<option value="3">ANY</option>
-<option value="4">SRV</option>
-<option value="5">SOA</option>
-<option value="6">PTR</option>
-<option value="7">TXT</option>
-<option value="8">type=65</option>
+<option value="3">HTTPS</option>
+<option value="4">ANY</option>
+<option value="5">SRV</option>
+<option value="6">SOA</option>
+<option value="7">PTR</option>
+<option value="8">TXT</option>
 </select>
 </td>
 <td>

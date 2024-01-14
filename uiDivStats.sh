@@ -1495,7 +1495,7 @@ Process_Upgrade(){
 		{
 			echo "ALTER TABLE [dnsqueries] RENAME TO [dnsqueries_bak];"
 			echo "CREATE TABLE [dnsqueries] ([QueryID] INTEGER PRIMARY KEY NOT NULL,[Timestamp] NUMERIC NOT NULL,[SrcIP] TEXT NOT NULL,[ReqDmn] TEXT NOT NULL,[QryType] Text NOT NULL,[Allowed] INTEGER NOT NULL);"
-			echo "INSERT INTO [dnsqueries] SELECT [QueryID], [Timestamp], [SrcIP], [ReqDmn], [QryType], [Result] == 'allowed' FROM [dnsqueries_bak];"
+			echo "INSERT INTO [dnsqueries] SELECT [QueryID], [Timestamp], [SrcIP], [ReqDmn], CASE [QryType] WHEN 'type=65' THEN 'HTTPS' ELSE [QryType] END, [Result] == 'allowed' FROM [dnsqueries_bak];"
 			echo "DROP TABLE [dnsqueries_bak];"
 		} > /tmp/uidivstats-upgrade.sql
 		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
