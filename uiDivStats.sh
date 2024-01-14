@@ -1483,7 +1483,7 @@ Process_Upgrade(){
 
 	rm -f "$SCRIPT_DIR/.newindexes"
 
-	if [ ! -f "$SCRIPT_DIR/.newallowed" ]; then
+	if [ echo "SELECT [Result] FROM [dnsqueries] LIMIT 0" | "$SQLITE3_PATH" "$DNS_DB" >/dev/null 2>&1 ]; then
 		Print_Output true "Upgrading database schema, this will take a while!" "$WARN"
 
 		/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
@@ -1512,7 +1512,6 @@ Process_Upgrade(){
 
 		Auto_Cron create 2>/dev/null
 		/opt/etc/init.d/S90taildns start >/dev/null 2>&1
-		touch "$SCRIPT_DIR/.newallowed"
 	fi
 }
 
