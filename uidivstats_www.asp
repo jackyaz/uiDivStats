@@ -123,8 +123,8 @@ var $j=jQuery.noConflict(),maxNoChartsBlocked=6,currentNoChartsBlocked=0,maxNoCh
 <td class="settingvalue">
 <input type="radio" name="uidivstats_querymode" id="uidivstats_query_all" class="input" value="all" checked>
 <label for="uidivstats_query_all">All</label>
-<input type="radio" name="uidivstats_querymode" id="uidivstats_query_aaaaa" class="input" value="A+AAAA">
-<label for="uidivstats_query_aaaaa">A+AAAA only</label>
+<input type="radio" name="uidivstats_querymode" id="uidivstats_query_aaaaahttps" class="input" value="A+AAAA+HTTPS">
+<label for="uidivstats_query_aaaaahttps">A+AAAA+HTTPS only</label>
 </td>
 </tr>
 <tr class="even" id="rowcachemode">

@@ -4,7 +4,7 @@ BEGIN {
 	OFS = ",";
 }
 {
-	if ($5 ~ "query\\[A" && $5 !~ "dnssec"){
+	if ($5 ~ "query\\[(A|AAAA|HTTPS)\\]" && $5 !~ "dnssec"){
 		time = mktime( \
 			sprintf("%04d %02d %02d %s\n", \
 				strftime("%Y", systime()), \

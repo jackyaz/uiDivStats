@@ -421,6 +421,7 @@ Conf_Exists(){
 		if ! grep -q "LASTXQUERIES" "$SCRIPT_CONF"; then
 			echo "LASTXQUERIES=5000" >> "$SCRIPT_CONF"
 		fi
+		sed -i -e 's/QUERYMODE=A+AAAA$/QUERYMODE=A+AAAA+HTTPS/g' "$SCRIPT_CONF"
 		return 0
 	else
 		{ echo "QUERYMODE=all"; echo "CACHEMODE=tmp"; echo "DAYSTOKEEP=30"; echo "LASTXQUERIES=5000"; } > "$SCRIPT_CONF"
@@ -691,8 +692,8 @@ QueryMode(){
 			sleep 3
 			/opt/etc/init.d/S90taildns start >/dev/null 2>&1
 		;;
-		A+AAAA)
-			sed -i 's/^QUERYMODE.*$/QUERYMODE=A+AAAA/' "$SCRIPT_CONF"
+		A+AAAA+HTTPS)
+			sed -i 's/^QUERYMODE.*$/QUERYMODE=A+AAAA+HTTPS/' "$SCRIPT_CONF"
 			/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
 			sleep 3
 			/opt/etc/init.d/S90taildns start >/dev/null 2>&1
@@ -1628,8 +1629,8 @@ MainMenu(){
 				printf "\\n"
 				if Check_Lock menu; then
 					if [ "$(QueryMode check)" = "all" ]; then
-						QueryMode "A+AAAA"
-					elif [ "$(QueryMode check)" = "A+AAAA" ]; then
+						QueryMode "A+AAAA+HTTPS"
+					elif [ "$(QueryMode check)" = "A+AAAA+HTTPS" ]; then
 						QueryMode all
 					fi
 					Clear_Lock
