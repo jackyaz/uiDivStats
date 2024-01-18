@@ -421,6 +421,7 @@ Conf_Exists(){
 		if ! grep -q "LASTXQUERIES" "$SCRIPT_CONF"; then
 			echo "LASTXQUERIES=5000" >> "$SCRIPT_CONF"
 		fi
+		sed -i -e 's/QUERYMODE=A+AAAA$/QUERYMODE=A+AAAA+HTTPS/g' "$SCRIPT_CONF"
 		return 0
 	else
 		{ echo "QUERYMODE=all"; echo "CACHEMODE=tmp"; echo "DAYSTOKEEP=30"; echo "LASTXQUERIES=5000"; } > "$SCRIPT_CONF"
@@ -691,8 +692,8 @@ QueryMode(){
 			sleep 3
 			/opt/etc/init.d/S90taildns start >/dev/null 2>&1
 		;;
-		A+AAAA)
-			sed -i 's/^QUERYMODE.*$/QUERYMODE=A+AAAA/' "$SCRIPT_CONF"
+		A+AAAA+HTTPS)
+			sed -i 's/^QUERYMODE.*$/QUERYMODE=A+AAAA+HTTPS/' "$SCRIPT_CONF"
 			/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
 			sleep 3
 			/opt/etc/init.d/S90taildns start >/dev/null 2>&1
@@ -1483,7 +1484,7 @@ Process_Upgrade(){
 
 	rm -f "$SCRIPT_DIR/.newindexes"
 
-	if [ echo "SELECT [Result] FROM [dnsqueries] LIMIT 0" | "$SQLITE3_PATH" "$DNS_DB" >/dev/null 2>&1 ]; then
+	if echo "SELECT [Result] FROM [dnsqueries] LIMIT 0" | "$SQLITE3_PATH" "$DNS_DB" >/dev/null 2>&1; then
 		Print_Output true "Upgrading database schema, this will take a while!" "$WARN"
 
 		/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
@@ -1495,7 +1496,7 @@ Process_Upgrade(){
 		{
 			echo "ALTER TABLE [dnsqueries] RENAME TO [dnsqueries_bak];"
 			echo "CREATE TABLE [dnsqueries] ([QueryID] INTEGER PRIMARY KEY NOT NULL,[Timestamp] NUMERIC NOT NULL,[SrcIP] TEXT NOT NULL,[ReqDmn] TEXT NOT NULL,[QryType] Text NOT NULL,[Allowed] INTEGER NOT NULL);"
-			echo "INSERT INTO [dnsqueries] SELECT [QueryID], [Timestamp], [SrcIP], [ReqDmn], [QryType], [Result] == 'allowed' FROM [dnsqueries_bak];"
+			echo "INSERT INTO [dnsqueries] SELECT [QueryID], [Timestamp], [SrcIP], [ReqDmn], CASE [QryType] WHEN 'type=65' THEN 'HTTPS' ELSE [QryType] END, [Result] == 'allowed' FROM [dnsqueries_bak];"
 			echo "DROP TABLE [dnsqueries_bak];"
 		} > /tmp/uidivstats-upgrade.sql
 		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
@@ -1628,8 +1629,8 @@ MainMenu(){
 				printf "\\n"
 				if Check_Lock menu; then
 					if [ "$(QueryMode check)" = "all" ]; then
-						QueryMode "A+AAAA"
-					elif [ "$(QueryMode check)" = "A+AAAA" ]; then
+						QueryMode "A+AAAA+HTTPS"
+					elif [ "$(QueryMode check)" = "A+AAAA+HTTPS" ]; then
 						QueryMode all
 					fi
 					Clear_Lock
