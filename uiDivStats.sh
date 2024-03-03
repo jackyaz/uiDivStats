@@ -1451,7 +1451,7 @@ Reset_DB(){
 	sleep 3
 	Auto_Cron delete 2>/dev/null
 
-	if ! mv "$DNS_DB" "$DNS_DB.bak"; then
+	if ! mv "$DNS_DB" "$DNS_DB$1"; then
 		Print_Output true "Database backup failed, please check storage device" "$WARN"
 	fi
 
@@ -1477,7 +1477,7 @@ Reset_DB(){
 }
 
 Process_Upgrade(){
-	if [ -f "$SCRIPT_DIR/.upgraded" ] || [ -f "$SCRIPT_DIR/.upgraded" ] || [ -f "$SCRIPT_DIR/.upgraded" ]; then
+	if [ -f "$SCRIPT_DIR/.upgraded" ] || [ -f "$SCRIPT_DIR/.upgraded2" ] || [ -f "$SCRIPT_DIR/.upgraded3" ]; then
 		Print_Output true "Unable to upgrade from older versions than 3.0.0" "$CRIT"
 		exit 1
 	fi
@@ -1485,34 +1485,36 @@ Process_Upgrade(){
 	rm -f "$SCRIPT_DIR/.newindexes"
 
 	if echo "SELECT [Result] FROM [dnsqueries] LIMIT 0" | "$SQLITE3_PATH" "$DNS_DB" >/dev/null 2>&1; then
-		Print_Output true "Upgrading database schema, this will take a while!" "$WARN"
+		Print_Output true "Upgrade database schema." "$WARN"
+		Print_Output false "Existing data will be migrated overnight, or you can run 'uiDivStats trimdb' manually." "$WARN"
+		Reset_DB .old
+	fi
+}
 
-		/opt/etc/init.d/S90taildns stop >/dev/null 2>&1
-		sleep 3
+Migrate_Old_Data(){
+	if [ -f "$DNS_DB.old" ]; then
+		Print_Output true "Migrating old data. This can take a while!" "$PASS"
 		Auto_Cron delete 2>/dev/null
-
 		renice 15 $$
 
+		TZ=$(cat /etc/TZ)
+		export TZ
+		timenow=$(date +"%s")
+
 		{
-			echo "ALTER TABLE [dnsqueries] RENAME TO [dnsqueries_bak];"
-			echo "CREATE TABLE [dnsqueries] ([QueryID] INTEGER PRIMARY KEY NOT NULL,[Timestamp] NUMERIC NOT NULL,[SrcIP] TEXT NOT NULL,[ReqDmn] TEXT NOT NULL,[QryType] Text NOT NULL,[Allowed] INTEGER NOT NULL);"
-			echo "INSERT INTO [dnsqueries] SELECT [QueryID], [Timestamp], [SrcIP], [ReqDmn], CASE [QryType] WHEN 'type=65' THEN 'HTTPS' ELSE [QryType] END, [Result] == 'allowed' FROM [dnsqueries_bak];"
-			echo "DROP TABLE [dnsqueries_bak];"
+			echo "ATTACH DATABASE '$DNS_DB.old' AS OLD;"
+			echo "INSERT INTO [dnsqueries] ([Timestamp], [SrcIP], [ReqDmn], [QryType], [Allowed]) SELECT [Timestamp], [SrcIP], [ReqDmn], CASE [QryType] WHEN 'type=65' THEN 'HTTPS' ELSE [QryType] END, [Result] == 'allowed' FROM OLD.[dnsqueries] WHERE [Timestamp] > strftime('%s',datetime($timenow,'unixepoch','-$(DaysToKeep check) day'));"
 		} > /tmp/uidivstats-upgrade.sql
 		while ! "$SQLITE3_PATH" "$DNS_DB" < /tmp/uidivstats-upgrade.sql >/dev/null 2>&1; do
 			sleep 1
 		done
-
-		Print_Output false "Creating database table indexes..." "$PASS"
-		Table_Indexes create
-
 		rm -f /tmp/uidivstats-upgrade.sql
-		Print_Output true "Database upgrade complete" "$PASS"
 
-		renice 0 $$
+		rm -f "$DNS_DB.old"
 
+		Print_Output true "Data migration complete" "$PASS"
 		Auto_Cron create 2>/dev/null
-		/opt/etc/init.d/S90taildns start >/dev/null 2>&1
+		renice 0 $$
 	fi
 }
 
@@ -1785,6 +1787,8 @@ Menu_Install(){
 	sleep 3
 	Auto_Cron delete 2>/dev/null
 
+	Process_Upgrade
+
 	renice 15 $$
 	Print_Output false "Creating database table and enabling write-ahead logging..." "$PASS"
 	{
@@ -1959,7 +1963,7 @@ Menu_ResetDB(){
 	case "$confirm" in
 		y|Y)
 			printf "\\n"
-			Reset_DB
+			Reset_DB .bak
 		;;
 		*)
 			printf "\\n${BOLD}\\e[33mDatabase reset cancelled${CLEARFORMAT}\\n\\n"
@@ -2137,12 +2141,12 @@ if [ -z "$1" ]; then
 	fi
 	Conf_Exists
 	Create_Symlinks
+	Process_Upgrade
 	Auto_Startup create 2>/dev/null
 	Auto_DNSMASQ_Postconf create 2>/dev/null
 	Auto_Cron create 2>/dev/null
 	Auto_ServiceEvent create 2>/dev/null
 	Shortcut_Script create
-	Process_Upgrade
 	ScriptHeader
 	MainMenu
 	exit 0
@@ -2219,6 +2223,7 @@ case "$1" in
 		Entware_Ready
 		Trim_DNS_DB
 		Check_Lock
+		Migrate_Old_Data
 		Optimise_DNS_DB
 		Menu_GenerateStats fullrefresh
 		exit 0
@@ -2249,12 +2254,12 @@ case "$1" in
 		fi
 		Conf_Exists
 		Create_Symlinks
+		Process_Upgrade
 		Auto_Startup create 2>/dev/null
 		Auto_DNSMASQ_Postconf create 2>/dev/null
 		Auto_Cron create 2>/dev/null
 		Auto_ServiceEvent create 2>/dev/null
 		Shortcut_Script create
-		Process_Upgrade
 	;;
 	about)
 		ScriptHeader
